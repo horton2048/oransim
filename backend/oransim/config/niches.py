@@ -81,3 +81,38 @@ def bias_captions() -> dict[str, str]:
 def female_ratio() -> dict[str, int]:
     """EN key → approximate female fan ratio (for mock KOL demographics)."""
     return {n["key"]: int(n.get("female_ratio", 50)) for n in _load()}
+
+
+# Default reference prices per niche (CNY). Used when niches.json lacks 'reference_price'.
+# Aligned with CATEGORY_DEFAULTS in spec/extract.py (kept in sync manually).
+_REFERENCE_PRICE_FALLBACK: dict[str, float] = {
+    "beauty":      89.0,
+    "food":        25.0,
+    "fitness":    199.0,
+    "fashion":    159.0,
+    "electronics": 399.0,
+    "pet":         59.0,
+    "travel":     299.0,
+    "baby":       129.0,
+    "education":  199.0,
+    "home":        89.0,
+    "general":     45.0,
+}
+
+
+def reference_prices() -> tuple[dict[str, float], set[str]]:
+    """EN key → reference price CNY + set of uncalibrated (default) niches.
+
+    Returns (prices_dict, uncalibrated_set). Niches in uncalibrated_set used a
+    fallback default (niches.json lacked a 'reference_price' field — 未标定).
+    """
+    prices: dict[str, float] = {}
+    uncalibrated: set[str] = set()
+    for n in _load():
+        key = n["key"]
+        if "reference_price" in n:
+            prices[key] = float(n["reference_price"])
+        else:
+            prices[key] = _REFERENCE_PRICE_FALLBACK.get(key, 45.0)
+            uncalibrated.add(key)
+    return prices, uncalibrated

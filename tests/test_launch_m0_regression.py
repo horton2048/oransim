@@ -73,6 +73,10 @@ def _field_variants():
         "platform_alloc": ({"douyin": 0.6, "xhs": 0.4}, {"douyin": 0.3, "xhs": 0.7}),
         "kol_per_platform": ({"douyin": _kol("k-a")}, {"douyin": _kol("k-b")}),
         "seed": (0, 99),
+        # M4 新字段: price_cny / pricing_model / substitute_pressure 已进 hash_tuple
+        "price_cny": (None, 99.0),
+        "pricing_model": (None, "subscription"),
+        "substitute_pressure": (None, 0.5),
         # 白名单四字段: 变体应不改 hash
         "macro_ctr_lift": (1.0, 3.0),
         "macro_cvr_lift": (1.0, 3.0),

@@ -135,10 +135,46 @@ class SandboxStore:
             new.audience_filter = patch["audience_filter"]
             alloc_changed = True  # treat as dist change
 
+        price_changed = False
+        if "price_cny" in patch:
+            new.price_cny = float(patch["price_cny"])
+            price_changed = True
+
         # Dispatch to right compute path
         if creative_changed:
             new_result = self.runner.run(new, n_monte_carlo=5)
             sess.last_mode = "full_rerun"
+        elif price_changed:
+            # Cheap price recompute: apply elasticity adjustment to current conversions,
+            # then recalculate revenue = new_conversions × new_price.
+            # Uses square-root elasticity: conv_adj = (old_price/new_price)^0.5.
+            # Commutes with budget fast_approx (AT-M4-05): both are multiplicative scalars.
+            old_price = prev.price_cny if prev.price_cny is not None else 45.0
+            new_price = new.price_cny
+            conv_adj = (old_price / max(new_price, 1e-6)) ** 0.5
+
+            scaled = copy.deepcopy(sess.current_result)
+
+            def _apply_price(d: dict) -> None:
+                if "conversions" in d:
+                    d["conversions"] *= conv_adj
+                if "conversions" in d:
+                    d["revenue"] = d["conversions"] * new_price
+                if d.get("impressions", 0) > 0:
+                    d["ctr"] = d.get("clicks", 0) / d["impressions"]
+                if d.get("clicks", 0) > 0:
+                    d["cvr"] = d.get("conversions", 0) / d["clicks"]
+
+            for _plat, _d in scaled.per_platform.items():
+                if "kpi" in _d:
+                    _apply_price(_d["kpi"])
+            _apply_price(scaled.total_kpis)
+            scaled.total_kpis["roi"] = (
+                scaled.total_kpis.get("revenue", 0) - scaled.total_kpis.get("cost", 0)
+            ) / max(scaled.total_kpis.get("cost", 1), 1)
+
+            new_result = scaled
+            sess.last_mode = "price_approx"
         elif alloc_changed or kol_changed:
             # counterfactual from baseline with new allocation, preserving baseline U
             intervention = {

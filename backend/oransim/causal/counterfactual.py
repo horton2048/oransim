@@ -30,6 +30,10 @@ class Scenario:
     macro_cvr_lift: float = 1.0
     cross_platform_overlap: float = 0.0  # 0..1, fraction of impressions that overlap users
     llm_calibration: float | None = None  # multiplier from LLM votes (set by API after explain)
+    # M4 price fields (Iron Rule 4: all enter hash_tuple)
+    price_cny: float | None = None          # product price CNY; None → default AOV (45)
+    pricing_model: str | None = None        # e.g. "one_time" / "subscription" / "freemium"
+    substitute_pressure: float | None = None  # 0..1, competitive substitution intensity
 
     def hash_tuple(self) -> tuple:
         return (
@@ -39,6 +43,9 @@ class Scenario:
             id(self.audience_filter),
             tuple((k, v.id) for k, v in (self.kol_per_platform or {}).items()),
             self.seed,
+            round(self.price_cny, 4) if self.price_cny is not None else None,
+            self.pricing_model,
+            round(self.substitute_pressure, 4) if self.substitute_pressure is not None else None,
         )
 
 
@@ -148,8 +155,9 @@ class ScenarioRunner:
                     rng_seed=scenario.seed + mc * 31,
                     macro_ctr_lift=scenario.macro_ctr_lift,
                     macro_cvr_lift=scenario.macro_cvr_lift,
+                    price_cny=scenario.price_cny,
                 )
-                k = self.ag.aggregate_kpis(oc, imp, budget)
+                k = self.ag.aggregate_kpis(oc, imp, budget, price_cny=scenario.price_cny)
                 # Apply LLM calibration multiplier if present
                 if scenario.llm_calibration is not None and scenario.llm_calibration > 0:
                     cal = float(scenario.llm_calibration)

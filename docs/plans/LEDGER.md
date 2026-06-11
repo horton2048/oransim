@@ -8,9 +8,9 @@
 
 ## 当前指针
 
-- **当前里程碑**：M1
-- **当前用例**：AT-M1-01
-- **上轮结束于**：M0 全部 3 AT 绿，commit e596eff（2026-06-11）。AT-M0-02 根因修复：hash(plat)→SHA256、report_content 嵌入时间戳移除、accept.ps1 pin PYTHONHASHSEED=0。下一步：开 M1（spec schema + 骨架）。
+- **当前里程碑**：M4
+- **当前用例**：AT-M4-01
+- **上轮结束于**：M1 全部 7 AT 绿，commit 44cb082（2026-06-11）。ProductSpec/SpecField schema、mock 双模抽取、normalize、pipeline 骨架，REG-4 通过。下一步：M4（价格端到端）—— 可与 M2/M3 并行。
 - **全局阻塞**：无
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
@@ -28,7 +28,7 @@
 | 里程碑 | 必绿用例 | 必跑回归 | 状态 | 备注 / 阻塞 |
 |---|---|---|---|---|
 | M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
-| M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | TODO | 可与 M4 并行 |
+| M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | TODO | |
 | M3 | AT-M3-01…08 | REG-1…4 | TODO | |
 | M4 | AT-M4-01…08 | REG-1…4 | TODO | 可与 M1–M3 并行 |
@@ -48,15 +48,15 @@
 - [x] AT-M0-02 `/api/predict` 黄金快照（e2e，3 组 payload）→ `test_at_m0_02_golden_snapshot` (e596eff)
 - [x] AT-M0-03 scale_kpi 乘法不变量（单测）→ `test_at_m0_03_aov_invariant` (e596eff)
 
-### M1 — Spec schema + 骨架
-- [ ] AT-M1-01 ProductSpec schema 严格性
-- [ ] AT-M1-02 无 provenance 拒绝
-- [ ] AT-M1-03 assumed_fields 派生正确
-- [ ] AT-M1-04 mock 抽取确定性
-- [ ] AT-M1-05 黄金集 spec 字段匹配率基线
-- [ ] AT-M1-06 （见文档）
-- [ ] AT-M1-07 CATEGORY_DEFAULTS 来源标记
-- [ ] 黄金集交付 `tests/golden/launch_ideas.jsonl`
+### M1 — Spec schema + 骨架（DONE）
+- [x] AT-M1-01 ProductSpec schema 严格性 → `test_at_m1_01_schema_strict` (44cb082)
+- [x] AT-M1-02 无 provenance 拒绝 → `test_at_m1_02_no_provenance_forces_inferred` (44cb082)
+- [x] AT-M1-03 assumed_fields 派生正确 → `test_at_m1_03_assumed_fields` (44cb082)
+- [x] AT-M1-04 mock 抽取确定性 → `test_at_m1_04_mock_extract_deterministic` (44cb082)
+- [x] AT-M1-05 黄金集 spec 字段匹配率基线 → `test_at_m1_05_golden_baseline` (44cb082)
+- [x] AT-M1-06 B2B 拒绝标记 → `test_at_m1_06_b2b_indicators` (44cb082)
+- [x] AT-M1-07 CATEGORY_DEFAULTS 来源标记 → `test_at_m1_07_category_defaults_tags` (44cb082)
+- [x] 黄金集交付 `tests/golden/launch_ideas.jsonl` (44cb082)
 
 ### M2 — Grounding
 - [ ] AT-M2-01 品类映射准确率（mock）

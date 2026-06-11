@@ -45,6 +45,8 @@ class StatisticalAgents:
     W_ENGAGE = np.array([1.4, 0.9, 0.6, 0.5, -0.3, 0.4], dtype=np.float32)
     W_CONVERT = np.array([1.1, 0.6, 0.7, 0.8, 0.35], dtype=np.float32)
     # order: click_prob, purchase_intent, kol_trust, audience_match, price_sensitivity
+    # M4: price sensitivity coefficient (negative: higher price → lower conversion)
+    W_PRICE_SENS = np.float32(-0.5)
 
     def __init__(self, population: Population):
         self.pop = population
@@ -58,6 +60,8 @@ class StatisticalAgents:
         rng_seed: int = 1,
         macro_ctr_lift: float = 1.0,
         macro_cvr_lift: float = 1.0,
+        price_cny: float | None = None,
+        reference_price: float = 45.0,
     ) -> OutcomeBatch:
         idx = impression.agent_idx
         K = len(idx)
@@ -120,6 +124,10 @@ class StatisticalAgents:
             [click_prob, purchase_intent, kol_trust, audience_match, price_sens * 0.3], axis=1
         )
         convert_logit = convert_feat @ self.W_CONVERT - 4.2 + np.log(max(macro_cvr_lift, 1e-3))
+        # M4 price feature: log(price / reference). None → feat=0 (natural degradation AT-M4-03)
+        if price_cny is not None:
+            price_feat = float(np.log(max(price_cny, 1e-3) / max(reference_price, 1e-3)))
+            convert_logit = convert_logit + self.W_PRICE_SENS * price_feat
         convert_prob = click_prob * _sigmoid(convert_logit + 0.3 * u)
 
         # sample outcomes
@@ -144,9 +152,13 @@ class StatisticalAgents:
         outcome: OutcomeBatch,
         impression: ImpressionResult,
         budget: float,
-        conv_value_cny: float = 45.0,
+        price_cny: float | None = None,
     ) -> dict[str, float]:
-        """Roll per-agent outcomes into campaign KPIs."""
+        """Roll per-agent outcomes into campaign KPIs.
+
+        price_cny=None → default AOV of 45.0 CNY (backward-compatible AT-M4-01/02).
+        """
+        aov = price_cny if price_cny is not None else 45.0
         if len(outcome.agent_idx) == 0:
             return {
                 "impressions": 0,
@@ -163,7 +175,7 @@ class StatisticalAgents:
         conversions = float(np.sum(outcome.convert_prob * impression.weight))
         ctr = clicks / max(imps, 1)
         cvr = conversions / max(clicks, 1)
-        revenue = conversions * conv_value_cny
+        revenue = conversions * aov
         roi = (revenue - budget) / max(budget, 1)
         return {
             "impressions": float(imps),
