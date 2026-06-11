@@ -55,6 +55,14 @@ def get_world_model(name: str, **kwargs: Any) -> WorldModel:
     except KeyError:
         raise KeyError(f"Unknown world model '{name}'. Available: {sorted(REGISTRY)}") from None
     cls = factory()
+    # Prefer locally-trained weights: training writes to <checkpoint_dir>/model.pt
+    # and load_pretrained() auto-resolves that path. Without a checkpoint it raises
+    # FileNotFoundError, so we fall back to a fresh (random-init) instance.
+    if not kwargs and hasattr(cls, "load_pretrained"):
+        try:
+            return cls.load_pretrained()
+        except FileNotFoundError:
+            pass
     return cls(**kwargs)
 
 

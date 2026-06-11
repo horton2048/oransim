@@ -355,7 +355,13 @@ class CausalNeuralHawkesProcess(DiffusionModel):
     # ----------------------------------------------------------- helpers
 
     def _etype_idx(self, name: str) -> int:
-        return self.config.event_types.index(name)
+        # A "paid_" prefix marks a treatment/intervention event (see
+        # _treatment_id_of); that paid/organic axis is carried separately by
+        # treatment_ids, so the base type for embedding lookup is the
+        # un-prefixed event name. The synthetic generator emits "paid_impression"
+        # which must map to the "impression" base type, not crash the lookup.
+        base = name[5:] if name.startswith("paid_") else name
+        return self.config.event_types.index(base)
 
     def _treatment_id_of(self, event_name: str) -> int:
         # Convention: events prefixed "paid_" are treatment/intervention events.
@@ -613,7 +619,9 @@ class CausalNeuralHawkesProcess(DiffusionModel):
         timeline: list[tuple[float, str, float]] = [(t, n, 0.0) for t, n in events]
         totals = {n: 0.0 for n in self.config.event_types}
         for _, n in events:
-            totals[n] += 1.0
+            # Normalise "paid_*" treatment events onto their base type (the model
+            # vocabulary is the 6 base types; the paid/organic axis is separate).
+            totals[self.config.event_types[self._etype_idx(n)]] += 1.0
         buckets = [[0.0] * K for _ in range(self.config.horizon_days)]
         for t, n in events:
             day = int(t // (24 * 60))
