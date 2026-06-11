@@ -20,6 +20,7 @@ from . import api_state
 from .api_routers import adapters as adapters_router
 from .api_routers import analysis as analysis_router
 from .api_routers import health as health_router
+from .api_routers import launch as launch_router
 from .api_routers import predict as predict_router
 from .api_routers import sandbox as sandbox_router
 from .api_routers import ueb as ueb_router
@@ -118,6 +119,7 @@ app.include_router(sandbox_router.router)
 app.include_router(ueb_router.router)
 app.include_router(v2_router.router)
 app.include_router(ws_router.router)
+app.include_router(launch_router.router)  # M7: 上市模拟 (纯新增, campaign 面不动)
 
 
 @app.get("/")

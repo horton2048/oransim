@@ -20,13 +20,15 @@ _DEFAULT_CACHE = Path("/tmp/oransim_specs.json")
 
 # spec_id → [ProductSpec, ...] (index = revision)
 _STORE: dict[str, list[ProductSpec]] = {}
+_LOCALE: dict[str, str] = {}   # spec_id → locale (报告市场环境标注用)
 _CACHE_PATH: Path = _DEFAULT_CACHE
 
 
 def reset(cache_path: str | Path | None = None) -> None:
     """清空进程内存 (不删磁盘缓存)。可重设缓存路径 (测试隔离)。"""
-    global _STORE, _CACHE_PATH
+    global _STORE, _LOCALE, _CACHE_PATH
     _STORE = {}
+    _LOCALE = {}
     if cache_path is not None:
         _CACHE_PATH = Path(cache_path)
 
@@ -35,12 +37,17 @@ def _new_spec_id() -> str:
     return uuid.uuid4().hex
 
 
-def put(spec: ProductSpec) -> tuple[str, int]:
+def put(spec: ProductSpec, locale: str = "zh-CN") -> tuple[str, int]:
     """新建 spec (v0)。返回 (spec_id, revision=0)。"""
     spec_id = _new_spec_id()
     _STORE[spec_id] = [spec]
+    _LOCALE[spec_id] = locale
     _flush()
     return spec_id, 0
+
+
+def get_locale(spec_id: str) -> str:
+    return _LOCALE.get(spec_id, "zh-CN")
 
 
 def append(spec_id: str, spec: ProductSpec) -> int:
@@ -82,7 +89,8 @@ def _flush() -> None:
     """落盘 (world_events 同款; 失败静默, 不阻塞 API)。"""
     with contextlib.suppress(Exception):
         payload = {
-            sid: [s.model_dump() for s in chain] for sid, chain in _STORE.items()
+            "specs": {sid: [s.model_dump() for s in chain] for sid, chain in _STORE.items()},
+            "locale": dict(_LOCALE),
         }
         _CACHE_PATH.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
@@ -98,6 +106,9 @@ def load_from_cache(cache_path: str | Path | None = None) -> int:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return 0
-    for sid, chain in raw.items():
+    specs = raw.get("specs", raw)  # 兼容旧格式 (无 locale 包裹)
+    locales = raw.get("locale", {})
+    for sid, chain in specs.items():
         _STORE[sid] = [ProductSpec(**d) for d in chain]
-    return len(raw)
+        _LOCALE[sid] = locales.get(sid, "zh-CN")
+    return len(specs)

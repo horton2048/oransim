@@ -90,3 +90,187 @@ def test_at_m7_13_engine_no_spec_import():
             if pat.search(text):
                 offenders.append(str(py.relative_to(base)))
     assert not offenders, f"引擎层禁止 import oransim.spec (REG-4): {offenders}"
+
+
+# ═══════════════════════════════════════ helpers ════════════════════════════
+
+_GOLD_IDEA = "一款保湿面膜，定价 89 元，小红书美妆博主种草。"
+_B2B_IDEA = "一款给企业 HR 部门用的 SaaS 招聘管理平台，月费 3000 元/席，主要走 B2B 销售。"
+
+
+def _ingest(client, idea=_GOLD_IDEA, locale="zh-CN"):
+    r = client.post("/api/launch/ingest", json={"idea_text": idea, "locale": locale})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+# ═══════════════════════════════════════ AT-M7-03 ═══════════════════════════
+
+
+def test_at_m7_03_ingest_no_simulation(api_client, monkeypatch):
+    """ingest 全程零 ScenarioRunner.run() 调用 (spy 计数 = 0)."""
+    from oransim import api_state
+
+    calls = {"n": 0}
+    orig = api_state.RUNNER.run
+
+    def _spy(*a, **k):
+        calls["n"] += 1
+        return orig(*a, **k)
+
+    monkeypatch.setattr(api_state.RUNNER, "run", _spy)
+    res = _ingest(api_client)
+    assert res["spec_id"], "正例应产出 spec_id"
+    assert calls["n"] == 0, f"ingest 不应调用 ScenarioRunner.run，实际 {calls['n']} 次"
+
+
+# ═══════════════════════════════════════ AT-M7-05 ═══════════════════════════
+
+
+def test_at_m7_05_hard_reject_e2e(api_client):
+    """B2B idea ingest → clarification 非空、无 spec_id；伪造 spec_id simulate → 4xx."""
+    res = _ingest(api_client, idea=_B2B_IDEA)
+    assert res["rejected"] is True
+    assert res["spec_id"] is None, "硬拒绝不应产出 spec_id"
+    assert res["clarification_questions"], "硬拒绝必须返回非空 clarification_questions"
+
+    # 伪造 spec_id 调 simulate → 显式 4xx, 不产出部分报告
+    r = api_client.post("/api/launch/simulate", json={"spec_id": "deadbeef_fake"})
+    assert 400 <= r.status_code < 500, f"伪造 spec_id 应 4xx，实际 {r.status_code}"
+
+
+# ═══════════════════════════════════════ AT-M7-01 ═══════════════════════════
+
+
+def test_at_m7_01_end_to_end_main_chain(api_client):
+    """ingest → PATCH → simulate → 完整 LaunchReport；复现性数值一致."""
+    # 1. ingest
+    ing = _ingest(api_client)
+    spec_id = ing["spec_id"]
+    assert spec_id and ing["grounding_confidence"] >= 0.55
+
+    # 2. PATCH 修正字段 → provenance user_confirmed, 版本 +1
+    pr = api_client.patch(f"/api/launch/spec/{spec_id}", json={"price_cny": 99.0})
+    assert pr.status_code == 200, pr.text
+    pj = pr.json()
+    assert pj["revision"] == 1, "PATCH 后版本应 +1"
+    assert pj["provenance_status"] == "user_confirmed"
+    assert "price_point" in pj["confirmed_fields"]
+
+    # 3. simulate → LaunchReport 四区块齐全
+    sr = api_client.post("/api/launch/simulate",
+                         json={"spec_id": spec_id, "overrides": {"n_seeds": 5}})
+    assert sr.status_code == 200, sr.text
+    rep = sr.json()
+    assert rep["disclaimer"] == "这是带标注不确定性的情景推演，不是预测"
+    assert "header" in rep and rep["header"]["assumptions"], "头部假设回显缺失"
+    # 指标三档分位
+    m = rep["metrics"]["adopters"]
+    assert m["band"] and "p35" in m and "p50" in m and "p65" in m
+    assert m["p35_label"] == "下行情形"
+    # 时间线 90 点 + peak/half_life/saturation
+    tl = rep["timeline"]
+    assert tl["n_points"] == 90
+    assert "peak_day" in tl and "half_life" in tl and "saturation_date" in tl
+    # 谁会买 + 什么会出问题
+    assert rep["who_buys"]["cate_segments"]
+    assert rep["what_breaks"]["intervention_cards"]
+
+    # 4. 复现性: 同请求再跑 → 数值一致
+    sr2 = api_client.post("/api/launch/simulate",
+                          json={"spec_id": spec_id, "overrides": {"n_seeds": 5}})
+    rep2 = sr2.json()
+    assert rep["metrics"] == rep2["metrics"], "同请求两次 metrics 应一致 (固定 seed)"
+    assert rep["timeline"] == rep2["timeline"], "同请求两次 timeline 应一致"
+
+
+# ═══════════════════════════════════════ AT-M7-02 ═══════════════════════════
+
+
+def test_at_m7_02_honesty_markers_all_endpoints(api_client):
+    """ingest/PATCH/simulate/sandbox/whatif 五端点响应顶层均有 assumed_fields + grounding_confidence."""
+    ing = _ingest(api_client)
+    spec_id = ing["spec_id"]
+    assert "assumed_fields" in ing and "grounding_confidence" in ing
+
+    pr = api_client.patch(f"/api/launch/spec/{spec_id}", json={"price_cny": 79.0}).json()
+    assert "assumed_fields" in pr and "grounding_confidence" in pr
+
+    sim = api_client.post("/api/launch/simulate", json={"spec_id": spec_id}).json()
+    assert "assumed_fields" in sim and "grounding_confidence" in sim
+
+    sb = api_client.post("/api/launch/sandbox", json={"spec_id": spec_id}).json()
+    assert "assumed_fields" in sb and "grounding_confidence" in sb
+
+    wi = api_client.get(f"/api/launch/whatif/{spec_id}").json()
+    assert "assumed_fields" in wi and "grounding_confidence" in wi
+
+
+# ═══════════════════════════════════════ AT-M7-08 ═══════════════════════════
+
+
+def test_at_m7_08_existing_routes_unchanged(api_client):
+    """既有 8 路由仍在; launch 路由为纯新增."""
+    paths = {r.path for r in api_client.app.routes}
+    # 既有 campaign 路由代表性路径
+    for p in ["/api/predict", "/api/dag", "/api/platforms"]:
+        assert p in paths, f"既有路由 {p} 缺失 — 违反铁律 1"
+    # launch 纯新增
+    assert "/api/launch/ingest" in paths
+    assert "/api/launch/simulate" in paths
+
+
+# ═══════════════════════════════════════ AT-M7-12 ═══════════════════════════
+
+
+def test_at_m7_12_report_copy_redlines(api_client):
+    """报告文案红线: 第一句逐字、P35 下行情形、竞品前缀、objection 原话、locale 标注."""
+    from oransim.causal.launch_interventions import COMPETITOR_BRANCH_PREFIX
+
+    ing = _ingest(api_client)
+    rep = api_client.post("/api/launch/simulate", json={"spec_id": ing["spec_id"]}).json()
+
+    # ① 第一句逐字
+    assert rep["disclaimer"] == "这是带标注不确定性的情景推演，不是预测"
+    # ② P35 行带「下行情形」
+    assert rep["metrics"]["adopters"]["p35_label"] == "下行情形"
+    # ③ 竞品卡前缀逐字
+    comp = [c for c in rep["what_breaks"]["intervention_cards"]
+            if c["name"] == "competitor_response"]
+    assert comp and COMPETITOR_BRANCH_PREFIX in comp[0]["label"]
+    assert comp[0]["branch"] is True
+
+    # ⑤ locale != zh-CN → assumed_fields 含市场环境标注
+    en = _ingest(api_client, idea="An organic lip balm for Gen Z women. RMB 39. Xiaohongshu.",
+                 locale="en-US")
+    if en.get("spec_id"):
+        sim_en = api_client.post("/api/launch/simulate", json={"spec_id": en["spec_id"]}).json()
+        assert any("中国社媒市场" in a for a in sim_en["assumed_fields"]), \
+            "非 zh-CN locale 应在 assumed_fields 标注市场环境"
+
+
+# ═══════════════════════════════════════ AT-M7-09 ═══════════════════════════
+
+
+def test_at_m7_09_n_seeds_degradation(api_client):
+    """n_seeds=1 → 无分位带 + 标注；默认 5 → 三档带齐；n_seeds>9 → 显式拒绝."""
+    ing = _ingest(api_client)
+    sid = ing["spec_id"]
+
+    # n_seeds=1 → 单点、无分位带
+    s1 = api_client.post("/api/launch/simulate",
+                         json={"spec_id": sid, "overrides": {"n_seeds": 1}}).json()
+    m1 = s1["metrics"]["adopters"]
+    assert m1["band"] is None, "n_seeds=1 应无分位带"
+    assert "单点、无分位带" in (m1.get("note", "") + s1["metrics"].get("degradation_note", ""))
+
+    # n_seeds=5 → 三档带齐
+    s5 = api_client.post("/api/launch/simulate",
+                         json={"spec_id": sid, "overrides": {"n_seeds": 5}}).json()
+    m5 = s5["metrics"]["adopters"]
+    assert m5["band"] and {"p35", "p50", "p65"} <= set(m5)
+
+    # n_seeds>9 → 显式拒绝 (pydantic 422, 非静默截断)
+    r = api_client.post("/api/launch/simulate",
+                        json={"spec_id": sid, "overrides": {"n_seeds": 20}})
+    assert r.status_code == 422, f"n_seeds>9 应显式拒绝，实际 {r.status_code}"

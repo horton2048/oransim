@@ -53,3 +53,43 @@ class PredictRequest(BaseModel):
     target_niches: list[str] | None = None  # KOL 赛道偏好 (for T2-A1)
     enable_kol_ilp: bool = True  # T2-A1 KOL 组合优化
     enable_search_elasticity: bool = True  # T3-A6
+
+
+# ============================================================================
+# Launch (上市模拟) request models — M7. 纯新增, 不碰 PredictRequest (铁律 1)。
+# ============================================================================
+
+
+class IdeaIngestRequest(BaseModel):
+    idea_text: str = Field(..., min_length=1, max_length=5000)
+    locale: str = "zh-CN"
+    budget_hint_cny: float | None = Field(default=None, ge=0, le=1e10)
+    launch_date: str | None = None  # ISO date
+
+
+class SpecPatchRequest(BaseModel):
+    """字段级修正 (人在回路确认闸)。仅传要改的字段。"""
+    product_name: str | None = None
+    one_liner: str | None = None
+    category_raw: str | None = None
+    target_user_raw: str | None = None
+    price_cny: float | None = Field(default=None, ge=0, le=1e7)
+    channels_hint: list[str] | None = None
+
+
+class SimulateOverrides(BaseModel):
+    budget: float | None = Field(default=None, ge=0, le=1e10)
+    platform_alloc: dict[str, float] | None = None
+    n_souls: int = Field(default=100, ge=0, le=10000)
+    n_seeds: int = Field(default=5, ge=1, le=9)
+    horizon_days: int = Field(default=90, ge=1, le=365)
+    use_llm: bool = False
+
+
+class SimulateRequest(BaseModel):
+    spec_id: str | None = None
+    overrides: SimulateOverrides = Field(default_factory=SimulateOverrides)
+
+
+class SandboxCreateRequest(BaseModel):
+    spec_id: str
