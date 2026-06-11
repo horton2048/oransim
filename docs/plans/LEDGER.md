@@ -8,9 +8,9 @@
 
 ## 当前指针
 
-- **当前里程碑**：M6
-- **当前用例**：AT-M6-01
-- **上轮结束于**：M5 全部 8 AT 绿，commits 9910bf3/e93df2c/26e8b46（2026-06-12）。事件别名双处同步（base.EVENT_ALIASES+resolve_event_base）；90 天 horizon；bass_saturated_hawkes.py（Bass 均场 ODE 峰值趋平+闭式对照<15%+饱和边界）+ market_potential（adoption_rate_priors getter）；registry 注册；launch 人格模式（infer_one_launch）；voronoi vote_field 换票源。下一步：M6（SCM + 干预弹药库）。
+- **当前里程碑**：M7
+- **当前用例**：AT-M7-01
+- **上轮结束于**：M6 全部 7 AT 绿，commit 9043b3d（2026-06-12）。scm.py 加 price_point/launch_channel_mix 两 L3 节点（只增不改）；launch_interventions.py 8 条命名 do()（价格走 counterfactual 图级 do，复用 abducted U）；substitute_pressure→competitor_action；competitor_response 标分支。铁律 1 守护：launch_only 标记 + dag_dict() campaign 视图 → /api/predict 字节稳定（见 DECISIONS）。下一步：M7（API + 报告，最高优先级 e2e=AT-M7-01）。
 - **全局阻塞**：无
 - **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后多轮连绿无法复现，疑环境瞬时态；若后续复发需查 bootstrap 期全局 RNG/线程态。
 
@@ -34,7 +34,7 @@
 | M3 | AT-M3-01…08 | REG-1…4 | DONE | commit 681cc6d 2026-06-12 |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | DONE | commit 26e8b46 2026-06-12 |
-| M6 | AT-M6-01…07 | REG-1…5 | TODO | |
+| M6 | AT-M6-01…07 | REG-1…5 | DONE | commit 9043b3d 2026-06-12 |
 | M7 | AT-M7-01…14 | REG-1…5 | TODO | 最高优先级 e2e=AT-M7-01 |
 | M8 | AT-M8-01…04 + AT-M2-02 live 复跑 | REG-1…5 全量 | TODO | M2-02 需 live LLM，留给你手动复跑 |
 
@@ -99,14 +99,14 @@
 - [x] AT-M5-07 launch 人格模式 → `test_at_m5_07_launch_persona_mode`
 - [x] AT-M5-08 voronoi 换票源 → `test_at_m5_08_voronoi_calibration_vote_source` (+08b)
 
-### M6 — SCM + 干预弹药库
-- [ ] AT-M6-01 图结构只增不改
-- [ ] AT-M6-02 新图收敛
-- [ ] AT-M6-03 七条命名干预各出 delta
-- [ ] AT-M6-04 价格反事实是图级 do()
-- [ ] AT-M6-05 substitute_pressure 接线
-- [ ] AT-M6-06 competitor_response 分支口吻
-- [ ] AT-M6-07 零改动模块未触碰（流程）
+### M6 — SCM + 干预弹药库（DONE）
+- [x] AT-M6-01 图结构只增不改 → `test_at_m6_01_graph_additive_only`
+- [x] AT-M6-02 新图收敛 → `test_at_m6_02_new_graph_converges`
+- [x] AT-M6-03 八条命名干预各出 delta → `test_at_m6_03_named_interventions_deltas`
+- [x] AT-M6-04 价格反事实是图级 do() → `test_at_m6_04_price_is_graph_level_do`
+- [x] AT-M6-05 substitute_pressure 接线 → `test_at_m6_05_substitute_pressure_wiring`
+- [x] AT-M6-06 competitor_response 分支口吻 → `test_at_m6_06_competitor_response_is_branch`
+- [x] AT-M6-07 零改动模块未触碰 → `test_at_m6_07_protected_modules_untouched`
 
 ### M7 — API + 报告
 - [ ] AT-M7-01 端到端主链路（最高优先级 e2e）
