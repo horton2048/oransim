@@ -429,8 +429,6 @@ def render_market_insight_md(
 """
     for r in top_sens:
         md += f"- **{r['parameter_name']}** ±20% → GMV 波动 ¥{r['gmv_change_amplitude']:,.0f} (弹性 {r['elasticity']:+.2f})\n"
-    md += f"\n_报告生成时间：{_now_iso()}_\n"
-
     return {
         "report_id": f"rpt_insight_{uuid.uuid4().hex[:8]}",
         "report_type": "MARKET_INSIGHT",

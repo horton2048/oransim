@@ -195,7 +195,7 @@ def _template_report(scenario: dict, kpis: dict, ps: dict | None, schema: dict) 
 
 ---
 
-_报告生成：{time.strftime('%Y-%m-%d %H:%M:%S')} · 基于 {(ps or {}).get('agent_count',0)} AI 用户 + Oransim 六层因果仿真_
+_基于 {(ps or {}).get('agent_count',0)} AI 用户 + Oransim 六层因果仿真_
 """
     return md
 

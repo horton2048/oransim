@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -430,7 +431,7 @@ def test_lightgbm_load_pretrained_none_auto_resolves_or_errors_with_path():
         assert model is not None
         return
 
-    with pytest.raises(FileNotFoundError, match=str(default_candidate)):
+    with pytest.raises(FileNotFoundError, match=re.escape(str(default_candidate))):
         LightGBMQuantileWorldModel.load_pretrained(None)
 
     with tempfile.TemporaryDirectory() as td:
@@ -755,7 +756,7 @@ def test_ci_workflow_present():
     root = Path(__file__).parent.parent
     ci = root / ".github" / "workflows" / "ci.yml"
     assert ci.exists(), ".github/workflows/ci.yml missing"
-    content = ci.read_text()
+    content = ci.read_text(encoding="utf-8")
     # The vendor-scrub grep was retired from public CI (self-defeating — it
     # enumerated the terms it was guarding against). The check lives in
     # test_no_sensitive_terms_in_package instead.
@@ -785,7 +786,7 @@ def test_example_notebooks_valid_json():
     missing = expected - shipped
     assert not missing, f"missing notebooks: {missing}"
     for name in expected:
-        nb = _json.loads((root / "examples" / name).read_text())
+        nb = _json.loads((root / "examples" / name).read_text(encoding="utf-8"))
         assert nb.get("nbformat") == 4
         assert isinstance(nb.get("cells"), list)
         assert len(nb["cells"]) > 0
@@ -1566,7 +1567,7 @@ def test_env_example_shipped():
     root = Path(__file__).parent.parent
     envx = root / ".env.example"
     assert envx.exists(), ".env.example missing — external users need it"
-    content = envx.read_text()
+    content = envx.read_text(encoding="utf-8")
     for key in (
         "LLM_MODE",
         "LLM_BASE_URL",
@@ -1585,7 +1586,11 @@ def test_no_sensitive_terms_in_package():
     Patterns are hex-decoded at runtime so this file itself does not contain
     the plaintext tokens it's guarding against (which would defeat the check).
     """
+    import shutil
     import subprocess
+
+    if shutil.which("grep") is None:
+        pytest.skip("grep not on PATH (e.g. Windows); this gate runs on CI/Linux")
 
     # Build grep pattern from hex-encoded fragments so this test file itself
     # does not contain the plaintext tokens it's trying to detect. Two forms:

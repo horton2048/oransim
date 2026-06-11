@@ -8,6 +8,7 @@ a trained Normalizing Flow / NPE net from the `sbi` library.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 
 import numpy as np
 
@@ -116,7 +117,7 @@ class ScenarioRunner:
                 budget,
                 audience_filter=scenario.audience_filter,
                 kol=kol,
-                rng_seed=scenario.seed * 1000 + hash(plat) % 1000,
+                rng_seed=scenario.seed * 1000 + int(hashlib.sha256(plat.encode()).hexdigest()[:4], 16) % 1000,
             )
             # optional fixed noise (for counterfactual)
             fu = None

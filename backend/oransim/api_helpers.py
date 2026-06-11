@@ -7,7 +7,7 @@ them here avoids circular imports between router modules.
 
 from __future__ import annotations
 
-import time
+import hashlib
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -30,8 +30,11 @@ from .runtime.graph import CausalGraph
 
 def build_scenario(req: PredictRequest) -> tuple[Scenario, dict]:
     c = req.creative
+    _cr_hash = hashlib.sha256(
+        f"{c.caption}:{c.visual_style}:{c.music_mood}:{c.duration_sec}:{c.has_celeb}".encode()
+    ).hexdigest()[:10]
     creative = make_creative(
-        f"cr_{int(time.time()*1000)%100000}",
+        f"cr_{_cr_hash}",
         c.caption,
         duration_sec=c.duration_sec,
         visual_style=c.visual_style,
