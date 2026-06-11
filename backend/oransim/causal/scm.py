@@ -29,6 +29,8 @@ class SCMNode:
     time_varying: bool = False
     computed_by: str = ""  # module name that actually computes this in V1
     description: str = ""
+    launch_only: bool = False  # M6: 上市路径专属节点; campaign dag_dict() 默认不暴露
+    # (保 /api/predict 字节级兼容 — 既有 campaign 前端不应看到上市节点)
 
 
 # ============================================================================
@@ -93,6 +95,15 @@ NODES: list[SCMNode] = [
     ),
     SCMNode("daypart_alloc", "L3", "decision", "时段分配", intervenable=True),
     SCMNode("ab_variants", "L3", "decision", "AB 变体", intervenable=True),
+    # ---- L3 launch decisions (M6: 只增不改, 加点加边) ----
+    SCMNode(
+        "price_point", "L3", "decision", "定价点", intervenable=True, launch_only=True,
+        description="上市定价 (价格弹性 do() 节点; 走 ScenarioRunner.counterfactual 图级反事实)",
+    ),
+    SCMNode(
+        "launch_channel_mix", "L3", "decision", "上市渠道组合", intervenable=True, launch_only=True,
+        description="上市平台分配 (channels_hint→platform_alloc 的图节点)",
+    ),
     # ---- L4 Distribution ----
     SCMNode("ecpm_bid", "L4", "mediator", "ECPM 竞价", computed_by="platforms.py"),
     SCMNode("impression_dist", "L4", "mediator", "曝光分发", computed_by="world_model.py"),
@@ -290,6 +301,12 @@ EDGES: list[tuple[str, str]] = [
     ("ltv_increment", "roi"),
     ("organic_search_uplift", "attributed_revenue"),
     ("comment_sentiment", "nps_delta"),
+    # ---- L3 launch decisions → funnel/distribution (M6: 新增边, 不改旧边) ----
+    ("price_point", "conversion"),       # 价格弹性: 价格 → 转化
+    ("price_point", "add_to_cart"),      # 价格 → 加购
+    ("price_point", "direct_revenue"),   # 价格 → 客单价/GMV
+    ("launch_channel_mix", "impression_dist"),
+    ("launch_channel_mix", "audience_match"),
 ]
 
 
@@ -326,11 +343,21 @@ LAYER_COLOR = {
 }
 
 
-def dag_dict() -> dict:
-    """Rich SCM dict for visualization + intervention selectors."""
+def dag_dict(include_launch: bool = False) -> dict:
+    """Rich SCM dict for visualization + intervention selectors.
+
+    ``include_launch=False`` (default) = campaign 视图: 排除 M6 上市专属节点
+    (``launch_only``) 及其边。这保 ``/api/predict`` 字节级兼容 (铁律 1) —— 既有
+    campaign 前端的因果图不因上市图扩展而改变。上市路径 (M7 API) 传
+    ``include_launch=True`` 取全图。
+    """
+    nodes = [n for n in NODES if include_launch or not n.launch_only]
+    node_names = {n.name for n in nodes}
+    edges = [e for e in EDGES if e[0] in node_names and e[1] in node_names]
+    intervenable = {n.name for n in nodes if n.intervenable}
     return {
-        "n_nodes": len(NODES),
-        "n_edges": len(EDGES),
+        "n_nodes": len(nodes),
+        "n_edges": len(edges),
         "nodes": [
             {
                 "name": n.name,
@@ -343,27 +370,28 @@ def dag_dict() -> dict:
                 "computed_by": n.computed_by,
                 "color": LAYER_COLOR[n.layer],
             }
-            for n in NODES
+            for n in nodes
         ],
-        "edges": [list(e) for e in EDGES],
-        "intervenable": list(INTERVENABLE),
+        "edges": [list(e) for e in edges],
+        "intervenable": list(intervenable),
         "layers": [
             {
                 "id": L,
                 "label": LAYER_LABELS[L],
                 "color": LAYER_COLOR[L],
-                "nodes": [n.name for n in NODES if n.layer == L],
+                "nodes": [n.name for n in nodes if n.layer == L],
             }
             for L in LAYERS
         ],
         "stats": {
-            "by_layer": {L: sum(1 for n in NODES if n.layer == L) for L in LAYERS},
+            "by_layer": {L: sum(1 for n in nodes if n.layer == L) for L in LAYERS},
             "by_category": {
-                c: sum(1 for n in NODES if n.category == c) for c in {n.category for n in NODES}
+                c: sum(1 for n in nodes if n.category == c)
+                for c in {n.category for n in nodes}
             },
-            "intervenable_count": len(INTERVENABLE),
-            "time_varying_count": sum(1 for n in NODES if n.time_varying),
-            "computed_count": sum(1 for n in NODES if n.computed_by),
+            "intervenable_count": len(intervenable),
+            "time_varying_count": sum(1 for n in nodes if n.time_varying),
+            "computed_count": sum(1 for n in nodes if n.computed_by),
         },
     }
 
@@ -429,7 +457,7 @@ def _find_feedback_edges() -> set[tuple[str, str]]:
     return feedback
 
 
-def dag_dict_unrolled(n_steps: int = 2) -> dict:
+def dag_dict_unrolled(n_steps: int = 2, include_launch: bool = False) -> dict:
     """Acyclic time-unrolled projection of the causal graph.
 
     Each original node becomes ``n_steps`` time-indexed copies (``N_t0``..
@@ -456,9 +484,15 @@ def dag_dict_unrolled(n_steps: int = 2) -> dict:
         raise ValueError("n_steps must be >= 1")
     feedback = _find_feedback_edges()
 
+    # 与 dag_dict() 一致: 默认 campaign 视图 (排除 M6 上市专属节点), 保两者节点数
+    # 一致 (内部一致性测试) 且不让上市节点泄入 campaign 因果计算。
+    base_nodes = [n for n in NODES if include_launch or not n.launch_only]
+    base_node_names = {n.name for n in base_nodes}
+    base_edges = [e for e in EDGES if e[0] in base_node_names and e[1] in base_node_names]
+
     unrolled_nodes: list[dict] = []
     for t in range(n_steps):
-        for n in NODES:
+        for n in base_nodes:
             unrolled_nodes.append(
                 {
                     "name": f"{n.name}_t{t}",
@@ -476,7 +510,7 @@ def dag_dict_unrolled(n_steps: int = 2) -> dict:
             )
 
     unrolled_edges: list[list[str]] = []
-    for s, d in EDGES:
+    for s, d in base_edges:
         if (s, d) in feedback:
             # Cross-time edge: src at t, dst at t+1. Drop at the last slice
             # (no t+1 exists there).
@@ -496,10 +530,10 @@ def dag_dict_unrolled(n_steps: int = 2) -> dict:
         "feedback_edges": [list(e) for e in sorted(feedback)],
         "intervenable": [n["name"] for n in unrolled_nodes if n["intervenable"]],
         "stats": {
-            "n_original_nodes": len(NODES),
-            "n_original_edges": len(EDGES),
+            "n_original_nodes": len(base_nodes),
+            "n_original_edges": len(base_edges),
             "n_feedback_edges": len(feedback),
-            "n_within_slice_edges": len(EDGES) - len(feedback),
+            "n_within_slice_edges": len(base_edges) - len(feedback),
         },
     }
 
