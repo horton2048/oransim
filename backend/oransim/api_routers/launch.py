@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -30,6 +31,21 @@ router = APIRouter(tags=["launch"])
 
 # 硬拒绝置信度阈值 (与 spec/ground 一致)
 _REJECT_NOTE = "置信度不足或非消费垂类 — 无可模拟 spec_id"
+
+# 单请求成本上限 (CNY)。超限显式拒绝, 非静默截断 (规范 §4, AT-M7-11)。
+# 测试可 monkeypatch 本模块属性到极低值触发拒绝。
+MAX_REQUEST_COST_CNY = 100.0
+# 流式 keepalive 间隔秒 (默认 10; 测试可经 env 调小验证慢路径 keepalive 帧)。
+_KEEPALIVE_SEC = float(os.environ.get("LAUNCH_KEEPALIVE_SEC", "10"))
+
+
+def _projected_cost_cny(n_souls: int, n_seeds: int) -> float:
+    """投射本请求 LLM 成本 (souls 仅 P50 主 seed; 走 COST_TABLE_CNY 同一账本)。"""
+    from ..agents.soul_llm import estimate_cost_cny
+    # 每 persona 估 ~250 in / ~150 out token (仅主 seed 跑 souls)
+    tin = max(0, int(n_souls)) * 250
+    tout = max(0, int(n_souls)) * 150
+    return estimate_cost_cny(tin, tout)
 
 
 def _ground_dict(g) -> dict:
@@ -87,7 +103,8 @@ def _stream_json(sync_fn, *args):
     async def gen():
         while not fut.done():
             try:
-                await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(fut)), timeout=10)
+                await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(fut)),
+                                       timeout=_KEEPALIVE_SEC)
             except asyncio.TimeoutError:
                 yield b" \n"  # keepalive whitespace; JSON parser ignores
         result = fut.result()
@@ -274,6 +291,18 @@ async def launch_simulate(req: SimulateRequest):
 
     if not req.spec_id or not store.exists(req.spec_id):
         raise HTTPException(status_code=400, detail="unknown or missing spec_id — ingest first")
+
+    # 成本上限: 投射成本超限 → 显式 402, 非静默截断/部分结果 (规范 §4, AT-M7-11)
+    projected = _projected_cost_cny(req.overrides.n_souls, req.overrides.n_seeds)
+    if projected > MAX_REQUEST_COST_CNY:
+        raise HTTPException(
+            status_code=402,
+            detail=(
+                f"projected request cost ¥{projected:.4f} exceeds cap "
+                f"¥{MAX_REQUEST_COST_CNY:.4f}; reduce n_souls/n_seeds or raise cap. "
+                "成本计入 COST_TABLE_CNY 账本, 显式拒绝不静默截断。"
+            ),
+        )
     return _stream_json(_simulate_sync, req)
 
 
@@ -291,7 +320,7 @@ async def launch_sandbox(req: SandboxCreateRequest):
     rev = store.latest_revision(req.spec_id)
     compiled = compile_spec(spec, spec_id=req.spec_id, revision=rev, kols=api_state.KOLS, seed=42)
     sess = api_state.SANDBOX.create(compiled.scenario)
-    sess.last_mode = "launch"  # 标记 launch session
+    sess.mode = "launch"  # 持久标记 launch session (lifecycle 路由据此)
     return {
         "sid": sess.id,
         "mode": "launch",

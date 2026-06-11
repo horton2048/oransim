@@ -274,3 +274,135 @@ def test_at_m7_09_n_seeds_degradation(api_client):
     r = api_client.post("/api/launch/simulate",
                         json={"spec_id": sid, "overrides": {"n_seeds": 20}})
     assert r.status_code == 422, f"n_seeds>9 应显式拒绝，实际 {r.status_code}"
+
+
+# ═══════════════════════════════════════ AT-M7-06 ═══════════════════════════
+
+
+def test_at_m7_06_launch_sandbox_sliders(api_client):
+    """launch sandbox 建 session 后 price/budget/alloc PATCH、counterfactual、undo、ws 可用."""
+    ing = _ingest(api_client)
+    sb = api_client.post("/api/launch/sandbox", json={"spec_id": ing["spec_id"]}).json()
+    sid = sb["sid"]
+    assert sb["mode"] == "launch"
+
+    base = api_client.get(f"/api/sandbox/session/{sid}").json()
+    base_conv = base["current_kpis"]["conversions"]
+
+    # price 滑杆
+    p_price = api_client.patch(f"/api/sandbox/session/{sid}", json={"price_cny": 200.0})
+    assert p_price.status_code == 200, p_price.text
+    assert p_price.json()["current_kpis"]["conversions"] != base_conv, "price 滑杆应改变 KPI"
+
+    # budget 滑杆
+    p_bud = api_client.patch(f"/api/sandbox/session/{sid}", json={"total_budget": 120000.0})
+    assert p_bud.status_code == 200
+
+    # alloc 滑杆
+    p_alloc = api_client.patch(f"/api/sandbox/session/{sid}",
+                               json={"platform_alloc": {"xhs": 1.0}})
+    assert p_alloc.status_code == 200
+
+    # counterfactual
+    cf = api_client.post(f"/api/sandbox/session/{sid}/counterfactual",
+                         json={"total_budget": 80000.0})
+    assert cf.status_code == 200
+
+    # undo
+    u = api_client.post(f"/api/sandbox/session/{sid}/undo")
+    assert u.status_code == 200
+
+    # WebSocket: 发 patch 收 snapshot 帧
+    with api_client.websocket_connect(f"/ws/sandbox/{sid}") as wsconn:
+        wsconn.send_text('{"total_budget": 90000}')
+        frame = wsconn.receive_json()
+        assert "current_kpis" in frame, "ws 应回传 snapshot 帧"
+
+
+# ═══════════════════════════════════════ AT-M7-07 ═══════════════════════════
+
+
+def test_at_m7_07_lifecycle_never_silently_legacy(api_client):
+    """launch session lifecycle → 409 (不落 legacy 14 天); campaign session 行为不变."""
+    # launch session → 409 + 指引, 绝不返回 legacy HAWKES 14 天
+    ing = _ingest(api_client)
+    sb = api_client.post("/api/launch/sandbox", json={"spec_id": ing["spec_id"]}).json()
+    lc = api_client.get(f"/api/sandbox/session/{sb['sid']}/lifecycle")
+    assert lc.status_code == 409, f"launch lifecycle 应 409，实际 {lc.status_code}"
+    assert "legacy" in lc.text or "Bass" in lc.text or "90" in lc.text
+
+    # campaign session → 行为不变 (200, legacy 14 天可用)
+    cs = api_client.post("/api/sandbox/session", json={
+        "creative": {"caption": "campaign lifecycle 回归"},
+        "total_budget": 50000, "platform_alloc": {"douyin": 1.0},
+    }).json()
+    lc2 = api_client.get(f"/api/sandbox/session/{cs['id']}/lifecycle")
+    assert lc2.status_code == 200, "campaign session lifecycle 应不变 (200)"
+
+
+# ═══════════════════════════════════════ AT-M7-10 ═══════════════════════════
+
+
+def test_at_m7_10_souls_only_p50_seed(api_client, monkeypatch):
+    """n_seeds=5 时 soul infer_batch 调用次数 = 1 个 seed 的量 (其余 seed 纯统计)."""
+    from oransim import api_state
+
+    calls = {"n": 0}
+    orig = api_state.SOULS.infer_batch
+
+    def _spy(*a, **k):
+        calls["n"] += 1
+        return orig(*a, **k)
+
+    monkeypatch.setattr(api_state.SOULS, "infer_batch", _spy)
+    ing = _ingest(api_client)
+    api_client.post("/api/launch/simulate",
+                    json={"spec_id": ing["spec_id"], "overrides": {"n_seeds": 5}})
+    assert calls["n"] == 1, f"souls 应只跑 P50 主 seed (1 次)，实际 {calls['n']} 次"
+
+
+# ═══════════════════════════════════════ AT-M7-11 ═══════════════════════════
+
+
+def test_at_m7_11_cost_cap_explicit_reject(api_client, monkeypatch):
+    """成本上限 monkeypatch 极低 → 显式拒绝 (非静默); 成本计入 COST_TABLE_CNY 账本."""
+    from oransim.agents.soul_llm import COST_TABLE_CNY
+    from oransim.api_routers import launch as launch_mod
+
+    assert COST_TABLE_CNY, "成本账本 COST_TABLE_CNY 应非空 (同一账本)"
+
+    ing = _ingest(api_client)
+    monkeypatch.setattr(launch_mod, "MAX_REQUEST_COST_CNY", 0.0001)
+    r = api_client.post("/api/launch/simulate",
+                        json={"spec_id": ing["spec_id"], "overrides": {"n_souls": 100}})
+    assert r.status_code == 402, f"超成本上限应显式拒绝 402，实际 {r.status_code}"
+    assert "cost" in r.text.lower() or "成本" in r.text
+
+
+# ═══════════════════════════════════════ AT-M7-14 ═══════════════════════════
+
+
+def test_at_m7_14_streaming_keepalive(api_client, monkeypatch):
+    """慢路径下 ingest 流式按 keepalive 间隔发空白帧，连接不超时，JSON 仍可解析."""
+    import json as _json
+    import time as _t
+
+    from oransim.api_routers import launch as launch_mod
+
+    orig = launch_mod._ingest_sync
+
+    def _slow(req):
+        _t.sleep(0.3)  # 慢路径 > keepalive 间隔
+        return orig(req)
+
+    monkeypatch.setattr(launch_mod, "_KEEPALIVE_SEC", 0.05)
+    monkeypatch.setattr(launch_mod, "_ingest_sync", _slow)
+
+    r = api_client.post("/api/launch/ingest", json={"idea_text": _GOLD_IDEA})
+    assert r.status_code == 200
+    raw = r.content
+    # keepalive 空白帧在 JSON 前 (慢路径下应出现至少一个)
+    assert raw[:1] in (b" ", b"\n") or b" \n" in raw[:40], "慢路径应有 keepalive 空白帧"
+    # 去空白后仍是合法 JSON (前端 fetch().json() 无需改)
+    parsed = _json.loads(raw.lstrip())
+    assert parsed["spec_id"], "keepalive 后 JSON 仍应可解析"

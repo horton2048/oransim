@@ -48,6 +48,9 @@ def sb_get(sid: str):
 class PatchReq(BaseModel):
     total_budget: float | None = None
     platform_alloc: dict[str, float] | None = None
+    # M7 上市价格滑杆 (可选, 向后兼容: campaign 不传 → 行为不变)。
+    # 走 SandboxStore.update() 的 price_approx 分支 (方案 §4.7)。
+    price_cny: float | None = None
 
 
 @router.patch("/api/sandbox/session/{sid}")
@@ -177,6 +180,17 @@ def sb_lifecycle(sid: str, days: int = 14):
     sess = api_state.SANDBOX.get(sid)
     if not sess:
         raise HTTPException(404, "session not found")
+    # launch session 禁止静默回退 legacy HAWKES 14 天 (方案 §4.7 红线, AT-M7-07)。
+    # 90 天 Bass 路由完成前返回 409 + 指引; campaign session 行为不变。
+    if getattr(sess, "mode", "campaign") == "launch":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "launch session 的 lifecycle 须走 90 天 Bass 饱和路径 (尚未接线); "
+                "请用 POST /api/launch/simulate 获取 90 天 LaunchReport 时间线。"
+                "禁止回退 legacy 14 天 HAWKES (方案 §4.7)。"
+            ),
+        )
     plat = next(iter(sess.current.platform_alloc.keys()))
     budget = sess.current.total_budget * sess.current.platform_alloc[plat]
     imp = api_state.WM.simulate_impression(

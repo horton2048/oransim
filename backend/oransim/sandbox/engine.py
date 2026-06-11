@@ -28,6 +28,10 @@ class SandboxSession:
     #                    slider UX but NOT a full world-model re-simulation.
     # Exposed in snapshot() so UI can label which regime the numbers are from.
     last_mode: str = "baseline"
+    # Session kind (M7): "campaign" (default) or "launch". Persistent across
+    # updates (unlike last_mode which tracks compute path). lifecycle 端点据此
+    # 路由: launch session 禁止静默回退 legacy HAWKES 14 天 (方案 §4.7)。
+    mode: str = "campaign"
 
     def snapshot(self) -> dict:
         def kpi_round(d):
