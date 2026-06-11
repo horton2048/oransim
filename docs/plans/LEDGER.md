@@ -8,11 +8,11 @@
 
 ## 当前指针
 
-- **当前里程碑**：M5
-- **当前用例**：AT-M5-01
-- **上轮结束于**：M3 全部 8 AT 绿（含 06b 辅助），commit 681cc6d（2026-06-12）。spec/scenario_gen.py（编译 Scenario + 合成 creative 走 make_creative + niche 渠道先验 + 价格×ctr_priors 推预算 + budget_to_impressions 种子脉冲）；pipeline.compile_spec 带 (spec_id,revision) AudienceFilter intern（幂等/升版失效）。M0→M4 已全 DONE，依赖序进 M5。下一步：M5（人格 + 传播）。
+- **当前里程碑**：M6
+- **当前用例**：AT-M6-01
+- **上轮结束于**：M5 全部 8 AT 绿，commits 9910bf3/e93df2c/26e8b46（2026-06-12）。事件别名双处同步（base.EVENT_ALIASES+resolve_event_base）；90 天 horizon；bass_saturated_hawkes.py（Bass 均场 ODE 峰值趋平+闭式对照<15%+饱和边界）+ market_potential（adoption_rate_priors getter）；registry 注册；launch 人格模式（infer_one_launch）；voronoi vote_field 换票源。下一步：M6（SCM + 干预弹药库）。
 - **全局阻塞**：无
-- **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后 12 连绿（8 隔离 + 4 全量）无法复现，疑环境瞬时态；若 M3 后复发需查 bootstrap 期全局 RNG/线程态。
+- **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后多轮连绿无法复现，疑环境瞬时态；若后续复发需查 bootstrap 期全局 RNG/线程态。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
 
@@ -33,7 +33,7 @@
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit c81891d 2026-06-12；AT-M2-02 live 手动 |
 | M3 | AT-M3-01…08 | REG-1…4 | DONE | commit 681cc6d 2026-06-12 |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
-| M5 | AT-M5-01…08 | REG-1…5 | TODO | |
+| M5 | AT-M5-01…08 | REG-1…5 | DONE | commit 26e8b46 2026-06-12 |
 | M6 | AT-M6-01…07 | REG-1…5 | TODO | |
 | M7 | AT-M7-01…14 | REG-1…5 | TODO | 最高优先级 e2e=AT-M7-01 |
 | M8 | AT-M8-01…04 + AT-M2-02 live 复跑 | REG-1…5 全量 | TODO | M2-02 需 live LLM，留给你手动复跑 |
@@ -89,15 +89,15 @@
 - [x] AT-M4-08 决策权重冻结 → `test_at_m4_08_decision_weights_frozen` (b0e4e2e)
 - [x] AT-M4-01b 新字段进 hash → `test_at_m4_01b_new_scenario_fields_in_hash` (b0e4e2e)
 
-### M5 — 人格 + 传播
-- [ ] AT-M5-01 事件别名双处同步
-- [ ] AT-M5-02 90 天 horizon
-- [ ] AT-M5-03 Bass 饱和形状（核心保真度）
-- [ ] AT-M5-04 拼接窗无硬接缝
-- [ ] AT-M5-05 registry 注册
-- [ ] AT-M5-06 市场潜量 m 的计算
-- [ ] AT-M5-07 launch（见文档）
-- [ ] AT-M5-08 voronoi（见文档）
+### M5 — 人格 + 传播（DONE）
+- [x] AT-M5-01 事件别名双处同步 → `test_at_m5_01_event_alias_sync` (+01b)
+- [x] AT-M5-02 90 天 horizon → `test_at_m5_02_90day_horizon`
+- [x] AT-M5-03 Bass 饱和形状（核心保真度）→ `test_at_m5_03_bass_saturation_shape`
+- [x] AT-M5-04 拼接窗无硬接缝 → `test_at_m5_04_splice_window_no_hard_seam`
+- [x] AT-M5-05 registry 注册 → `test_at_m5_05_registry_registration`
+- [x] AT-M5-06 市场潜量 m 的计算 → `test_at_m5_06_market_potential_m`
+- [x] AT-M5-07 launch 人格模式 → `test_at_m5_07_launch_persona_mode`
+- [x] AT-M5-08 voronoi 换票源 → `test_at_m5_08_voronoi_calibration_vote_source` (+08b)
 
 ### M6 — SCM + 干预弹药库
 - [ ] AT-M6-01 图结构只增不改
