@@ -87,3 +87,135 @@ def test_at_m5_02_90day_horizon():
     # 默认 14 天 forecast 仍 14 桶 (campaign 不变)
     fc14 = default_model.forecast(seed_events)
     assert len(fc14.daily_buckets) == 14
+
+
+# ═══════════════════════════════════════ AT-M5-05 ═══════════════════════════
+
+
+def test_at_m5_05_registry_registration():
+    """get_diffusion_model('bass_saturated_hawkes') 返回 DiffusionModel 实例；
+    既有 parametric_hawkes / causal_neural_hawkes 注册不受影响."""
+    from oransim.diffusion.base import DiffusionModel
+    from oransim.diffusion.registry import get_diffusion_model, list_diffusion_models
+
+    bass = get_diffusion_model("bass_saturated_hawkes")
+    assert isinstance(bass, DiffusionModel), "bass 应实现 DiffusionModel ABC"
+    assert hasattr(bass, "forecast") and hasattr(bass, "saturation_factor")
+
+    # 既有注册仍可用
+    assert isinstance(get_diffusion_model("parametric_hawkes"), DiffusionModel)
+    cnh = get_diffusion_model("causal_neural_hawkes")
+    assert isinstance(cnh, DiffusionModel)
+
+    listed = list_diffusion_models()
+    assert "bass_saturated_hawkes" in listed
+    assert "parametric_hawkes" in listed and "causal_neural_hawkes" in listed
+
+
+# ═══════════════════════════════════════ AT-M5-06 ═══════════════════════════
+
+
+def test_at_m5_06_market_potential_m():
+    """m = fan_weight 加权质量 × adoption_rate_prior；不同 niche 不同 m；POP 不被写入."""
+    from oransim.data.population import generate_population
+    from oransim.diffusion.bass_saturated_hawkes import market_potential
+
+    pop = generate_population(N=2000, seed=42)
+
+    # POP 守护栏: 取关键数组 checksum
+    import hashlib
+    def _checksum(arr):
+        return hashlib.sha256(np.ascontiguousarray(arr).tobytes()).hexdigest()
+    before = (_checksum(pop.gender_idx), _checksum(pop.age_idx),
+              _checksum(pop.city_idx), _checksum(pop.income))
+
+    m_beauty = market_potential(pop, "beauty")
+    m_food = market_potential(pop, "food")
+    m_pet = market_potential(pop, "pet")
+
+    after = (_checksum(pop.gender_idx), _checksum(pop.age_idx),
+             _checksum(pop.city_idx), _checksum(pop.income))
+    assert before == after, "market_potential 不应写入 POP 单例数组"
+
+    # 公式成立 (正数) 且不同 niche 不同
+    for mv in (m_beauty, m_food, m_pet):
+        assert mv > 0
+    assert m_beauty != m_food, "不同 niche 应产出不同 m"
+    assert m_food != m_pet
+
+
+# ═══════════════════════════════════════ AT-M5-03 ═══════════════════════════
+
+
+def test_at_m5_03_bass_saturation_shape():
+    """Bass 饱和形状: 单调 + N(90)≤m + 峰值趋平 + 闭式对照 + 饱和边界."""
+    from oransim.diffusion.bass_saturated_hawkes import (
+        BassSaturatedConfig,
+        BassSaturatedHawkes,
+        bass_closed_form_cumulative,
+    )
+
+    p, q, m = 0.03, 0.38, 10_000.0
+    cfg = BassSaturatedConfig(horizon_days=90, bass_p=p, bass_q=q, market_m=m, seed=42)
+    model = BassSaturatedHawkes(cfg)
+    fc = model.forecast([(0.0, "impression")])
+
+    conv_idx = model._conversion_idx()
+    daily_new = [day[conv_idx] for day in fc.daily_buckets]
+    assert len(daily_new) == 90
+
+    # (1) 累计单调不减 且 N(90) ≤ m
+    cum = np.cumsum(daily_new)
+    assert np.all(np.diff(cum) >= -1e-9), "累计采纳应单调不减"
+    assert cum[-1] <= m + 1e-6, f"N(90)={cum[-1]} 不应超过 m={m}"
+
+    # (2) 日新增存在峰值 t_peak ∈ (0,90)，峰后 7 日均值 < 峰值 80% (趋平)
+    t_peak = int(np.argmax(daily_new))
+    assert 0 < t_peak < 89, f"峰值日 {t_peak} 应在 (0,90) 内部"
+    post = daily_new[t_peak + 1: t_peak + 8]
+    assert post, "峰后应有数据"
+    assert np.mean(post) < 0.8 * daily_new[t_peak], "峰后 7 日均值应 < 峰值 80% (趋平)"
+
+    # (3) 对照闭式 Bass: 逐日累计相对误差 ≤ 15%
+    for d in range(5, 90, 10):
+        closed = bass_closed_form_cumulative(p, q, m, float(d + 1))
+        if closed > m * 0.01:
+            rel = abs(cum[d] - closed) / closed
+            assert rel <= 0.15, f"day {d}: 模拟累计 {cum[d]:.1f} vs 闭式 {closed:.1f} 相对误差 {rel:.2%} > 15%"
+
+    # (4) 饱和因子边界: N→m → 强度趋零
+    assert model.saturation_factor(m) == 0.0
+    assert model.saturation_factor(0.999 * m) < 0.01
+    assert abs(model.saturation_factor(0.0) - 1.0) < 1e-9
+
+
+# ═══════════════════════════════════════ AT-M5-04 ═══════════════════════════
+
+
+def test_at_m5_04_splice_window_no_hard_seam():
+    """day 10–18 线性混合后，序列在 day 14 附近一阶差分无突变."""
+    from oransim.diffusion.bass_saturated_hawkes import blend_intensity_curves
+
+    # 两条同一过程的估计 (神经/parametric 在重叠区量级相近, 小偏移)。
+    # 硬切会在 day 14 产生 |a-b| 的单点跳变; 线性混合把它摊到 8 天 → 无突变。
+    curve_a = [100.0 - d for d in range(30)]        # slope -1
+    curve_b = [97.0 - d for d in range(30)]         # slope -1, offset 3 (重叠区接近)
+    blended = blend_intensity_curves(curve_a, curve_b, splice_start=10, splice_end=18)
+
+    diffs = np.abs(np.diff(blended))
+    seam_window = diffs[9:19]                         # day 14 附近
+    outside = np.concatenate([diffs[2:9], diffs[19:29]])  # 窗外
+    seam_max = seam_window.max()
+    outside_max = outside.max()
+    assert seam_max <= outside_max * 1.5 + 1e-9, (
+        f"day14 附近一阶差分 {seam_max:.3f} > 窗外最大 {outside_max:.3f}×1.5 (硬接缝)"
+    )
+
+    # 对照: 硬切 (day≤14 用 a, day>14 用 b) 会在 day 14 产生远大于混合的跳变
+    hard = [curve_a[d] if d <= 14 else curve_b[d] for d in range(30)]
+    hard_seam = abs(hard[15] - hard[14])
+    assert seam_max < hard_seam, "线性混合的接缝差分应远小于硬切"
+
+    # 端点行为: 窗前 = a, 窗后 = b
+    assert blended[5] == curve_a[5]
+    assert blended[25] == curve_b[25]

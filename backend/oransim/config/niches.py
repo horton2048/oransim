@@ -100,6 +100,47 @@ _REFERENCE_PRICE_FALLBACK: dict[str, float] = {
 }
 
 
+# 默认采纳率先验 (Bass m 标定用). niches.json 无 adoption_rate_prior (v2 字段, M8 补)
+# 前用这组逐 niche 区分的回退值; 不同 niche 不同 → 市场潜量 m 不同 (AT-M5-06).
+_ADOPTION_RATE_FALLBACK: dict[str, float] = {
+    "beauty":      0.080,
+    "fashion":     0.060,
+    "food":        0.120,
+    "beverage":    0.130,
+    "fitness":     0.055,
+    "electronics": 0.045,
+    "travel":      0.040,
+    "home":        0.050,
+    "pet":         0.070,
+    "parenting":   0.065,
+    "general":     0.060,
+}
+
+
+def adoption_rate_priors() -> tuple[dict[str, float], set[str]]:
+    """EN key → 采纳率先验 (Bass 市场潜量标定) + 未标定 niche 集合.
+
+    返回 (rates, uncalibrated). niches.json 缺 adoption_rate_prior 字段的 niche
+    用回退值并入 uncalibrated (报告需显式标「未标定」)。
+    """
+    rates: dict[str, float] = {}
+    uncalibrated: set[str] = set()
+    for n in _load():
+        key = n["key"]
+        if "adoption_rate_prior" in n:
+            rates[key] = float(n["adoption_rate_prior"])
+        else:
+            rates[key] = _ADOPTION_RATE_FALLBACK.get(key, 0.06)
+            uncalibrated.add(key)
+    return rates, uncalibrated
+
+
+def adoption_rate_prior(niche: str) -> float:
+    """单 niche 采纳率先验 (缺省回退 0.06)。"""
+    rates, _ = adoption_rate_priors()
+    return rates.get(niche, _ADOPTION_RATE_FALLBACK.get(niche, 0.06))
+
+
 def reference_prices() -> tuple[dict[str, float], set[str]]:
     """EN key → reference price CNY + set of uncalibrated (default) niches.
 

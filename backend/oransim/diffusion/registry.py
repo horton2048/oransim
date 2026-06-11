@@ -20,14 +20,22 @@ def _load_parametric() -> type[DiffusionModel]:
     return ParametricHawkes
 
 
+def _load_bass_saturated() -> type[DiffusionModel]:
+    from .bass_saturated_hawkes import BassSaturatedHawkes
+
+    return BassSaturatedHawkes
+
+
 REGISTRY: dict[str, Callable[[], type[DiffusionModel]]] = {
     "causal_neural_hawkes": _load_causal_neural_hawkes,
     "parametric_hawkes": _load_parametric,
+    "bass_saturated_hawkes": _load_bass_saturated,
     # Aliases
     "neural_hawkes": _load_causal_neural_hawkes,
     "transformer_hawkes": _load_causal_neural_hawkes,
     "thp": _load_causal_neural_hawkes,
     "hawkes": _load_parametric,
+    "bass": _load_bass_saturated,
 }
 
 
@@ -49,4 +57,4 @@ def get_diffusion_model(name: str, **kwargs: Any) -> DiffusionModel:
 
 
 def list_diffusion_models() -> list[str]:
-    return ["causal_neural_hawkes", "parametric_hawkes"]
+    return ["causal_neural_hawkes", "parametric_hawkes", "bass_saturated_hawkes"]
