@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maya · 投放预演台</title>
+
+<!-- Reliable: IBM Plex Mono (telemetry digits) + Noto Sans SC (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+<style>
+/* Distinctive Chinese display: 得意黑 Smiley Sans (graceful fallback to Noto 900) */
+@font-face{
+  font-family:'Smiley Sans';
+  src:url('https://cdn.jsdelivr.net/gh/atelier-anchor/smiley-sans@v1.1.1/dist/SmileySans-Oblique.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/cn-fontsource-smiley-sans-oblique/font.woff2') format('woff2');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+
+:root{
+  --bg:#0A0C12; --bg2:#070910; --panel:#11141C; --panel2:#0E121A;
+  --edge:#1E2430; --edge2:#272f3e; --ink:#E8ECF4; --ink-dim:#9aa3b5; --ink-faint:#5b6478;
+  --amber:#F4B740; --amber-hi:#FFD479; --amber-deep:#b9831f;
+  --teal:#5FB0C9; --pos:#59C28A; --neg:#FF5C5C; --neu:#8A94A6;
+  --glow:0 0 0 1px rgba(244,183,64,.0), 0 0 24px -6px rgba(244,183,64,.45);
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --disp:'Smiley Sans','Noto Sans SC',sans-serif;
+  --body:'Noto Sans SC',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 78% -10%, rgba(244,183,64,.06), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, rgba(95,176,201,.05), transparent 55%),
+    var(--bg);
+  color:var(--ink); font-family:var(--body); font-size:13px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+/* faint telemetry grid + grain overlay */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size:46px 46px;
+  mask-image:radial-gradient(120% 120% at 50% 0%, #000 40%, transparent 100%);
+}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#222a38;border-radius:9px;border:2px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:#303a4d}
+
+/* ---------- shell ---------- */
+.app{position:relative; z-index:1; height:100vh; display:flex; flex-direction:column}
+.topbar{
+  height:54px; flex:0 0 auto; display:flex; align-items:center; gap:18px;
+  padding:0 20px; border-bottom:1px solid var(--edge);
+  background:linear-gradient(180deg, rgba(20,24,34,.7), rgba(10,12,18,.4)); backdrop-filter:blur(8px);
+}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:600; letter-spacing:.32em}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 14px 2px var(--amber-hi);animation:pulse 3.4s ease-in-out infinite}
+.brand b{font-size:16px}
+.brand .sub{font-family:var(--body); font-weight:400; letter-spacing:.18em; color:var(--ink-faint); font-size:10px; margin-left:2px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.topbar .spacer{flex:1}
+.pill{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--ink-dim);
+  padding:5px 11px;border:1px solid var(--edge);border-radius:30px;background:var(--panel2)}
+.pill .k{width:6px;height:6px;border-radius:50%;background:var(--pos);box-shadow:0 0 8px var(--pos)}
+.pill b{color:var(--ink);font-weight:600}
+.pill.warn .k{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+.grid{flex:1; display:grid; grid-template-columns:320px 1fr 360px; min-height:0}
+.col{min-height:0; overflow:auto; padding:18px}
+.col.left{border-right:1px solid var(--edge); background:linear-gradient(180deg,var(--panel2),transparent 240px)}
+.col.right{border-left:1px solid var(--edge); background:linear-gradient(180deg,var(--panel2),transparent 240px)}
+
+/* section heading */
+.sh{display:flex;align-items:center;gap:9px;margin:2px 0 14px; color:var(--ink-dim);
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+.sh .idx{color:var(--amber);font-weight:600}
+.sh::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--edge2),transparent)}
+.sh.zh{font-family:var(--disp);font-size:13px;letter-spacing:.1em;text-transform:none;color:var(--ink)}
+
+/* ---------- form ---------- */
+.field{margin-bottom:15px}
+.field > label{display:block;color:var(--ink-dim);font-size:11px;margin-bottom:6px;letter-spacing:.04em}
+textarea,select,input[type=text]{
+  width:100%;background:var(--panel);border:1px solid var(--edge);color:var(--ink);
+  border-radius:8px;padding:9px 11px;font-family:var(--body);font-size:13px;resize:vertical;transition:.18s}
+textarea{min-height:70px;line-height:1.6}
+textarea:focus,select:focus{outline:none;border-color:var(--amber-deep);box-shadow:0 0 0 3px rgba(244,183,64,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.chkrow{display:flex;align-items:center;gap:8px;color:var(--ink-dim);font-size:12px;cursor:pointer;user-select:none}
+.chkrow input{accent-color:var(--amber)}
+
+/* slider */
+.slabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.slabel .v{font-family:var(--mono);color:var(--amber);font-weight:600;font-size:14px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--amber) var(--p,50%), #222a38 var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--amber-hi);box-shadow:0 0 0 4px rgba(244,183,64,.18),0 2px 6px rgba(0,0,0,.5);cursor:pointer;transition:.12s}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px rgba(244,183,64,.22),0 0 14px var(--amber)}
+
+/* platform split */
+.split{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--edge);margin-top:4px}
+.split .seg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#0A0C12;font-weight:600;transition:.25s}
+.split .dy{background:linear-gradient(180deg,var(--amber-hi),var(--amber))}
+.split .xh{background:linear-gradient(180deg,#7cc6dd,var(--teal))}
+
+/* presets */
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.preset{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--edge);border-radius:8px;
+  background:var(--panel);color:var(--ink-dim);cursor:pointer;font-size:12px;transition:.16s}
+.preset:hover{border-color:var(--amber-deep);color:var(--ink);background:#161b25;transform:translateY(-1px)}
+.preset .e{font-size:14px}
+
+.adv summary{list-style:none;cursor:pointer;color:var(--ink-faint);font-family:var(--mono);font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;padding:8px 0;border-top:1px solid var(--edge);margin-top:6px}
+.adv summary::-webkit-details-marker{display:none}
+.adv summary::before{content:"▸ ";color:var(--amber)}
+.adv[open] summary::before{content:"▾ "}
+
+/* run button */
+.run{position:sticky;bottom:-18px;margin:18px -18px -18px;padding:18px;
+  background:linear-gradient(180deg,transparent, var(--bg2) 40%)}
+.runbtn{width:100%;border:none;border-radius:10px;padding:14px;cursor:pointer;
+  font-family:var(--disp);font-size:16px;letter-spacing:.08em;color:#160d00;
+  background:linear-gradient(180deg,var(--amber-hi),var(--amber));
+  box-shadow:0 0 0 1px var(--amber-deep),0 8px 26px -8px rgba(244,183,64,.6);transition:.18s;position:relative;overflow:hidden}
+.runbtn:hover{transform:translateY(-2px);box-shadow:0 0 0 1px var(--amber-hi),0 12px 34px -8px rgba(244,183,64,.8)}
+.runbtn:active{transform:translateY(0)}
+.runbtn:disabled{opacity:.55;cursor:wait;transform:none}
+.runbtn .sweep{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:translateX(-120%)}
+.runbtn.busy .sweep{animation:sweep 1.1s linear infinite}
+@keyframes sweep{to{transform:translateX(120%)}}
+
+/* ---------- center ---------- */
+.scenario{display:flex;align-items:center;gap:14px;padding:11px 15px;border:1px solid var(--edge);border-radius:10px;
+  background:var(--panel);margin-bottom:16px}
+.scenario .cap{flex:1;font-size:13px;color:var(--ink)}
+.scenario .cap small{display:block;color:var(--ink-faint);font-family:var(--mono);font-size:10px;letter-spacing:.1em;margin-bottom:3px}
+.scenario .tag{font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid var(--amber-deep);border-radius:20px;padding:4px 10px;white-space:nowrap}
+
+/* KPI grid */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.kpi{position:relative;border:1px solid var(--edge);border-radius:12px;padding:15px 16px 14px;
+  background:linear-gradient(160deg,var(--panel),var(--panel2));overflow:hidden}
+.kpi::after{content:"";position:absolute;left:0;top:0;width:100%;height:2px;
+  background:linear-gradient(90deg,var(--amber),transparent 70%);opacity:.0;transition:.4s}
+.kpi.lit::after{opacity:.7}
+.kpi .lab{display:flex;justify-content:space-between;color:var(--ink-dim);font-size:11px;letter-spacing:.05em}
+.kpi .lab .en{font-family:var(--mono);font-size:9px;color:var(--ink-faint);letter-spacing:.15em;text-transform:uppercase}
+.kpi .val{font-family:var(--mono);font-weight:600;font-size:27px;color:var(--ink);margin-top:9px;letter-spacing:-.01em;line-height:1}
+.kpi .val .u{font-size:13px;color:var(--ink-dim);font-weight:400;margin-left:3px}
+.kpi .ci{margin-top:9px;height:14px;display:flex;align-items:center;gap:7px}
+.kpi .ci .bar{flex:1;height:3px;border-radius:3px;background:#1c2330;position:relative;overflow:hidden}
+.kpi .ci .bar i{position:absolute;top:0;height:100%;background:var(--amber);border-radius:3px;left:50%;width:0;transform:translateX(-50%);opacity:.55}
+.kpi .ci .pm{font-family:var(--mono);font-size:9px;color:var(--ink-faint)}
+.kpi .delta{font-family:var(--mono);font-size:11px;font-weight:600}
+.kpi .delta.up{color:var(--pos)} .kpi .delta.down{color:var(--neg)}
+.kpi.hero{grid-column:span 3;display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:0;background:none;border:none}
+.kpi.hero > div{border:1px solid var(--edge);border-right:none;padding:15px 16px;background:linear-gradient(160deg,var(--panel),var(--panel2))}
+.kpi.hero > div:first-child{border-radius:12px 0 0 12px}
+.kpi.hero > div:last-child{border-right:1px solid var(--edge);border-radius:0 12px 12px 0}
+
+/* per-platform + macro */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.card{border:1px solid var(--edge);border-radius:12px;background:var(--panel);padding:15px}
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{text-align:right;color:var(--ink-faint);font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;padding:0 0 9px;font-weight:400}
+.ptable th:first-child,.ptable td:first-child{text-align:left}
+.ptable td{padding:8px 0;border-top:1px solid var(--edge);font-family:var(--mono);color:var(--ink);text-align:right}
+.ptable .pf{display:flex;align-items:center;gap:8px;font-family:var(--body)}
+.ptable .pf i{width:8px;height:8px;border-radius:2px}
+.macro-strip{display:flex;flex-wrap:wrap;gap:8px}
+.mfac{display:flex;flex-direction:column;gap:3px;padding:8px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--panel2);min-width:92px}
+.mfac .t{color:var(--ink-faint);font-size:10px}
+.mfac .v{font-family:var(--mono);color:var(--amber);font-size:14px;font-weight:600}
+.mfac .v.mut{color:var(--ink)}
+
+/* chart */
+.chart-wrap{border:1px solid var(--edge);border-radius:12px;background:var(--panel);padding:15px 15px 8px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ink-dim)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:3px;border-radius:3px}
+svg{display:block;width:100%}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--edge);overflow-x:auto}
+.tab{padding:9px 13px;color:var(--ink-faint);font-size:12px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.tab:hover{color:var(--ink-dim)}
+.tab.on{color:var(--amber);border-bottom-color:var(--amber)}
+.tab.soon{opacity:.4;cursor:not-allowed}
+.tab.soon::after{content:"·占位";font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--ink-faint);margin-left:4px}
+
+/* ---------- right / sentiment ---------- */
+.sent-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:14px}
+.gauge{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--pos);line-height:1}
+.gauge small{display:block;font-family:var(--body);font-size:10px;color:var(--ink-faint);letter-spacing:.1em;font-weight:400;margin-bottom:4px}
+.sent-bar{display:flex;height:10px;border-radius:6px;overflow:hidden;border:1px solid var(--edge);margin-bottom:6px}
+.sent-bar i{transition:.5s}
+.sent-legend{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-bottom:16px}
+.feel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.feel{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--panel2)}
+.feel .n{color:var(--ink-dim);font-size:12px}
+.feel .c{font-family:var(--mono);font-weight:600;color:var(--amber)}
+.themes{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.theme{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-dim)}
+.theme .tb{flex:1;height:5px;border-radius:5px;background:#1c2330;overflow:hidden}
+.theme .tb i{display:block;height:100%;background:linear-gradient(90deg,var(--amber-deep),var(--amber));border-radius:5px}
+.theme .tc{font-family:var(--mono);font-size:10px;color:var(--ink-faint);width:18px;text-align:right}
+
+/* soul cards */
+.souls{display:flex;flex-direction:column;gap:9px}
+.soul{border:1px solid var(--edge);border-radius:10px;background:linear-gradient(150deg,var(--panel),var(--panel2));
+  padding:11px 12px;opacity:0;transform:translateY(8px)}
+.soul.in{animation:soulin .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes soulin{to{opacity:1;transform:none}}
+.soul .sh1{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.soul .av{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:13px;color:#0A0C12}
+.soul .who{flex:1;font-size:11px;color:var(--ink-dim);font-family:var(--mono);letter-spacing:.02em}
+.soul .verdict{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:20px;letter-spacing:.05em}
+.soul .verdict.click{color:var(--pos);border:1px solid rgba(89,194,138,.4);background:rgba(89,194,138,.08)}
+.soul .verdict.skip{color:var(--neg);border:1px solid rgba(255,92,92,.4);background:rgba(255,92,92,.08)}
+.soul .reason{color:var(--ink);font-size:12.5px;margin-bottom:6px}
+.soul .reason::before{content:"“";color:var(--amber);font-family:var(--disp);margin-right:1px}
+.soul .reason::after{content:"”";color:var(--amber);font-family:var(--disp)}
+.soul .foot{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-faint)}
+.soul .feeltag{color:var(--amber-hi)}
+.soul .intent{margin-left:auto;font-family:var(--mono);font-size:10px}
+.soul .intent b{color:var(--amber)}
+
+/* placeholder card */
+.placeholder{border:1px dashed var(--edge2);border-radius:12px;background:repeating-linear-gradient(135deg,transparent,transparent 11px,rgba(255,255,255,.012) 11px,rgba(255,255,255,.012) 22px);
+  padding:40px 20px;text-align:center;color:var(--ink-faint)}
+.placeholder .big{font-family:var(--disp);font-size:20px;color:var(--ink-dim);margin-bottom:8px}
+.placeholder code{font-family:var(--mono);font-size:11px;color:var(--amber)}
+
+/* empty / idle hint before first run */
+.idle-veil{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(10,12,18,.55);backdrop-filter:blur(2px);z-index:4;border-radius:12px;text-align:center}
+.idle-veil .t{font-family:var(--disp);font-size:18px;color:var(--ink-dim)}
+.idle-veil .s{font-size:12px;color:var(--ink-faint)}
+
+/* ---------- reveal overlay ---------- */
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:radial-gradient(800px 500px at 50% 45%, rgba(20,24,34,.92), rgba(7,9,16,.96));backdrop-filter:blur(6px)}
+.overlay.on{display:flex}
+.ov-counter{font-family:var(--mono);font-size:64px;font-weight:600;color:var(--amber);letter-spacing:.02em;line-height:1;
+  text-shadow:0 0 40px rgba(244,183,64,.5)}
+.ov-label{font-family:var(--disp);font-size:18px;color:var(--ink);margin-top:14px;letter-spacing:.06em}
+.ov-sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:8px;letter-spacing:.18em;text-transform:uppercase}
+.ov-field{position:relative;width:340px;height:120px;margin-top:26px}
+.ov-field .star{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--amber);opacity:0}
+.ov-bar{width:300px;height:2px;background:#222a38;margin-top:24px;border-radius:2px;overflow:hidden}
+.ov-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber-deep),var(--amber-hi))}
+
+@media(max-width:1180px){.grid{grid-template-columns:280px 1fr}.col.right{display:none}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><b>MAYA</b><span class="sub">投放预演台 / CONSUMER SIMULATION</span></div>
+    <div class="spacer"></div>
+    <div class="pill"><span class="k"></span>人口&nbsp;<b id="st-pop">100,000</b></div>
+    <div class="pill"><span class="k"></span>灵魂&nbsp;<b id="st-soul">100</b></div>
+    <div class="pill warn"><span class="k"></span>LLM&nbsp;<b id="st-llm">MiniMax-Text-01</b></div>
+    <div class="pill" style="font-family:var(--mono)"><b id="st-date">2026-06-08</b></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+
+    <!-- LEFT : 投放台 -->
+    <div class="col left">
+      <div class="sh"><span class="idx">01</span> 投放台 / BRIEF</div>
+
+      <div class="presets">
+        <div class="preset" data-preset="light"><span class="e">⚡</span> 轻量</div>
+        <div class="preset" data-preset="hit"><span class="e">🔥</span> 爆款</div>
+        <div class="preset" data-preset="crisis"><span class="e">⚠️</span> 危机</div>
+        <div class="preset" data-preset="full"><span class="e">🧠</span> 完整</div>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <label>创意文案 · CAPTION</label>
+        <textarea id="caption">夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆</textarea>
+      </div>
+
+      <div class="field row2">
+        <div><label>视觉风格</label>
+          <select id="visual"><option value="bright">明亮 bright</option><option>暗调 dark</option><option>极简 minimal</option><option>浮夸 flashy</option></select></div>
+        <div><label>配乐情绪</label>
+          <select id="music"><option value="upbeat">欢快 upbeat</option><option>平静 calm</option><option>ASMR</option><option>戏剧 dramatic</option></select></div>
+      </div>
+
+      <div class="field"><label class="chkrow"><input type="checkbox" id="celeb"> 明星代言加成</label></div>
+
+      <div class="field">
+        <div class="slabel"><label style="margin:0">投放预算</label><span class="v" id="budget-v">¥80,000</span></div>
+        <input type="range" id="budget" min="5000" max="500000" step="5000" value="80000">
+      </div>
+
+      <div class="field">
+        <div class="slabel"><label style="margin:0">平台分配 · 抖音 / 小红书</label><span class="v" id="alloc-v">60 / 40</span></div>
+        <input type="range" id="alloc" min="0" max="100" step="5" value="60">
+        <div class="split"><div class="seg dy" id="seg-dy" style="width:60%">抖音</div><div class="seg xh" id="seg-xh" style="width:40%">小红书</div></div>
+      </div>
+
+      <div class="field">
+        <label>KOL 领域 · NICHE</label>
+        <select id="niche"><option value="beauty">美妆</option><option>母婴</option><option>数码</option><option>美食</option><option>穿搭</option><option>健身</option><option>理财</option><option>旅行</option></select>
+      </div>
+
+      <details class="adv">
+        <summary>高级参数</summary>
+        <div class="field row2" style="margin-top:12px">
+          <div><label>灵魂采样 n_souls</label><select id="nsouls"><option>60</option><option>100</option><option>300</option></select></div>
+          <div><label>时段 daypart</label><select id="daypart"><option value="evening">18-22 黄金档</option><option>上午</option><option>午间</option><option>下午</option><option>深夜</option></select></div>
+        </div>
+        <div class="field"><label class="chkrow"><input type="checkbox" id="usellm"> 启用真 LLM 灵魂（更慢更准）</label></div>
+        <div class="field"><label class="chkrow"><input type="checkbox" id="cross" checked> 跨平台去重</label></div>
+      </details>
+
+      <div class="run">
+        <button class="runbtn" id="runbtn"><span class="sweep"></span>▶ 开始预演</button>
+      </div>
+    </div>
+
+    <!-- CENTER : 预测 -->
+    <div class="col center">
+      <div class="sh"><span class="idx">02</span> 预测 / PREDICTION</div>
+
+      <div class="scenario">
+        <div class="cap"><small>SCENARIO · cr_49540</small><span id="sc-cap">夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆</span></div>
+        <div class="tag" id="sc-budget">¥80,000 · 抖音60/小红书40</div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab on">KPI 总览</div>
+        <div class="tab soon">百万智能体</div>
+        <div class="tab soon">因果图</div>
+        <div class="tab soon">AI 群聊</div>
+        <div class="tab soon">结构化输出</div>
+      </div>
+
+      <div style="position:relative">
+        <div class="idle-veil" id="idle"><div class="t">待预演</div><div class="s">设定创意与预算，点「开始预演」让十万消费者替你试一遍</div></div>
+
+        <!-- KPI grid -->
+        <div class="kpis" id="kpis">
+          <div class="kpi" data-k="impressions"><div class="lab"><span>曝光</span><span class="en">IMPRESSIONS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="clicks"><div class="lab"><span>点击</span><span class="en">CLICKS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="conversions"><div class="lab"><span>转化</span><span class="en">CONVERSIONS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="ctr"><div class="lab"><span>点击率</span><span class="en">CTR</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="cvr"><div class="lab"><span>转化率</span><span class="en">CVR</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="roi"><div class="lab"><span>回报</span><span class="en">ROI</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+        </div>
+
+        <div class="twocol">
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:12px">分平台拆解</div>
+            <table class="ptable">
+              <thead><tr><th>平台</th><th>曝光</th><th>CTR</th><th>CVR</th><th>ROI</th></tr></thead>
+              <tbody id="ptbody"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:12px">宏观因子</div>
+            <div class="macro-strip" id="macro"></div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-head">
+            <div class="sh zh" style="margin:0">Hawkes 14 天传播扩散</div>
+            <div class="legend"><span><i style="background:var(--amber)"></i>付费</span><span><i style="background:var(--teal)"></i>自然</span></div>
+          </div>
+          <svg id="hawkes" viewBox="0 0 720 220" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT : 民意 -->
+    <div class="col right">
+      <div class="sh"><span class="idx">03</span> AI 民意 / SENTIMENT</div>
+
+      <div style="position:relative">
+        <div class="idle-veil" id="idle2" style="border-radius:10px"><div class="t">—</div><div class="s">等待预演结果</div></div>
+
+        <div class="sent-head">
+          <div class="gauge" id="netscore">—<small>净情感分 NET</small></div>
+          <div style="flex:1">
+            <div class="sent-bar" id="sentbar">
+              <i style="width:0;background:var(--pos)"></i><i style="width:0;background:var(--neu)"></i><i style="width:0;background:var(--neg)"></i>
+            </div>
+            <div class="sent-legend"><span id="sl-pos">正 —</span><span id="sl-neu">中 —</span><span id="sl-neg">负 —</span></div>
+            <div style="font-size:11px;color:var(--ink-dim);margin-top:4px">高意向占比 <b id="hi-pct" style="color:var(--amber);font-family:var(--mono)">—</b></div>
+          </div>
+        </div>
+
+        <div class="sh zh">情绪分布</div>
+        <div class="feel-grid" id="feels"></div>
+
+        <div class="sh zh">关键舆论主题</div>
+        <div class="themes" id="themes"></div>
+
+        <div class="sh zh">灵魂语录 · <span id="soul-n" style="font-family:var(--mono);color:var(--amber)">0</span></div>
+        <div class="souls" id="souls"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REVEAL OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-counter" id="ovc">0</div>
+  <div class="ov-label" id="ovl">正在唤醒虚拟消费者…</div>
+  <div class="ov-sub">MAYA · SIMULATING POPULATION</div>
+  <div class="ov-field" id="ovfield"></div>
+  <div class="ov-bar"><i id="ovbar"></i></div>
+</div>
+
+<!-- ===== real /api/predict sample (embedded, no backend needed) ===== -->
+<script id="maya-data" type="application/json">
+{
+  "kpis": {
+    "impressions": 2038095.2381,
+    "clicks": 27052.8051,
+    "conversions": 5382.8141,
+    "cost": 80000.0,
+    "revenue": 242226.6333,
+    "ctr": 0.0133,
+    "cvr": 0.199,
+    "roi": 2.0278
+  },
+  "per_platform": {
+    "douyin": {
+      "impressions": 1371428.5714,
+      "impressions_std": 0.0,
+      "clicks": 21167.8801,
+      "clicks_std": 4.6805,
+      "conversions": 4886.2156,
+      "conversions_std": 4.2239,
+      "ctr": 0.0154,
+      "ctr_std": 0.0,
+      "cvr": 0.2308,
+      "cvr_std": 0.0002,
+      "roi": 3.5808,
+      "roi_std": 0.004,
+      "revenue": 219879.7004,
+      "revenue_std": 190.0771,
+      "cost": 48000.0,
+      "cost_std": 0.0
+    },
+    "xhs": {
+      "impressions": 666666.6667,
+      "impressions_std": 0.0,
+      "clicks": 5884.925,
+      "clicks_std": 3.6756,
+      "conversions": 1354.7283,
+      "conversions_std": 2.8984,
+      "ctr": 0.0088,
+      "ctr_std": 0.0,
+      "cvr": 0.2302,
+      "cvr_std": 0.0004,
+      "roi": 0.9051,
+      "roi_std": 0.0041,
+      "revenue": 60962.773,
+      "revenue_std": 130.4264,
+      "cost": 32000.0,
+      "cost_std": 0.0
+    }
+  },
+  "macro": {
+    "today": "2026-06-08",
+    "holiday": {
+      "label": "平日",
+      "lift": 1.0,
+      "days_to": 0
+    },
+    "daypart": {
+      "label": "18-22 黄金档",
+      "ctr_mult": 1.3,
+      "cvr_mult": 1.2
+    },
+    "ctr_macro_lift": 1.3,
+    "cvr_macro_lift": 1.2,
+    "creative_audit_risk": 0.0,
+    "creative_aigc_score": 0.05
+  },
+  "predicted_sentiment": {
+    "sentiment_distribution": {
+      "positive": 0.9,
+      "neutral": 0.1,
+      "negative": 0.0
+    },
+    "net_sentiment_score": 0.6517,
+    "high_intent_pct": 0.9,
+    "avg_purchase_intent_7d": 0.857,
+    "feel_breakdown": {
+      "心动": 17,
+      "购买冲动": 23,
+      "好奇": 14,
+      "无感": 6
+    },
+    "key_opinion_themes": [
+      {
+        "theme": "文案挺真诚 不像硬广",
+        "count": 10
+      },
+      {
+        "theme": "BGM 很抓耳",
+        "count": 10
+      },
+      {
+        "theme": "达人之前买过 她推的不踩雷",
+        "count": 8
+      },
+      {
+        "theme": "剧情有点意思 想看完",
+        "count": 7
+      },
+      {
+        "theme": "正好最近在看这个",
+        "count": 6
+      },
+      {
+        "theme": "封面颜色挺清爽",
+        "count": 6
+      }
+    ],
+    "agent_count": 60,
+    "llm_backed": 0
+  },
+  "lifecycle": {
+    "days": 14,
+    "day_axis": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "paid_daily": [
+      37991.2,
+      25466.27,
+      17070.55,
+      11442.73,
+      7670.29,
+      5141.55,
+      3446.48,
+      2310.25,
+      1548.61,
+      1038.06,
+      695.83,
+      466.43,
+      312.66,
+      209.58
+    ],
+    "organic_daily": [
+      4618.24,
+      12514.82,
+      14193.6,
+      13091.46,
+      10979.97,
+      8718.65,
+      6681.51,
+      4994.71,
+      3666.02,
+      2653.35,
+      1899.35,
+      1347.59,
+      949.18,
+      664.52
+    ],
+    "total_daily": [
+      42609.44,
+      37981.09,
+      31264.14,
+      24534.19,
+      18650.26,
+      13860.2,
+      10128.0,
+      7304.95,
+      5214.62,
+      3691.41,
+      2595.19,
+      1814.02,
+      1261.84,
+      874.1
+    ],
+    "branching_ratio": 0.35,
+    "peak_day": 2.0,
+    "organic_share": 0.431
+  },
+  "soul_quotes": [
+    {
+      "persona_id": 72078,
+      "persona_oneliner": "22岁女·玉林·学生·月入分位2/10",
+      "persona_card": "22岁女·玉林·学生·月入分位2/10\n兴趣：游戏, 健身, 母婴, 旅行, 穿搭\n原型画像：健身精致生活派\n常看内容：游戏 / 健身 / 母婴\n不爱看：美食 / 汽车 / 宠物\n性格：容易焦虑\n性格特征：\n  • 容易被焦虑痛点驱动",
+      "will_click": true,
+      "reason": "剧情有点意思 想看完",
+      "comment": "已下单",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 49936,
+      "persona_oneliner": "68岁女·保定·退休·月入分位5/10",
+      "persona_card": "68岁女·保定·退休·月入分位5/10\n兴趣：理财, 健身, 旅行, 游戏, 美食\n原型画像：健身精致生活派\n常看内容：理财 / 健身 / 旅行\n不爱看：咖啡 / 汽车 / 母婴\n性格：佛系\n性格特征：\n  • 爱分享 · 晒图评论频繁",
+      "will_click": true,
+      "reason": "正好最近在看这个",
+      "comment": "求链接姐妹",
+      "feel": "购买冲动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 99290,
+      "persona_oneliner": "54岁男·济南·蓝领·月入分位1/10",
+      "persona_card": "54岁男·济南·蓝领·月入分位1/10\n兴趣：游戏, 汽车, 读书, 理财, 家居\n原型画像：职场妈妈价格敏感型\n常看内容：游戏 / 汽车 / 读书\n不爱看：旅行 / 宠物 / 母婴\n性格：佛系\n性格特征：\n  • 对新鲜事物特别敏感",
+      "will_click": true,
+      "reason": "文案挺真诚 不像硬广",
+      "comment": "跟我家娃挺配",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 44453,
+      "persona_oneliner": "63岁女·长沙·蓝领·月入分位9/10",
+      "persona_card": "63岁女·长沙·蓝领·月入分位9/10\n兴趣：健身, 美妆, 汽车, 美食, 家居\n原型画像：Z 世代美妆早鸟\n常看内容：健身 / 美妆 / 汽车\n不爱看：咖啡 / 理财 / 游戏\n性格：外向爱分享\n性格特征：\n  • 冲动消费多\n  • 爱分享 · 晒图评论频繁\n  • 容易被焦虑痛点驱动",
+      "will_click": true,
+      "reason": "封面颜色挺清爽",
+      "comment": "看起来不错等降价",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 36944,
+      "persona_oneliner": "48岁女·杭州·白领·月入分位3/10",
+      "persona_card": "48岁女·杭州·白领·月入分位3/10\n兴趣：美食, 汽车, 旅行, 理财, 穿搭\n原型画像：文艺旅行向往者\n常看内容：美食 / 汽车 / 旅行\n不爱看：读书 / 美妆 / 家居\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感\n  • 注重细节 · 反复比价\n  • 对广告本能反感\n  • 容易被焦虑痛点驱动",
+      "will_click": true,
+      "reason": "剧情有点意思 想看完",
+      "comment": "种草了",
+      "feel": "好奇",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 30279,
+      "persona_oneliner": "38岁男·保定·蓝领·月入分位5/10",
+      "persona_card": "38岁男·保定·蓝领·月入分位5/10\n兴趣：读书, 家居, 咖啡, 健身, 数码\n原型画像：健身精致生活派\n常看内容：读书 / 家居 / 咖啡\n不爱看：美妆 / 宠物 / 母婴\n性格：佛系\n性格特征：\n  • 对广告本能反感",
+      "will_click": true,
+      "reason": "文案挺真诚 不像硬广",
+      "comment": "已下单",
+      "feel": "购买冲动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 13133,
+      "persona_oneliner": "41岁男·上海·个体·月入分位4/10",
+      "persona_card": "41岁男·上海·个体·月入分位4/10\n兴趣：宠物, 咖啡, 游戏, 汽车, 健身\n原型画像：职场妈妈价格敏感型\n常看内容：宠物 / 咖啡 / 游戏\n不爱看：理财 / 旅行 / 穿搭\n性格：偏保守，外向爱分享\n性格特征：\n  • 倾向经过验证的选择\n  • 冲动消费多\n  • 爱分享 · 晒图评论频繁",
+      "will_click": true,
+      "reason": "剧情有点意思 想看完",
+      "comment": "求链接姐妹",
+      "feel": "好奇",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 58214,
+      "persona_oneliner": "72岁女·保定·退休·月入分位2/10",
+      "persona_card": "72岁女·保定·退休·月入分位2/10\n兴趣：数码, 母婴, 读书, 理财, 游戏\n原型画像：通用中间派\n常看内容：数码 / 母婴 / 读书\n不爱看：美食 / 咖啡 / 家居\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感",
+      "will_click": true,
+      "reason": "封面颜色挺清爽",
+      "comment": "求链接姐妹",
+      "feel": "购买冲动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 85697,
+      "persona_oneliner": "54岁女·苏州·蓝领·月入分位3/10",
+      "persona_card": "54岁女·苏州·蓝领·月入分位3/10\n兴趣：旅行, 美食, 游戏, 母婴, 理财\n原型画像：Z 世代美妆早鸟\n常看内容：旅行 / 美食 / 游戏\n不爱看：美妆 / 健身 / 咖啡\n性格：佛系\n性格特征：\n  • 对广告本能反感",
+      "will_click": true,
+      "reason": "剧情有点意思 想看完",
+      "comment": "已下单",
+      "feel": "购买冲动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 14148,
+      "persona_oneliner": "46岁女·济南·无业·月入分位7/10",
+      "persona_card": "46岁女·济南·无业·月入分位7/10\n兴趣：旅行, 美妆, 穿搭, 宠物, 读书\n原型画像：Z 世代美妆早鸟\n常看内容：旅行 / 美妆 / 穿搭\n不爱看：家居 / 健身 / 游戏\n性格：外向爱分享\n性格特征：\n  • 爱分享 · 晒图评论频繁",
+      "will_click": true,
+      "reason": "BGM 很抓耳",
+      "comment": "种草了",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 62179,
+      "persona_oneliner": "21岁女·九江·学生·月入分位6/10",
+      "persona_card": "21岁女·九江·学生·月入分位6/10\n兴趣：美食, 母婴, 咖啡, 读书, 数码\n原型画像：健身精致生活派\n常看内容：美食 / 母婴 / 咖啡\n不爱看：美妆 / 游戏 / 汽车\n性格：偏保守，外向爱分享\n性格特征：\n  • 倾向经过验证的选择\n  • 爱分享 · 晒图评论频繁",
+      "will_click": true,
+      "reason": "BGM 很抓耳",
+      "comment": "这个色我真的爱",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 83287,
+      "persona_oneliner": "46岁男·达州·个体·月入分位9/10",
+      "persona_card": "46岁男·达州·个体·月入分位9/10\n兴趣：宠物, 读书, 咖啡, 健身, 游戏\n原型画像：文艺旅行向往者\n常看内容：宠物 / 读书 / 咖啡\n不爱看：美妆 / 美食 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感",
+      "will_click": true,
+      "reason": "价格看着能接受",
+      "comment": "种草了",
+      "feel": "好奇",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 87133,
+      "persona_oneliner": "66岁男·广州·退休·月入分位6/10",
+      "persona_card": "66岁男·广州·退休·月入分位6/10\n兴趣：汽车, 穿搭, 家居, 母婴, 宠物\n原型画像：健身精致生活派\n常看内容：汽车 / 穿搭 / 家居\n不爱看：健身 / 旅行 / 理财\n性格：情绪稳定\n性格特征：\n  • 沉默围观 · 很少留言\n  • 情绪稳定 · 不追热点",
+      "will_click": true,
+      "reason": "有真人试色 / 实拍",
+      "comment": "这个色我真的爱",
+      "feel": "心动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    },
+    {
+      "persona_id": 50776,
+      "persona_oneliner": "30岁男·绵阳·白领·月入分位4/10",
+      "persona_card": "30岁男·绵阳·白领·月入分位4/10\n兴趣：游戏, 穿搭, 美食, 旅行, 美妆\n原型画像：Z 世代美妆早鸟\n常看内容：游戏 / 穿搭 / 美食\n不爱看：母婴 / 健身 / 咖啡\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感",
+      "will_click": true,
+      "reason": "价格看着能接受",
+      "comment": "已下单",
+      "feel": "购买冲动",
+      "purchase_intent_7d": 0.95,
+      "source": "mock"
+    }
+  ],
+  "scenario_summary": {
+    "creative_id": "cr_49540",
+    "caption": "夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆",
+    "total_budget": 80000.0,
+    "platform_alloc": {
+      "douyin": 0.6,
+      "xhs": 0.4
+    }
+  }
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('maya-data').textContent);
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// ---- formatting ----
+const nf = n => n>=1e8?(n/1e8).toFixed(2)+'亿':n>=1e4?(n/1e4).toFixed(1)+'万':Math.round(n).toLocaleString();
+const pct = n => (n*100).toFixed(2)+'%';
+const x2 = n => n.toFixed(2);
+const FEEL_COLOR = {'购买冲动':'#FFD479','心动':'#F4B740','好奇':'#5FB0C9','无感':'#8A94A6','厌恶':'#FF5C5C'};
+const AV_COLORS = ['#F4B740','#FFD479','#5FB0C9','#b9831f','#7cc6dd'];
+
+// ---- live recompute: scale embedded baseline by budget + platform alloc ----
+function compute(){
+  const budget = +$('#budget').value;
+  const dyShare = +$('#alloc').value/100;
+  const base = DATA.per_platform;
+  // per-yuan efficiency from embedded baseline
+  const eff = p => ({ impPerY: base[p].impressions/base[p].cost, ctr: base[p].ctr, cvr: base[p].cvr,
+                      aov: base[p].revenue/Math.max(1,base[p].conversions), roiStd: base[p].roi_std,
+                      clkStd: base[p].clicks_std, cvrStd: base[p].cvr_std });
+  const mk = (p, spend) => { const e=eff(p); const imp=spend*e.impPerY; const clk=imp*e.ctr;
+    const conv=clk*e.cvr; const rev=conv*e.aov; return {impressions:imp,clicks:clk,conversions:conv,
+    revenue:rev,cost:spend,ctr:e.ctr,cvr:e.cvr,roi:(rev-spend)/spend,_std:{clk:e.clkStd,cvr:e.cvrStd,roi:e.roiStd}}; };
+  const dy=mk('douyin',budget*dyShare), xh=mk('xhs',budget*(1-dyShare));
+  const sum=(a,b,k)=>a[k]+b[k];
+  const tot={impressions:sum(dy,xh,'impressions'),clicks:sum(dy,xh,'clicks'),conversions:sum(dy,xh,'conversions'),
+    revenue:sum(dy,xh,'revenue'),cost:budget};
+  tot.ctr=tot.clicks/tot.impressions; tot.cvr=tot.conversions/tot.clicks; tot.roi=(tot.revenue-tot.cost)/tot.cost;
+  return {budget,dyShare,tot,dy,xh};
+}
+
+// baseline snapshot (for delta) captured at first run
+let BASELINE=null;
+
+// ---- KPI render with count-up + CI settle ----
+const KCONF={
+  impressions:{get:t=>t.tot.impressions,fmt:nf,std:t=>t.tot.impressions*0.004},
+  clicks:{get:t=>t.tot.clicks,fmt:nf,std:t=>(t.dy._std.clk+t.xh._std.clk)*60},
+  conversions:{get:t=>t.tot.conversions,fmt:nf,std:t=>t.tot.conversions*0.012},
+  ctr:{get:t=>t.tot.ctr,fmt:pct,std:t=>t.tot.ctr*0.03},
+  cvr:{get:t=>t.tot.cvr,fmt:pct,std:t=>t.tot.cvr*0.01},
+  roi:{get:t=>t.tot.roi,fmt:x2,std:t=>(t.dy._std.roi+t.xh._std.roi)},
+};
+function animVal(el,to,fmt,dur=900){
+  const from=0,t0=performance.now();
+  function tick(now){let p=Math.min(1,(now-t0)/dur);p=1-Math.pow(1-p,3);
+    el.textContent=fmt(from+(to-from)*p);if(p<1)requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+}
+function renderKPIs(state,animate){
+  $$('#kpis .kpi').forEach((el,i)=>{
+    const k=el.dataset.k,c=KCONF[k],v=c.get(state),std=c.std(state);
+    const valEl=el.querySelector('[data-v]');
+    if(animate){ el.classList.remove('lit'); setTimeout(()=>{ animVal(valEl,v,c.fmt); el.classList.add('lit'); },i*110); }
+    else valEl.textContent=c.fmt(v);
+    // CI bracket: overshoot then settle
+    const pm=el.querySelector('.pm'), bar=el.querySelector('.ci i');
+    const rel=std/v; pm.textContent='±'+(c.fmt===pct?pct(std):c.fmt===x2?std.toFixed(3):nf(std));
+    const w=Math.min(46,rel*900+6);
+    bar.style.transition='none'; bar.style.width=(w*1.7)+'%';
+    setTimeout(()=>{bar.style.transition='width .7s cubic-bezier(.3,1.3,.5,1)';bar.style.width=w+'%';}, animate?i*110+400:30);
+    // delta vs baseline
+    let d=el.querySelector('.delta'); if(!d){d=document.createElement('span');d.className='delta';el.querySelector('.lab').appendChild(d);}
+    if(BASELINE&&BASELINE!==state){const bv=c.get(BASELINE);const dd=(v-bv)/bv;
+      d.textContent=(dd>=0?'+':'')+(dd*100).toFixed(1)+'%';d.className='delta '+(dd>=0?'up':'down');}
+    else d.textContent='';
+  });
+}
+
+function renderPlatforms(state){
+  const rows=[['douyin','抖音','var(--amber)',state.dy],['xhs','小红书','var(--teal)',state.xh]];
+  $('#ptbody').innerHTML=rows.map(([id,name,col,p])=>`<tr>
+    <td><span class="pf"><i style="background:${col}"></i>${name}</span></td>
+    <td>${nf(p.impressions)}</td><td>${pct(p.ctr)}</td><td>${pct(p.cvr)}</td>
+    <td style="color:${p.roi>=1?'var(--pos)':'var(--neg)'}">${x2(p.roi)}</td></tr>`).join('');
+}
+
+function renderMacro(){
+  const m=DATA.macro;
+  const items=[['节假日',m.holiday.label,m.holiday.lift,true],['时段',m.daypart.label,'',true],
+    ['CTR 增益','×'+m.ctr_macro_lift,'',false],['CVR 增益','×'+m.cvr_macro_lift,'',false],
+    ['审核风险',(m.creative_audit_risk*100).toFixed(0)+'%','',true],['AIGC 度',(m.creative_aigc_score*100).toFixed(0)+'%','',true]];
+  $('#macro').innerHTML=items.map(([t,v,_,mut])=>`<div class="mfac"><span class="t">${t}</span><span class="v ${mut?'mut':''}">${v}</span></div>`).join('');
+}
+
+// ---- Hawkes SVG stacked area ----
+function renderHawkes(){
+  const L=DATA.lifecycle,W=720,H=220,pad={l:8,r:8,t:14,b:22};
+  const days=L.day_axis, paid=L.paid_daily, org=L.organic_daily, tot=L.total_daily;
+  const maxV=Math.max(...tot)*1.08;
+  const X=i=>pad.l+(W-pad.l-pad.r)*(i/(days.length-1));
+  const Y=v=>H-pad.b-(H-pad.t-pad.b)*(v/maxV);
+  const areaPath=(arr,base)=>{
+    let d='M'+X(0)+' '+Y(base?base[0]:0);
+    arr.forEach((v,i)=>d+=' L'+X(i)+' '+Y((base?base[i]:0)+v));
+    for(let i=arr.length-1;i>=0;i--)d+=' L'+X(i)+' '+Y(base?base[i]:0);
+    return d+'Z';
+  };
+  const line=arr=>arr.map((v,i)=>(i?'L':'M')+X(i)+' '+Y(v)).join(' ');
+  const peak=L.peak_day|0;
+  let grid='';for(let g=0;g<=4;g++){const y=pad.t+(H-pad.t-pad.b)*g/4;grid+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#1a2230" stroke-width="1"/>`;}
+  let ticks='';days.forEach((d,i)=>{if(i%2===0)ticks+=`<text x="${X(i)}" y="${H-6}" fill="#5b6478" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">D${d}</text>`;});
+  $('#hawkes').innerHTML=`
+    <defs>
+      <linearGradient id="gPaid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4B740" stop-opacity=".45"/><stop offset="1" stop-color="#F4B740" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="gOrg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FB0C9" stop-opacity=".4"/><stop offset="1" stop-color="#5FB0C9" stop-opacity=".04"/></linearGradient>
+    </defs>
+    ${grid}
+    <path d="${areaPath(paid,null)}" fill="url(#gPaid)"/>
+    <path d="${areaPath(org,paid)}" fill="url(#gOrg)"/>
+    <path d="${line(tot)}" fill="none" stroke="#FFD479" stroke-width="1.6" class="hline"/>
+    <line x1="${X(peak)}" y1="${pad.t}" x2="${X(peak)}" y2="${H-pad.b}" stroke="#F4B740" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
+    <circle cx="${X(peak)}" cy="${Y(tot[peak])}" r="3.5" fill="#FFD479"/>
+    <text x="${X(peak)}" y="${pad.t-3}" fill="#F4B740" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">峰值 D${peak}</text>
+    ${ticks}`;
+  const ln=$('#hawkes .hline'); if(ln){const len=ln.getTotalLength();ln.style.strokeDasharray=len;ln.style.strokeDashoffset=len;
+    ln.animate([{strokeDashoffset:len},{strokeDashoffset:0}],{duration:1100,easing:'ease-out',fill:'forwards'});}
+}
+
+// ---- sentiment ----
+function renderSentiment(animate){
+  const s=DATA.predicted_sentiment;
+  $('#netscore').childNodes[0].nodeValue=s.net_sentiment_score>=0?'+'+s.net_sentiment_score.toFixed(2):s.net_sentiment_score.toFixed(2);
+  $('#hi-pct').textContent=pct(s.high_intent_pct);
+  const d=s.sentiment_distribution, bars=$$('#sentbar i');
+  bars[0].style.width=d.positive*100+'%';bars[1].style.width=d.neutral*100+'%';bars[2].style.width=d.negative*100+'%';
+  $('#sl-pos').textContent='正 '+pct(d.positive);$('#sl-neu').textContent='中 '+pct(d.neutral);$('#sl-neg').textContent='负 '+pct(d.negative);
+  const fb=s.feel_breakdown;
+  $('#feels').innerHTML=Object.entries(fb).map(([k,v])=>`<div class="feel"><span class="n">${k}</span><span class="c" style="color:${FEEL_COLOR[k]||'var(--amber)'}">${v}</span></div>`).join('');
+  const themes=s.key_opinion_themes,maxC=Math.max(...themes.map(t=>t.count));
+  $('#themes').innerHTML=themes.map(t=>`<div class="theme"><span style="width:128px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.theme}</span><span class="tb"><i style="width:${t.count/maxC*100}%"></i></span><span class="tc">${t.count}</span></div>`).join('');
+}
+
+// ---- soul cards (staggered) ----
+function renderSouls(animate){
+  const souls=DATA.soul_quotes;
+  $('#soul-n').textContent=souls.length;
+  $('#souls').innerHTML=souls.map((q,i)=>{
+    const av=AV_COLORS[i%AV_COLORS.length];const initial=q.persona_oneliner.match(/[一-龥]/)?q.persona_oneliner[q.persona_oneliner.search(/[一-龥]/)]:'?';
+    const age=(q.persona_oneliner.match(/^\d+/)||['?'])[0];
+    return `<div class="soul" style="animation-delay:${i*70}ms" title="${q.persona_card.replace(/"/g,'&quot;')}">
+      <div class="sh1"><span class="av" style="background:${av}">${age}</span>
+        <span class="who">${q.persona_oneliner}</span>
+        <span class="verdict ${q.will_click?'click':'skip'}">${q.will_click?'会点':'划走'}</span></div>
+      <div class="reason">${q.reason}</div>
+      <div class="foot"><span class="feeltag" style="color:${FEEL_COLOR[q.feel]||'var(--amber-hi)'}">${q.feel}</span>· ${q.comment}
+        <span class="intent">7日购买意向 <b>${(q.purchase_intent_7d*100).toFixed(0)}%</b></span></div>
+    </div>`;}).join('');
+  if(animate) requestAnimationFrame(()=>$$('#souls .soul').forEach(el=>el.classList.add('in')));
+  else $$('#souls .soul').forEach(el=>{el.style.opacity=1;el.style.transform='none';});
+}
+
+// ---- form interactions (live, no reveal) ----
+function syncForm(){
+  const b=+$('#budget').value,a=+$('#alloc').value;
+  $('#budget-v').textContent='¥'+b.toLocaleString();
+  $('#alloc-v').textContent=a+' / '+(100-a);
+  $('#budget').style.setProperty('--p',((b-5000)/(500000-5000)*100)+'%');
+  $('#alloc').style.setProperty('--p',a+'%');
+  $('#seg-dy').style.width=a+'%';$('#seg-xh').style.width=(100-a)+'%';
+  $('#seg-dy').style.opacity=a<12?0:1;$('#seg-xh').style.opacity=a>88?0:1;
+  $('#sc-cap').textContent=$('#caption').value;
+  $('#sc-budget').textContent='¥'+b.toLocaleString()+' · 抖音'+a+'/小红书'+(100-a);
+}
+let started=false;
+function liveUpdate(){ syncForm(); if(started){const st=compute();renderKPIs(st,false);renderPlatforms(st);} }
+['#budget','#alloc','#caption','#visual','#music','#niche'].forEach(s=>{
+  $(s).addEventListener('input',liveUpdate);
+});
+
+// presets
+const PRESETS={light:{budget:20000,alloc:50,llm:false},hit:{budget:200000,alloc:75,llm:false},
+  crisis:{budget:60000,alloc:40,llm:false,cap:'紧急公关 · 控评维稳 召回说明'},full:{budget:120000,alloc:60,llm:true}};
+$$('.preset').forEach(p=>p.addEventListener('click',()=>{
+  const c=PRESETS[p.dataset.preset];$('#budget').value=c.budget;$('#alloc').value=c.alloc;$('#usellm').checked=c.llm;
+  if(c.cap)$('#caption').value=c.cap; liveUpdate();
+  p.animate([{transform:'scale(.94)'},{transform:'scale(1)'}],{duration:200});
+}));
+
+// ---- the reveal moment (~3s orchestrated) ----
+function runReveal(){
+  const ov=$('#overlay'),btn=$('#runbtn');
+  btn.classList.add('busy');btn.disabled=true;
+  ov.classList.add('on');
+  // seed star field
+  const field=$('#ovfield');field.innerHTML='';
+  const stars=[];for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';
+    s.style.left=Math.random()*340+'px';s.style.top=Math.random()*120+'px';field.appendChild(s);stars.push(s);}
+  // counter ticks to 100,000
+  const target=100000,t0=performance.now(),dur=2100;
+  const ovc=$('#ovc'),ovbar=$('#ovbar'),ovl=$('#ovl');
+  const labels=['正在唤醒虚拟消费者…','正在分配曝光…','灵魂逐个表态…','聚合民意与扩散…'];
+  function tick(now){let p=Math.min(1,(now-t0)/dur);const e=1-Math.pow(1-p,2);
+    ovc.textContent=Math.round(target*e).toLocaleString();
+    ovbar.style.width=(p*100)+'%';
+    ovl.textContent=labels[Math.min(labels.length-1,Math.floor(p*labels.length))];
+    stars.forEach((s,i)=>{if(p*60>i)s.style.opacity=Math.min(1,(p*60-i)*.4)*.9;});
+    if(p<1)requestAnimationFrame(tick);else finish();}
+  requestAnimationFrame(tick);
+
+  function finish(){
+    setTimeout(()=>{
+      ov.classList.remove('on');btn.classList.remove('busy');btn.disabled=false;btn.textContent='▶ 重新预演';
+      $('#idle').style.display='none';$('#idle2').style.display='none';
+      const st=compute(); if(!BASELINE)BASELINE=st;
+      started=true;
+      renderKPIs(st,true);renderPlatforms(st);renderMacro();renderHawkes();
+      renderSentiment(true);renderSouls(true);
+    },260);
+  }
+}
+$('#runbtn').addEventListener('click',runReveal);
+
+// init
+syncForm();
+</script>
+</body>
+</html>
