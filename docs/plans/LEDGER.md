@@ -10,7 +10,7 @@
 
 - **当前里程碑**：M3
 - **当前用例**：AT-M3-01
-- **上轮结束于**：M2 全部 6 AT 绿（AT-M2-02 live LLM 留手动），commit 待填（2026-06-12）。spec/ground.py：B2B 硬拒绝 + 富品类关键词最早位置匹配（90.9% 黄金集准确率，阈值 85%）+ 嵌入兜底 + 语料覆盖惩罚 + 0.55 置信度闸门；api_state 注册 product_categories/category_notes 双 UEB 源。黄金集 niche key 对齐 10 真垂类（baby→parenting；4 条工具/知识服务改 reject，见 DECISIONS）。下一步：M3（Scenario 生成）。
+- **上轮结束于**：M2 全部 6 AT 绿（AT-M2-02 live LLM 留手动），commit c81891d（2026-06-12）。spec/ground.py：B2B 硬拒绝 + 富品类关键词最早位置匹配（90.9% 黄金集准确率，阈值 85%）+ 嵌入兜底 + 语料覆盖惩罚 + 0.55 置信度闸门；api_state 注册 product_categories/category_notes 双 UEB 源。黄金集 niche key 对齐 10 真垂类（baby→parenting；4 条工具/知识服务改 reject，见 DECISIONS）。下一步：M3（Scenario 生成）。
 - **全局阻塞**：无
 - **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后 12 连绿（8 隔离 + 4 全量）无法复现，疑环境瞬时态；若 M3 后复发需查 bootstrap 期全局 RNG/线程态。
 
@@ -30,7 +30,7 @@
 |---|---|---|---|---|
 | M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
-| M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit 待填 2026-06-12；AT-M2-02 live 手动 |
+| M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit c81891d 2026-06-12；AT-M2-02 live 手动 |
 | M3 | AT-M3-01…08 | REG-1…4 | TODO | |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | TODO | |
