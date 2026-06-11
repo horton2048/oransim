@@ -8,11 +8,11 @@
 
 ## 当前指针
 
-- **当前里程碑**：M7
-- **当前用例**：AT-M7-01
-- **上轮结束于**：M6 全部 7 AT 绿，commit 9043b3d（2026-06-12）。scm.py 加 price_point/launch_channel_mix 两 L3 节点（只增不改）；launch_interventions.py 8 条命名 do()（价格走 counterfactual 图级 do，复用 abducted U）；substitute_pressure→competitor_action；competitor_response 标分支。铁律 1 守护：launch_only 标记 + dag_dict() campaign 视图 → /api/predict 字节稳定（见 DECISIONS）。下一步：M7（API + 报告，最高优先级 e2e=AT-M7-01）。
+- **当前里程碑**：M7（进行中 9/14）
+- **当前用例**：AT-M7-06（sandbox 滑杆）
+- **上轮结束于**：M7 已绿 9 条（AT-M7-01/02/03/04/05/08/09/12/13），commits 70f89b0/d578fe4（2026-06-12）。spec/store.py append-only 版本化存储；api_routers/launch.py 五端点（ingest/PATCH/simulate/sandbox/whatif，流式 keepalive，顶层诚实标记）；agents/launch_outputs.py LaunchReport 四区块 + 文案红线。剩余 M7：AT-M7-06（launch sandbox 滑杆复用）/07（lifecycle 409 不落 legacy）/10（LLM souls 仅 P50 主 seed）/11（成本上限显式拒绝）/14（流式 keepalive 慢路径）。
 - **全局阻塞**：无
-- **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后多轮连绿无法复现，疑环境瞬时态；若后续复发需查 bootstrap 期全局 RNG/线程态。
+- **观察项**：AT-M0-02 黄金快照本轮第 2 次出现非复现单次字节失配（4× 隔离复测全绿，launch 路由纯新增非诱因）；累计 2 次，仍疑 bootstrap 期全局 RNG/线程瞬时态，未阻塞但值得 M8 后专项查。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
 
@@ -108,20 +108,20 @@
 - [x] AT-M6-06 competitor_response 分支口吻 → `test_at_m6_06_competitor_response_is_branch`
 - [x] AT-M6-07 零改动模块未触碰 → `test_at_m6_07_protected_modules_untouched`
 
-### M7 — API + 报告
-- [ ] AT-M7-01 端到端主链路（最高优先级 e2e）
-- [ ] AT-M7-02 诚实标记全覆盖（参数化全端点）
-- [ ] AT-M7-03 idempotency（见文档）
-- [ ] AT-M7-04 spec 存储 append-only
-- [ ] AT-M7-05 硬拒绝端到端
-- [ ] AT-M7-06 launch（见文档）
+### M7 — API + 报告（进行中 9/14）
+- [x] AT-M7-01 端到端主链路 → `test_at_m7_01_end_to_end_main_chain` (d578fe4)
+- [x] AT-M7-02 诚实标记全覆盖 → `test_at_m7_02_honesty_markers_all_endpoints` (d578fe4)
+- [x] AT-M7-03 ingest 不烧仿真 → `test_at_m7_03_ingest_no_simulation` (d578fe4)
+- [x] AT-M7-04 spec 存储 append-only → `test_at_m7_04_spec_store_append_only` (70f89b0)
+- [x] AT-M7-05 硬拒绝端到端 → `test_at_m7_05_hard_reject_e2e` (d578fe4)
+- [ ] AT-M7-06 launch sandbox 滑杆可用
 - [ ] AT-M7-07 lifecycle 永不静默落 legacy
-- [ ] AT-M7-08 现有 8 路由契约不变
-- [ ] AT-M7-09 （见文档）
+- [x] AT-M7-08 现有 8 路由契约不变 → `test_at_m7_08_existing_routes_unchanged` (d578fe4)
+- [x] AT-M7-09 n_seeds 降级显式化 → `test_at_m7_09_n_seeds_degradation` (d578fe4)
 - [ ] AT-M7-10 LLM souls 只跑 P50 主 seed
 - [ ] AT-M7-11 成本上限显式拒绝
-- [ ] AT-M7-12 报告文案红线
-- [ ] AT-M7-13 引擎层依赖方向（流程+单测，REG-4）
+- [x] AT-M7-12 报告文案红线 → `test_at_m7_12_report_copy_redlines` (d578fe4)
+- [x] AT-M7-13 引擎层依赖方向（REG-4）→ `test_at_m7_13_engine_no_spec_import` (70f89b0)
 - [ ] AT-M7-14 流式 keepalive
 
 ### M8 — 数据 v2 + 标定
