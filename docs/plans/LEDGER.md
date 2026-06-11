@@ -8,9 +8,9 @@
 
 ## 当前指针
 
-- **当前里程碑**：M3
-- **当前用例**：AT-M3-01
-- **上轮结束于**：M2 全部 6 AT 绿（AT-M2-02 live LLM 留手动），commit c81891d（2026-06-12）。spec/ground.py：B2B 硬拒绝 + 富品类关键词最早位置匹配（90.9% 黄金集准确率，阈值 85%）+ 嵌入兜底 + 语料覆盖惩罚 + 0.55 置信度闸门；api_state 注册 product_categories/category_notes 双 UEB 源。黄金集 niche key 对齐 10 真垂类（baby→parenting；4 条工具/知识服务改 reject，见 DECISIONS）。下一步：M3（Scenario 生成）。
+- **当前里程碑**：M5
+- **当前用例**：AT-M5-01
+- **上轮结束于**：M3 全部 8 AT 绿（含 06b 辅助），commit 待填（2026-06-12）。spec/scenario_gen.py（编译 Scenario + 合成 creative 走 make_creative + niche 渠道先验 + 价格×ctr_priors 推预算 + budget_to_impressions 种子脉冲）；pipeline.compile_spec 带 (spec_id,revision) AudienceFilter intern（幂等/升版失效）。M0→M4 已全 DONE，依赖序进 M5。下一步：M5（人格 + 传播）。
 - **全局阻塞**：无
 - **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后 12 连绿（8 隔离 + 4 全量）无法复现，疑环境瞬时态；若 M3 后复发需查 bootstrap 期全局 RNG/线程态。
 
@@ -31,7 +31,7 @@
 | M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit c81891d 2026-06-12；AT-M2-02 live 手动 |
-| M3 | AT-M3-01…08 | REG-1…4 | TODO | |
+| M3 | AT-M3-01…08 | REG-1…4 | DONE | commit 待填 2026-06-12 |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | TODO | |
 | M6 | AT-M6-01…07 | REG-1…5 | TODO | |
@@ -68,15 +68,15 @@
 - [x] AT-M2-07 synonyms 优先嵌入兜底 → `test_at_m2_07_synonyms_priority_over_embedding`
 - [ ] AT-M2-02 品类映射准确率（live LLM）— **发版前补 / 手动**
 
-### M3 — Scenario 生成
-- [ ] AT-M3-01 编译产物直通 Scenario
-- [ ] AT-M3-02 重编译 hash 幂等
-- [ ] AT-M3-03 PATCH 升版后 id 行为
-- [ ] AT-M3-04 合成 creative 走 make_creative
-- [ ] AT-M3-05 channel（见文档）
-- [ ] AT-M3-06 预算默认进 assumed_fields
-- [ ] AT-M3-07 Hawkes 种子事件规模
-- [ ] AT-M3-08 新字段三件套（流程+单测）
+### M3 — Scenario 生成（DONE）
+- [x] AT-M3-01 编译产物直通 Scenario → `test_at_m3_01_compiled_scenario_runs`
+- [x] AT-M3-02 重编译 hash 幂等（intern）→ `test_at_m3_02_recompile_hash_idempotent`
+- [x] AT-M3-03 PATCH 升版后 intern 失效 → `test_at_m3_03_patch_bumps_intern`
+- [x] AT-M3-04 合成 creative 走 make_creative → `test_at_m3_04_creatives_via_make_creative`
+- [x] AT-M3-05 channels_hint 覆盖默认 alloc → `test_at_m3_05_channels_hint_overrides_alloc`
+- [x] AT-M3-06 预算默认进 assumed_fields → `test_at_m3_06_budget_default_in_assumed` (+06b)
+- [x] AT-M3-07 Hawkes 种子事件规模 → `test_at_m3_07_hawkes_seed_scale_deterministic`
+- [x] AT-M3-08 新字段三件套 → `test_at_m3_08_new_fields_default_none_behavior_unchanged`
 
 ### M4 — 价格端到端（DONE）
 - [x] AT-M4-01 AOV 参数化后 predict 快照不变 → `test_at_m4_01_aov_param_snapshot_unchanged` (b0e4e2e)
