@@ -39,12 +39,16 @@ Thumbs.db
 data/synthetic/*.json
 data/synthetic/*.csv
 data/synthetic/*.parquet
-data/models/*.pkl
-data/models/*.joblib
-data/models/*.pt
-data/models/*.safetensors
+data/models/**/*.pkl
+data/models/**/*.joblib
+data/models/**/*.pt
+data/models/**/*.safetensors
 data/synthetic/*.jsonl
 !data/**/.gitkeep
+
+# Teamagent local state (manifest.json and shared-claude.md ARE tracked)
+.teamagent/knowledge.db
+.teamagent/recording-memory/
 
 # Logs
 *.log
