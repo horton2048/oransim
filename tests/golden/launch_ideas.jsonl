@@ -1,0 +1,30 @@
+{"idea_text": "我想做一款有机燕麦奶，不含添加剂，定价 25 元，主攻小红书健身人群。", "expected_spec": {"product_name": "有机燕麦奶", "category_raw": "食品", "target_user_raw": "健身人群"}, "expected_niche_key": "food"}
+{"idea_text": "一款主打无硅油的天然洗发水，售价 68 元，主要走小红书和抖音。差异化：纯天然植物配方，无硫酸盐。", "expected_spec": {"category_raw": "洗发水"}, "expected_niche_key": "beauty"}
+{"idea_text": "做一个帮职场妈妈管理亲子时间的 App，月订阅 29 元，主推微信生态。", "expected_spec": {"category_raw": "App"}, "expected_niche_key": "education"}
+{"idea_text": "一款专门给猫咪吃的冻干鸡肉零食，每包 35 元，在小红书做种草。替代品：比瑞吉、麦富迪。", "expected_spec": {"category_raw": "猫零食"}, "expected_niche_key": "pet"}
+{"idea_text": "做一个环保可降解的手机壳品牌，定价 59 元，走小红书 + 抖音。", "expected_spec": {"category_raw": "手机壳"}, "expected_niche_key": "electronics"}
+{"idea_text": "我想推出一款针对健身人群的胶原蛋白蛋白棒，15 元一条，抖音做投放。", "expected_spec": {"category_raw": "蛋白棒"}, "expected_niche_key": "fitness"}
+{"idea_text": "一款适合城市白领的便携迷你香氛机，定价 199 元，小红书种草 + 京东销售。", "expected_spec": {"category_raw": "香氛机"}, "expected_niche_key": "home"}
+{"idea_text": "做一个给新手宝妈看的育儿知识付费专栏，月费 39 元，微信订阅号。", "expected_spec": {"category_raw": "育儿专栏"}, "expected_niche_key": "baby"}
+{"idea_text": "一款主打防晒的 SPF50+ 素颜霜，75 元，小红书为主渠道，替代竞品有花西子、完美日记。", "expected_spec": {"category_raw": "素颜霜"}, "expected_niche_key": "beauty"}
+{"idea_text": "做一个帮助用户做复盘记录的笔记 App，年费 98 元，小红书 + 微信社群做推广。", "expected_spec": {"category_raw": "笔记 App"}, "expected_niche_key": "education"}
+{"idea_text": "我想做一款高蛋白低卡的饱腹代餐粉，每盒 10 包，定价 99 元，主攻抖音减脂人群。替代品：Wonderlab、Keep 代餐。", "expected_spec": {"category_raw": "代餐粉"}, "expected_niche_key": "fitness"}
+{"idea_text": "一款面向 Z 世代的国潮风卫衣，定价 189 元，走小红书 + 抖音，主打限量联名款。", "expected_spec": {"category_raw": "卫衣"}, "expected_niche_key": "fashion"}
+{"idea_text": "做一个家庭迷你自动浇水装置，售价 139 元，小红书花园爱好者社区推广。", "expected_spec": {"category_raw": "浇水装置"}, "expected_niche_key": "home"}
+{"idea_text": "一款专为老年人设计的智能血压手环，售价 299 元，走京东和线下药店。", "expected_spec": {"category_raw": "血压手环"}, "expected_niche_key": "electronics"}
+{"idea_text": "做一个宠物狗智能喂食器，定价 399 元，小红书 + 抖音养宠人群，替代品：小佩、PETKIT。", "expected_spec": {"category_raw": "智能喂食器"}, "expected_niche_key": "pet"}
+{"idea_text": "I want to launch an organic lip balm brand targeting Gen Z women in China. Price point: ¥39 per stick. Main channel: Xiaohongshu.", "expected_spec": {"category_raw": "lip balm"}, "expected_niche_key": "beauty"}
+{"idea_text": "A premium instant noodle brand with chef-quality broth. RMB 15 per serving, sold on Douyin and JD.", "expected_spec": {"category_raw": "instant noodle"}, "expected_niche_key": "food"}
+{"idea_text": "想做一个专门给旅行摄影爱好者的轻量化三脚架，售价 549 元，走抖音 + B 站测评。", "expected_spec": {"category_raw": "三脚架"}, "expected_niche_key": "electronics"}
+{"idea_text": "一款主打本土草药配方的护发精油，定价 89 元，在小红书做成分党种草，替代品：摩洛哥油。", "expected_spec": {"category_raw": "护发精油"}, "expected_niche_key": "beauty"}
+{"idea_text": "做一个帮助斜杠青年管理多份收入的财务记账 App，月费 19 元，小红书 + 微信推广。", "expected_spec": {"category_raw": "记账 App"}, "expected_niche_key": "education"}
+{"idea_text": "一款针对城市养猫人的猫厕所自动清洁器，售价 1299 元，小红书 + 抖音宠物博主合作。竞品：PETKIT PURA。", "expected_spec": {"category_raw": "猫厕所"}, "expected_niche_key": "pet"}
+{"idea_text": "做一个健身可穿戴设备，追踪深蹲姿势并给纠正建议，售价 499 元，走健身 KOL + 抖音。", "expected_spec": {"category_raw": "可穿戴设备"}, "expected_niche_key": "fitness"}
+{"idea_text": "一款轻旅行专用折叠帆布包，定价 159 元，小红书穿搭博主种草，替代品：Longchamp。", "expected_spec": {"category_raw": "折叠包"}, "expected_niche_key": "fashion"}
+{"idea_text": "做一个高中生物理辅导课程，按章节购买，每章 29 元，微信群 + B 站。", "expected_spec": {"category_raw": "物理辅导"}, "expected_niche_key": "education"}
+{"idea_text": "我想做一款支持中文 + 日文双语的 AI 写作助手，年费 298 元，走 Twitter 和小红书出海人群。", "expected_spec": {"category_raw": "AI 写作助手"}, "expected_niche_key": "education"}
+{"idea_text": "一款给企业 HR 部门用的 SaaS 招聘管理平台，月费 3000 元/席，主要走 B2B 销售和行业展会。", "expected_spec": {"category_raw": "HR SaaS"}, "expected_niche_key": null, "expect_reject": true}
+{"idea_text": "帮我做一个工厂设备预测性维护系统，按设备台数授权，年费 50 万起。面向制造业 MES 系统集成商。", "expected_spec": {"category_raw": "工业 SaaS"}, "expected_niche_key": null, "expect_reject": true}
+{"idea_text": "我们公司做的是给医院 ICU 用的远程监护 SaaS 平台，B2B2C 模式，需要医疗器械认证，目标客户是三甲医院。", "expected_spec": {"category_raw": "医疗 SaaS"}, "expected_niche_key": null, "expect_reject": true}
+{"idea_text": "想做个给创业公司用的法律合规 SaaS，按合同数量收费，月费 1500 元，面向企业法务和 CEO。", "expected_spec": {"category_raw": "法律 SaaS"}, "expected_niche_key": null, "expect_reject": true}
+{"idea_text": "一款添加了玻尿酸的保湿面膜，10 片装定价 49 元，走小红书美妆护肤博主合作。替代品：森田药妆、MG 美即。", "expected_spec": {"category_raw": "面膜", "price_raw": "49 元"}, "expected_niche_key": "beauty"}

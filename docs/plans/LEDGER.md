@@ -8,9 +8,9 @@
 
 ## 当前指针
 
-- **当前里程碑**：M0
-- **当前用例**：AT-M0-01
-- **上轮结束于**：M-1 基线刷绿完成（tests/test_smoke.py 5 个 Windows portability bug 已修，104 passed/3 skipped/0 failed）。下一步：开 M0。
+- **当前里程碑**：M1
+- **当前用例**：AT-M1-01
+- **上轮结束于**：M0 全部 3 AT 绿，commit e596eff（2026-06-11）。AT-M0-02 根因修复：hash(plat)→SHA256、report_content 嵌入时间戳移除、accept.ps1 pin PYTHONHASHSEED=0。下一步：开 M1（spec schema + 骨架）。
 - **全局阻塞**：无
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
@@ -27,7 +27,7 @@
 
 | 里程碑 | 必绿用例 | 必跑回归 | 状态 | 备注 / 阻塞 |
 |---|---|---|---|---|
-| M0 | AT-M0-01…03 | — | TODO | 一切前置；先红后绿 |
+| M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | TODO | 可与 M4 并行 |
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | TODO | |
 | M3 | AT-M3-01…08 | REG-1…4 | TODO | |
@@ -43,10 +43,10 @@
 
 > 实现一个用例 = 测试先红 → 写功能 → 测试绿 → 在此打 `[x]` 并附测试函数名。
 
-### M0 — 回归地基
-- [ ] AT-M0-01 hash 反射回归（单测）→ `test_at_m0_01_*`
-- [ ] AT-M0-02 `/api/predict` 黄金快照（e2e，≥3 组 payload）→ `test_at_m0_02_*`
-- [ ] AT-M0-03 scale_kpi 乘法不变量（单测+注释）→ `test_at_m0_03_*`
+### M0 — 回归地基（DONE）
+- [x] AT-M0-01 hash 反射回归（单测）→ `test_at_m0_01_hash_reflection` (e596eff)
+- [x] AT-M0-02 `/api/predict` 黄金快照（e2e，3 组 payload）→ `test_at_m0_02_golden_snapshot` (e596eff)
+- [x] AT-M0-03 scale_kpi 乘法不变量（单测）→ `test_at_m0_03_aov_invariant` (e596eff)
 
 ### M1 — Spec schema + 骨架
 - [ ] AT-M1-01 ProductSpec schema 严格性
