@@ -8,9 +8,9 @@
 
 ## 当前指针
 
-- **当前里程碑**：M4
-- **当前用例**：AT-M4-01
-- **上轮结束于**：M1 全部 7 AT 绿，commit 44cb082（2026-06-11）。ProductSpec/SpecField schema、mock 双模抽取、normalize、pipeline 骨架，REG-4 通过。下一步：M4（价格端到端）—— 可与 M2/M3 并行。
+- **当前里程碑**：M2
+- **当前用例**：AT-M2-01
+- **上轮结束于**：M4 全部 8 AT 绿，commit b0e4e2e（2026-06-11）。price_cny/pricing_model/substitute_pressure→hash_tuple；W_PRICE_SENS=-0.5；aggregate_kpis 参数化；sandbox price_approx 路径；reference_prices() getter。下一步：M2（Grounding）。
 - **全局阻塞**：无
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
@@ -31,7 +31,7 @@
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | TODO | |
 | M3 | AT-M3-01…08 | REG-1…4 | TODO | |
-| M4 | AT-M4-01…08 | REG-1…4 | TODO | 可与 M1–M3 并行 |
+| M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | TODO | |
 | M6 | AT-M6-01…07 | REG-1…5 | TODO | |
 | M7 | AT-M7-01…14 | REG-1…5 | TODO | 最高优先级 e2e=AT-M7-01 |
@@ -77,15 +77,16 @@
 - [ ] AT-M3-07 Hawkes 种子事件规模
 - [ ] AT-M3-08 新字段三件套（流程+单测）
 
-### M4 — 价格端到端（可与 M1–M3 并行）
-- [ ] AT-M4-01 AOV 参数化后 predict 快照不变
-- [ ] AT-M4-02 price=None 退化
-- [ ] AT-M4-03 价格特征自然退化
-- [ ] AT-M4-04 价格单调性
-- [ ] AT-M4-05 价格×预算交换律
-- [ ] AT-M4-06 price elif 用当前 context
-- [ ] AT-M4-07 reference price
-- [ ] AT-M4-08 决策权重冻结
+### M4 — 价格端到端（DONE）
+- [x] AT-M4-01 AOV 参数化后 predict 快照不变 → `test_at_m4_01_aov_param_snapshot_unchanged` (b0e4e2e)
+- [x] AT-M4-02 price=None 退化 → `test_at_m4_02_price_none_numeric_equiv` (b0e4e2e)
+- [x] AT-M4-03 价格特征自然退化 → `test_at_m4_03_price_feature_natural_degradation` (b0e4e2e)
+- [x] AT-M4-04 价格单调性 → `test_at_m4_04_price_monotonicity` (b0e4e2e)
+- [x] AT-M4-05 价格×预算交换律 → `test_at_m4_05_price_budget_commutativity` (b0e4e2e)
+- [x] AT-M4-06 price elif 用当前 context → `test_at_m4_06_price_elif_uses_current_conversions` (b0e4e2e)
+- [x] AT-M4-07 reference price → `test_at_m4_07_reference_price_getter` (b0e4e2e)
+- [x] AT-M4-08 决策权重冻结 → `test_at_m4_08_decision_weights_frozen` (b0e4e2e)
+- [x] AT-M4-01b 新字段进 hash → `test_at_m4_01b_new_scenario_fields_in_hash` (b0e4e2e)
 
 ### M5 — 人格 + 传播
 - [ ] AT-M5-01 事件别名双处同步
