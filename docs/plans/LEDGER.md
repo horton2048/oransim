@@ -10,7 +10,7 @@
 
 - **当前里程碑**：M5
 - **当前用例**：AT-M5-01
-- **上轮结束于**：M3 全部 8 AT 绿（含 06b 辅助），commit 待填（2026-06-12）。spec/scenario_gen.py（编译 Scenario + 合成 creative 走 make_creative + niche 渠道先验 + 价格×ctr_priors 推预算 + budget_to_impressions 种子脉冲）；pipeline.compile_spec 带 (spec_id,revision) AudienceFilter intern（幂等/升版失效）。M0→M4 已全 DONE，依赖序进 M5。下一步：M5（人格 + 传播）。
+- **上轮结束于**：M3 全部 8 AT 绿（含 06b 辅助），commit 681cc6d（2026-06-12）。spec/scenario_gen.py（编译 Scenario + 合成 creative 走 make_creative + niche 渠道先验 + 价格×ctr_priors 推预算 + budget_to_impressions 种子脉冲）；pipeline.compile_spec 带 (spec_id,revision) AudienceFilter intern（幂等/升版失效）。M0→M4 已全 DONE，依赖序进 M5。下一步：M5（人格 + 传播）。
 - **全局阻塞**：无
 - **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后 12 连绿（8 隔离 + 4 全量）无法复现，疑环境瞬时态；若 M3 后复发需查 bootstrap 期全局 RNG/线程态。
 
@@ -31,7 +31,7 @@
 | M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
 | M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit c81891d 2026-06-12；AT-M2-02 live 手动 |
-| M3 | AT-M3-01…08 | REG-1…4 | DONE | commit 待填 2026-06-12 |
+| M3 | AT-M3-01…08 | REG-1…4 | DONE | commit 681cc6d 2026-06-12 |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | TODO | |
 | M6 | AT-M6-01…07 | REG-1…5 | TODO | |
