@@ -77,6 +77,7 @@ def calibrate_per_territory(
     stat_click_probs_by_persona: dict[int, float],
     eps: float = 0.05,
     persona_id_to_slot: dict[int, int] | None = None,
+    vote_field: str = "will_click",
 ) -> dict:
     """For each soul → territory, compute correction factor; produce both
     a global (weighted-geomean) factor and per-segment factors.
@@ -97,7 +98,8 @@ def calibrate_per_territory(
     factors = np.zeros(S, dtype=np.float32)
 
     for i, s in enumerate(souls):
-        soul_verdicts[i] = 1.0 if s.get("will_click") else 0.0
+        # vote_field 切换票源: campaign 用 will_click, launch 用 will_try (AT-M5-08)。
+        soul_verdicts[i] = 1.0 if s.get(vote_field) else 0.0
         pid = s.get("persona_id")
         if pid is not None:
             stat_at_souls[i] = stat_click_probs_by_persona.get(int(pid), eps)
@@ -136,6 +138,7 @@ def calibrate_per_territory(
         "stat_at_souls": [round(float(p), 3) for p in stat_at_souls],
         "n_souls": S,
         "n_population_covered": int((weights > 0).sum()),
+        "vote_field": vote_field,
     }
 
 

@@ -410,6 +410,47 @@ class SoulAgentPool:
             "purchase_intent_7d": intent,
         }
 
+    def infer_one_launch(
+        self,
+        persona_id: int,
+        creative: Creative,
+        trial_prob: float,
+        kol: KOL | None,
+        platform: str,
+        rng: random.Random,
+    ) -> dict:
+        """上市人格模式 (方案 §4.3): persona 看合成发布笔记 + 定价, 返回
+        {will_try, would_pay_cny, objection, purchase_intent_7d}. mock 模板路径,
+        镜像 infer_one 但换成 try/pay/objection 语义。"""
+        p = self.personas[persona_id]
+        base = trial_prob
+        if kol and any(
+            n in p.interests for n in [kol.niche, _niche_en_to_zh().get(kol.niche, "")]
+        ):
+            base = min(1.0, base * 1.3)
+        will_try = rng.random() < min(1.0, base * 1.2)
+
+        if will_try:
+            objection = ""
+            intent = round(min(0.95, 0.35 + base + rng.uniform(-0.1, 0.2)), 2)
+            pay_floor = 60.0 + base * 240.0
+        else:
+            objection = rng.choice(NEGATIVE_REASONS)
+            intent = round(max(0.02, 0.15 - (1 - base)), 2)
+            pay_floor = 20.0 + base * 80.0
+        # 支付意愿: 随机围绕 pay_floor 抖动 (mock; 真实由 LLM 估)
+        would_pay_cny = round(max(0.0, pay_floor + rng.uniform(-20.0, 40.0)), 2)
+
+        return {
+            "persona_id": persona_id,
+            "persona_oneliner": p.one_liner(),
+            "persona_card": p.full_card(),
+            "will_try": bool(will_try),
+            "would_pay_cny": float(would_pay_cny),
+            "objection": objection,
+            "purchase_intent_7d": float(intent),
+        }
+
     def infer_batch(
         self,
         creative: Creative,
@@ -419,6 +460,7 @@ class SoulAgentPool:
         n_sample: int = 10,
         seed: int = 7,
         use_llm: bool = False,
+        mode: str = "campaign",
     ) -> list[dict]:
         """Pick n_sample souls and get their reasoning.
 
@@ -570,7 +612,10 @@ class SoulAgentPool:
         results = []
         for pid in chosen:
             cp = outcome_click_probs.get(pid, 0.05)
-            r = self.infer_one(pid, creative, cp, kol, platform, rng)
+            if mode == "launch":
+                r = self.infer_one_launch(pid, creative, cp, kol, platform, rng)
+            else:
+                r = self.infer_one(pid, creative, cp, kol, platform, rng)
             r["source"] = "mock"
             results.append(r)
         return results

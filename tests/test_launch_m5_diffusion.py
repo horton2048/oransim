@@ -219,3 +219,105 @@ def test_at_m5_04_splice_window_no_hard_seam():
     # 端点行为: 窗前 = a, 窗后 = b
     assert blended[5] == curve_a[5]
     assert blended[25] == curve_b[25]
+
+
+# ═══════════════════════════════════════ AT-M5-07 ═══════════════════════════
+
+
+def _soul_pool(n=12):
+    from oransim.agents.soul import SoulAgentPool
+    from oransim.data.population import generate_population
+    pop = generate_population(N=600, seed=42)
+    return SoulAgentPool(pop, n=n, seed=7)
+
+
+def _creative():
+    from oransim.data.creatives import make_creative
+    return make_creative(creative_id="m5-cre", caption="新品上市 保湿面膜 种草", duration_sec=15.0)
+
+
+def test_at_m5_07_launch_persona_mode():
+    """infer_batch(mode='launch') mock 返回四键齐全且类型正确；默认 mode 行为不变."""
+    pool = _soul_pool()
+    cre = _creative()
+    probs = {pid: 0.3 for pid in pool.personas}
+
+    launch = pool.infer_batch(cre, probs, None, "xhs", n_sample=8, seed=7, mode="launch")
+    assert launch, "launch 模式应返回结果"
+    for r in launch:
+        assert set(["will_try", "would_pay_cny", "objection", "purchase_intent_7d"]) <= set(r)
+        assert isinstance(r["will_try"], bool)
+        assert isinstance(r["would_pay_cny"], float) and r["would_pay_cny"] >= 0
+        assert isinstance(r["objection"], str)
+        assert isinstance(r["purchase_intent_7d"], float)
+        assert 0.0 <= r["purchase_intent_7d"] <= 1.0
+
+    # 默认 mode (不传) 行为不变: 仍是 campaign 的 will_click 语义键
+    default = pool.infer_batch(cre, probs, None, "xhs", n_sample=8, seed=7)
+    for r in default:
+        assert "will_click" in r, "默认 mode 应保留 will_click 键 (campaign 回归)"
+        assert "will_try" not in r, "默认 mode 不应出现 launch 专有键"
+
+
+# ═══════════════════════════════════════ AT-M5-08 ═══════════════════════════
+
+
+def test_at_m5_08_voronoi_calibration_vote_source():
+    """campaign 用 will_click 票；launch 用 will_try 票 (calibrate_per_territory vote_field)."""
+    from oransim.agents.calibration import VoronoiPartition, calibrate_per_territory
+
+    # 构造 will_click 与 will_try 故意相反的 souls
+    souls = []
+    for i in range(6):
+        souls.append({
+            "persona_id": i,
+            "source": "llm",
+            "will_click": (i % 2 == 0),   # 偶数 click
+            "will_try": (i % 2 == 1),     # 奇数 try (与 click 相反)
+        })
+    S = len(souls)
+    partition = VoronoiPartition(
+        soul_indices=np.arange(S),
+        nearest=np.zeros(1, dtype=np.int32),
+        weights=np.full(S, 1.0 / S, dtype=np.float32),
+        feat_pop=np.zeros((1, 2), dtype=np.float32),
+        feat_souls=np.zeros((S, 2), dtype=np.float32),
+    )
+    stats = {i: 0.2 for i in range(S)}
+
+    cal_click = calibrate_per_territory(souls, partition, stats, vote_field="will_click")
+    cal_try = calibrate_per_territory(souls, partition, stats, vote_field="will_try")
+
+    assert cal_click["vote_field"] == "will_click"
+    assert cal_try["vote_field"] == "will_try"
+    # 票源不同 → 逐 soul verdict 相反
+    assert cal_click["soul_verdicts"] != cal_try["soul_verdicts"], "换票源应改变 verdicts"
+    for i in range(S):
+        assert cal_click["soul_verdicts"][i] != cal_try["soul_verdicts"][i]
+
+
+def test_at_m5_08b_voronoi_calibration_mode_plumbing(monkeypatch):
+    """voronoi_calibration(mode='launch') 把 will_try 作为票源传给 calibrate (spy)."""
+    import oransim.api_helpers as ah
+    from oransim import api_state
+
+    seen = {}
+
+    def _spy(souls, partition, stats, persona_id_to_slot=None, vote_field="will_click", **kw):
+        seen["vote_field"] = vote_field
+        return {"global_factor": 1.0}
+
+    monkeypatch.setattr(ah, "calibrate_per_territory", _spy)
+    monkeypatch.setattr(ah, "calibration_summary", lambda cal: {})
+    monkeypatch.setattr(api_state, "PARTITION", object(), raising=False)
+    monkeypatch.setattr(api_state, "PERSONA_TO_SLOT", {}, raising=False)
+
+    souls = [{"source": "llm", "persona_id": i, "will_click": True, "will_try": False}
+             for i in range(6)]
+    stats = {i: 0.2 for i in range(6)}
+
+    ah.voronoi_calibration(souls, stats, mode="launch")
+    assert seen["vote_field"] == "will_try"
+
+    ah.voronoi_calibration(souls, stats, mode="campaign")
+    assert seen["vote_field"] == "will_click"

@@ -144,20 +144,30 @@ def build_scenario(req: PredictRequest) -> tuple[Scenario, dict]:
     return scenario, msum
 
 
-def voronoi_calibration(souls: list[dict], stats_click_probs: dict[int, float]) -> dict | None:
+def voronoi_calibration(
+    souls: list[dict],
+    stats_click_probs: dict[int, float],
+    *,
+    mode: str = "campaign",
+) -> dict | None:
     """Voronoi-weighted calibration: each soul represents its territory.
 
     100 LLM verdicts → effective coverage of all 100k population agents,
     same way 1k poll respondents represent 1.4B citizens.
+
+    票源 (方案 §4.3, AT-M5-08): campaign 模式用 ``will_click`` 票校准 click_prob;
+    launch 模式用 ``will_try`` 票校准 trial_prob。同一 Voronoi 加权机制, 换票源即可。
     """
     llm_souls = [s for s in souls if s.get("source") == "llm"]
     if len(llm_souls) < 5:
         return None
+    vote_field = "will_try" if mode == "launch" else "will_click"
     cal = calibrate_per_territory(
         llm_souls,
         api_state.PARTITION,
         stats_click_probs,
         persona_id_to_slot=api_state.PERSONA_TO_SLOT,
+        vote_field=vote_field,
     )
     cal["summary"] = calibration_summary(cal)
     return cal
