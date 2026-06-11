@@ -109,10 +109,14 @@ def _is_b2b(text: str) -> bool:
 
 
 def _keyword_table() -> dict[str, list[str]]:
-    """合并 niches.synonyms() 与本模块富品类表 (synonyms 在前, 同 niche 追加)."""
-    syn = _niches.synonyms()
+    """合并 niches.synonyms() 与本模块富品类表 (synonyms 在前, 同 niche 追加).
+
+    include_v2=True: grounding 覆盖 M8 新增上市域品类 (app_tool/edu_service/... )，
+    使新品类可被 grounded (AT-M8-04); 不影响 campaign KOL 库 (后者用默认 campaign 域)。
+    """
+    syn = _niches.synonyms(include_v2=True)
     table: dict[str, list[str]] = {}
-    for niche in _niches.niche_keys():
+    for niche in _niches.niche_keys(include_v2=True):
         kws = list(syn.get(niche, []))
         kws.extend(_CATEGORY_KEYWORDS.get(niche, []))
         table[niche] = kws
@@ -203,7 +207,7 @@ def _corpus_coverage(niche_key: str | None, bus) -> float:
         return 1.0
     if vecs is None or len(vecs) == 0 or rec is None:
         return 1.0
-    caption = _niches.bias_captions().get(niche_key, niche_key)
+    caption = _niches.bias_captions(include_v2=True).get(niche_key, niche_key)
     qvec = rec.embedder.embed(f"{niche_key}::{caption}")
     hits = bus.search(qvec, src, top_k=1)
     if not hits:

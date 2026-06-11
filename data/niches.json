@@ -6,8 +6,22 @@
       "key": "beauty",
       "zh": "美妆",
       "en": "Beauty",
-      "synonyms": ["美妆", "口红", "粉底", "眼影", "彩妆", "香水", "腮红", "底妆", "妆前"],
-      "ctr_prior": {"mu": 0.048, "sigma": 0.020, "n": 3100},
+      "synonyms": [
+        "美妆",
+        "口红",
+        "粉底",
+        "眼影",
+        "彩妆",
+        "香水",
+        "腮红",
+        "底妆",
+        "妆前"
+      ],
+      "ctr_prior": {
+        "mu": 0.048,
+        "sigma": 0.02,
+        "n": 3100
+      },
       "bias_caption": "美妆 口红 粉底 测评",
       "female_ratio": 90
     },
@@ -15,8 +29,21 @@
       "key": "fashion",
       "zh": "穿搭",
       "en": "Fashion",
-      "synonyms": ["穿搭", "时尚", "OOTD", "搭配", "服装", "外套", "连衣裙", "牛仔"],
-      "ctr_prior": {"mu": 0.035, "sigma": 0.014, "n": 2750},
+      "synonyms": [
+        "穿搭",
+        "时尚",
+        "OOTD",
+        "搭配",
+        "服装",
+        "外套",
+        "连衣裙",
+        "牛仔"
+      ],
+      "ctr_prior": {
+        "mu": 0.035,
+        "sigma": 0.014,
+        "n": 2750
+      },
       "bias_caption": "穿搭 vintage 设计师 小众",
       "female_ratio": 85
     },
@@ -24,8 +51,19 @@
       "key": "food",
       "zh": "美食",
       "en": "Food",
-      "synonyms": ["美食", "探店", "做饭", "家常", "甜品", "小吃"],
-      "ctr_prior": {"mu": 0.044, "sigma": 0.019, "n": 1890},
+      "synonyms": [
+        "美食",
+        "探店",
+        "做饭",
+        "家常",
+        "甜品",
+        "小吃"
+      ],
+      "ctr_prior": {
+        "mu": 0.044,
+        "sigma": 0.019,
+        "n": 1890
+      },
       "bias_caption": "美食 探店 做饭 家常",
       "female_ratio": 60
     },
@@ -33,8 +71,19 @@
       "key": "beverage",
       "zh": "饮品",
       "en": "Beverage",
-      "synonyms": ["奶茶", "咖啡", "饮料", "汽水", "果汁", "茶饮"],
-      "ctr_prior": {"mu": 0.042, "sigma": 0.018, "n": 2350},
+      "synonyms": [
+        "奶茶",
+        "咖啡",
+        "饮料",
+        "汽水",
+        "果汁",
+        "茶饮"
+      ],
+      "ctr_prior": {
+        "mu": 0.042,
+        "sigma": 0.018,
+        "n": 2350
+      },
       "bias_caption": "奶茶 咖啡 茶饮 饮品",
       "female_ratio": 65
     },
@@ -42,8 +91,20 @@
       "key": "fitness",
       "zh": "健身",
       "en": "Fitness",
-      "synonyms": ["健身", "减脂", "瑜伽", "跑步", "运动", "塑形", "增肌"],
-      "ctr_prior": {"mu": 0.033, "sigma": 0.013, "n": 1120},
+      "synonyms": [
+        "健身",
+        "减脂",
+        "瑜伽",
+        "跑步",
+        "运动",
+        "塑形",
+        "增肌"
+      ],
+      "ctr_prior": {
+        "mu": 0.033,
+        "sigma": 0.013,
+        "n": 1120
+      },
       "bias_caption": "健身 减脂 跑步 瑜伽",
       "female_ratio": 55
     },
@@ -51,8 +112,22 @@
       "key": "electronics",
       "zh": "数码",
       "en": "Electronics",
-      "synonyms": ["数码", "手机", "耳机", "笔记本", "平板", "电脑", "相机", "智能", "3C"],
-      "ctr_prior": {"mu": 0.029, "sigma": 0.011, "n": 1260},
+      "synonyms": [
+        "数码",
+        "手机",
+        "耳机",
+        "笔记本",
+        "平板",
+        "电脑",
+        "相机",
+        "智能",
+        "3C"
+      ],
+      "ctr_prior": {
+        "mu": 0.029,
+        "sigma": 0.011,
+        "n": 1260
+      },
       "bias_caption": "数码 机械 评测 极客",
       "female_ratio": 25
     },
@@ -60,8 +135,22 @@
       "key": "travel",
       "zh": "旅行",
       "en": "Travel",
-      "synonyms": ["旅行", "旅游", "酒店", "民宿", "机票", "景点", "风景", "自驾", "度假"],
-      "ctr_prior": {"mu": 0.031, "sigma": 0.012, "n": 1540},
+      "synonyms": [
+        "旅行",
+        "旅游",
+        "酒店",
+        "民宿",
+        "机票",
+        "景点",
+        "风景",
+        "自驾",
+        "度假"
+      ],
+      "ctr_prior": {
+        "mu": 0.031,
+        "sigma": 0.012,
+        "n": 1540
+      },
       "bias_caption": "旅行 风景 度假 机票",
       "female_ratio": 52
     },
@@ -69,8 +158,20 @@
       "key": "home",
       "zh": "家居",
       "en": "Home",
-      "synonyms": ["家居", "收纳", "装修", "家具", "清洁", "整理", "沙发"],
-      "ctr_prior": {"mu": 0.036, "sigma": 0.015, "n": 1450},
+      "synonyms": [
+        "家居",
+        "收纳",
+        "装修",
+        "家具",
+        "清洁",
+        "整理",
+        "沙发"
+      ],
+      "ctr_prior": {
+        "mu": 0.036,
+        "sigma": 0.015,
+        "n": 1450
+      },
       "bias_caption": "家居 收纳 装修 家具",
       "female_ratio": 70
     },
@@ -78,8 +179,20 @@
       "key": "pet",
       "zh": "宠物",
       "en": "Pet",
-      "synonyms": ["宠物", "猫咪", "狗狗", "铲屎官", "萌宠", "猫粮", "狗粮"],
-      "ctr_prior": {"mu": 0.046, "sigma": 0.019, "n": 920},
+      "synonyms": [
+        "宠物",
+        "猫咪",
+        "狗狗",
+        "铲屎官",
+        "萌宠",
+        "猫粮",
+        "狗粮"
+      ],
+      "ctr_prior": {
+        "mu": 0.046,
+        "sigma": 0.019,
+        "n": 920
+      },
       "bias_caption": "宠物 猫咪 狗狗 铲屎官",
       "female_ratio": 68
     },
@@ -87,10 +200,158 @@
       "key": "parenting",
       "zh": "母婴",
       "en": "Parenting",
-      "synonyms": ["母婴", "育儿", "辅食", "宝宝", "奶粉", "童装", "亲子"],
-      "ctr_prior": {"mu": 0.039, "sigma": 0.016, "n": 870},
+      "synonyms": [
+        "母婴",
+        "育儿",
+        "辅食",
+        "宝宝",
+        "奶粉",
+        "童装",
+        "亲子"
+      ],
+      "ctr_prior": {
+        "mu": 0.039,
+        "sigma": 0.016,
+        "n": 870
+      },
       "bias_caption": "母婴 育儿 宝宝 辅食",
       "female_ratio": 92
+    },
+    {
+      "key": "app_tool",
+      "zh": "效率工具",
+      "en": "App Tool",
+      "synonyms": [
+        "效率",
+        "笔记",
+        "记账",
+        "待办",
+        "日程",
+        "生产力"
+      ],
+      "ctr_prior": {
+        "mu": 0.035,
+        "sigma": 0.015,
+        "n": 1200
+      },
+      "bias_caption": "效率 笔记 记账 工具",
+      "female_ratio": 55,
+      "tier": "v2",
+      "reference_price": 98.0,
+      "purchase_cycle_days": 365,
+      "adoption_rate_prior": 0.04,
+      "bass_p_prior": 0.02,
+      "bass_q_prior": 0.3,
+      "aov_prior": 108.0
+    },
+    {
+      "key": "smart_hardware",
+      "zh": "智能硬件",
+      "en": "Smart Hardware",
+      "synonyms": [
+        "智能硬件",
+        "机器人",
+        "扫地机",
+        "智能音箱",
+        "IoT",
+        "智能家电"
+      ],
+      "ctr_prior": {
+        "mu": 0.03,
+        "sigma": 0.012,
+        "n": 900
+      },
+      "bias_caption": "智能硬件 机器人 扫地机 IoT",
+      "female_ratio": 50,
+      "tier": "v2",
+      "reference_price": 599.0,
+      "purchase_cycle_days": 540,
+      "adoption_rate_prior": 0.035,
+      "bass_p_prior": 0.018,
+      "bass_q_prior": 0.28,
+      "aov_prior": 680.0
+    },
+    {
+      "key": "edu_service",
+      "zh": "教育服务",
+      "en": "Edu Service",
+      "synonyms": [
+        "网课",
+        "知识付费",
+        "训练营",
+        "考研",
+        "留学",
+        "辅导课"
+      ],
+      "ctr_prior": {
+        "mu": 0.028,
+        "sigma": 0.012,
+        "n": 800
+      },
+      "bias_caption": "网课 知识付费 训练营 辅导",
+      "female_ratio": 55,
+      "tier": "v2",
+      "reference_price": 299.0,
+      "purchase_cycle_days": 180,
+      "adoption_rate_prior": 0.045,
+      "bass_p_prior": 0.02,
+      "bass_q_prior": 0.32,
+      "aov_prior": 330.0
+    },
+    {
+      "key": "outdoor",
+      "zh": "户外露营",
+      "en": "Outdoor",
+      "synonyms": [
+        "露营",
+        "徒步",
+        "钓鱼",
+        "骑行",
+        "户外装备",
+        "登山",
+        "桨板"
+      ],
+      "ctr_prior": {
+        "mu": 0.033,
+        "sigma": 0.014,
+        "n": 700
+      },
+      "bias_caption": "露营 徒步 户外装备 骑行",
+      "female_ratio": 45,
+      "tier": "v2",
+      "reference_price": 259.0,
+      "purchase_cycle_days": 150,
+      "adoption_rate_prior": 0.05,
+      "bass_p_prior": 0.022,
+      "bass_q_prior": 0.33,
+      "aov_prior": 290.0
+    },
+    {
+      "key": "collectible",
+      "zh": "潮玩收藏",
+      "en": "Collectible",
+      "synonyms": [
+        "潮玩",
+        "盲盒",
+        "手办",
+        "积木",
+        "模型",
+        "谷子"
+      ],
+      "ctr_prior": {
+        "mu": 0.042,
+        "sigma": 0.018,
+        "n": 1100
+      },
+      "bias_caption": "潮玩 盲盒 手办 模型",
+      "female_ratio": 60,
+      "tier": "v2",
+      "reference_price": 69.0,
+      "purchase_cycle_days": 30,
+      "adoption_rate_prior": 0.075,
+      "bass_p_prior": 0.032,
+      "bass_q_prior": 0.4,
+      "aov_prior": 78.0
     }
   ]
 }
