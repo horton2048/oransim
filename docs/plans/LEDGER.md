@@ -8,10 +8,11 @@
 
 ## 当前指针
 
-- **当前里程碑**：M2
-- **当前用例**：AT-M2-01
-- **上轮结束于**：M4 全部 8 AT 绿，commit b0e4e2e（2026-06-11）。price_cny/pricing_model/substitute_pressure→hash_tuple；W_PRICE_SENS=-0.5；aggregate_kpis 参数化；sandbox price_approx 路径；reference_prices() getter。下一步：M2（Grounding）。
+- **当前里程碑**：M3
+- **当前用例**：AT-M3-01
+- **上轮结束于**：M2 全部 6 AT 绿（AT-M2-02 live LLM 留手动），commit 待填（2026-06-12）。spec/ground.py：B2B 硬拒绝 + 富品类关键词最早位置匹配（90.9% 黄金集准确率，阈值 85%）+ 嵌入兜底 + 语料覆盖惩罚 + 0.55 置信度闸门；api_state 注册 product_categories/category_notes 双 UEB 源。黄金集 niche key 对齐 10 真垂类（baby→parenting；4 条工具/知识服务改 reject，见 DECISIONS）。下一步：M3（Scenario 生成）。
 - **全局阻塞**：无
+- **观察项**：AT-M0-02 黄金快照在某次全量跑中出现 1 次字节失配，随后 12 连绿（8 隔离 + 4 全量）无法复现，疑环境瞬时态；若 M3 后复发需查 bootstrap 期全局 RNG/线程态。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
 
@@ -29,7 +30,7 @@
 |---|---|---|---|---|
 | M0 | AT-M0-01…03 | — | DONE | commit e596eff 2026-06-11 |
 | M1 | AT-M1-01…07 + 黄金集交付 | REG-1/2/3 | DONE | commit 44cb082 2026-06-11 |
-| M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | TODO | |
+| M2 | AT-M2-01/03…07（02 发版前补） | REG-1…4 | DONE | commit 待填 2026-06-12；AT-M2-02 live 手动 |
 | M3 | AT-M3-01…08 | REG-1…4 | TODO | |
 | M4 | AT-M4-01…08 | REG-1…4 | DONE | commit b0e4e2e 2026-06-11 |
 | M5 | AT-M5-01…08 | REG-1…5 | TODO | |
@@ -49,22 +50,22 @@
 - [x] AT-M0-03 scale_kpi 乘法不变量（单测）→ `test_at_m0_03_aov_invariant` (e596eff)
 
 ### M1 — Spec schema + 骨架（DONE）
-- [x] AT-M1-01 ProductSpec schema 严格性 → `test_at_m1_01_schema_strict` (44cb082)
-- [x] AT-M1-02 无 provenance 拒绝 → `test_at_m1_02_no_provenance_forces_inferred` (44cb082)
-- [x] AT-M1-03 assumed_fields 派生正确 → `test_at_m1_03_assumed_fields` (44cb082)
+- [x] AT-M1-01 ProductSpec schema 严格性 → `test_at_m1_01_product_spec_schema_strictness` (44cb082)
+- [x] AT-M1-02 无 provenance 拒绝 → `test_at_m1_02_no_provenance_must_be_inferred` (44cb082)
+- [x] AT-M1-03 assumed_fields 派生正确 → `test_at_m1_03_assumed_fields_derived` (44cb082)
 - [x] AT-M1-04 mock 抽取确定性 → `test_at_m1_04_mock_extract_deterministic` (44cb082)
-- [x] AT-M1-05 黄金集 spec 字段匹配率基线 → `test_at_m1_05_golden_baseline` (44cb082)
-- [x] AT-M1-06 B2B 拒绝标记 → `test_at_m1_06_b2b_indicators` (44cb082)
-- [x] AT-M1-07 CATEGORY_DEFAULTS 来源标记 → `test_at_m1_07_category_defaults_tags` (44cb082)
+- [x] AT-M1-05 黄金集 spec 字段匹配率基线 → `test_at_m1_05_golden_set_baseline` (44cb082)
+- [x] AT-M1-06 normalize 纯函数规整 → `test_at_m1_06_normalize_functions` (44cb082)
+- [x] AT-M1-07 CATEGORY_DEFAULTS 来源标记 → `test_at_m1_07_category_defaults_tagging` (44cb082)
 - [x] 黄金集交付 `tests/golden/launch_ideas.jsonl` (44cb082)
 
-### M2 — Grounding
-- [ ] AT-M2-01 品类映射准确率（mock）
-- [ ] AT-M2-03 B2B 反例硬拒绝
-- [ ] AT-M2-04 置信度闸门语义
-- [ ] AT-M2-05 UEB 双源注册
-- [ ] AT-M2-06 语料覆盖拉低置信度
-- [ ] AT-M2-07 synonyms（见文档）
+### M2 — Grounding（DONE，AT-M2-02 手动留存）
+- [x] AT-M2-01 品类映射准确率（mock）90.9% ≥85% → `test_at_m2_01_category_mapping_accuracy_mock`
+- [x] AT-M2-03 B2B 反例硬拒绝 4/4 → `test_at_m2_03_b2b_hard_reject`
+- [x] AT-M2-04 置信度闸门语义（0.55 含入）→ `test_at_m2_04_confidence_gate_semantics`
+- [x] AT-M2-05 UEB 双源注册 → `test_at_m2_05_ueb_dual_source_registered`
+- [x] AT-M2-06 语料覆盖拉低置信度 → `test_at_m2_06_corpus_coverage_lowers_confidence`
+- [x] AT-M2-07 synonyms 优先嵌入兜底 → `test_at_m2_07_synonyms_priority_over_embedding`
 - [ ] AT-M2-02 品类映射准确率（live LLM）— **发版前补 / 手动**
 
 ### M3 — Scenario 生成

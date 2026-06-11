@@ -146,3 +146,19 @@ def _bootstrap_index() -> None:
             BUS.index("world_event", ws["events"])
     except Exception:
         pass
+
+    # M2 grounding 双源: product_categories (各 niche 代表文案) + category_notes
+    # (按 niche 的语料覆盖). 两源 item 用 "niche::caption" 编码, grounding 据此解析
+    # niche 并做覆盖自匹配 (spec/ground.py)。
+    from .config import niches as _nm
+
+    _caps = _nm.bias_captions()
+    _keys = _nm.niche_keys()
+    BUS.index("product_categories", [f"{k}::{_caps.get(k, k)}" for k in _keys])
+    try:
+        from .agents.tag_lift import _load_notes
+
+        _covered = {n.get("niche") for n in _load_notes() if n.get("niche")}
+    except Exception:
+        _covered = set(_keys)
+    BUS.index("category_notes", [f"{k}::{_caps.get(k, k)}" for k in _keys if k in _covered])
