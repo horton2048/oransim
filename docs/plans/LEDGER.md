@@ -8,11 +8,12 @@
 
 ## 当前指针
 
-- **当前里程碑**：M8
-- **当前用例**：AT-M8-01
-- **上轮结束于**：M7 全部 14 AT 绿，commits 70f89b0/d578fe4/83a1266（2026-06-12）。完整 launch API（spec/store append-only 版本化 + 5 端点 + LaunchReport 四区块 + 文案红线 + 诚实标记 + 流式 keepalive + 成本上限 + lifecycle 409 不落 legacy + launch sandbox 滑杆）。下一步：M8（数据 v2 + 标定）。
+- **当前里程碑**：全部 DONE 🎉（M0–M8 完结，仅 AT-M2-02 live LLM 与 M8 live 复跑留手动）
+- **当前用例**：—（无未完成 mock 用例）
+- **上轮结束于**：M8 全部 4 AT 绿，commit 6c33000（2026-06-12）。niches.json v2（原 10 零改动 + 5 新 tier:v2 品类）；config/niches.py campaign 域 getter 默认排除 v2 保 REG-2；新 getter reference_prices/adoption_priors/bass_priors 全覆盖；spec/calibration.py 标定可追溯。**M0–M8 八里程碑全部 DONE，验收闸 183 passed / 2 skipped / REG-4 clean。**
 - **全局阻塞**：无
-- **观察项**：AT-M0-02 黄金快照本 session 累计 2 次非复现单次字节失配（每次 4× 隔离复测全绿，纯新增代码非诱因）；疑 bootstrap 期全局 RNG/线程瞬时态，未阻塞，值得专项查。
+- **观察项**：AT-M0-02 黄金快照本 session 累计 2 次非复现单次字节失配（每次多轮隔离复测全绿，纯新增代码非诱因）；疑 bootstrap 期全局 RNG/线程瞬时态，未阻塞，建议后续专项查。
+- **留手动**：AT-M2-02（品类映射 live LLM 准确率）、M8 live 复跑——需真实 LLM 供应商，按约定留人工执行。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
 
@@ -36,7 +37,7 @@
 | M5 | AT-M5-01…08 | REG-1…5 | DONE | commit 26e8b46 2026-06-12 |
 | M6 | AT-M6-01…07 | REG-1…5 | DONE | commit 9043b3d 2026-06-12 |
 | M7 | AT-M7-01…14 | REG-1…5 | DONE | commit 83a1266 2026-06-12 |
-| M8 | AT-M8-01…04 + AT-M2-02 live 复跑 | REG-1…5 全量 | TODO | M2-02 需 live LLM，留给你手动复跑 |
+| M8 | AT-M8-01…04 + AT-M2-02 live 复跑 | REG-1…5 全量 | DONE | commit 6c33000 2026-06-12；AT-M2-02/live 手动 |
 
 ---
 
@@ -124,9 +125,9 @@
 - [x] AT-M7-13 引擎层依赖方向（REG-4）→ `test_at_m7_13_engine_no_spec_import` (70f89b0)
 - [x] AT-M7-14 流式 keepalive → `test_at_m7_14_streaming_keepalive` (83a1266)
 
-### M8 — 数据 v2 + 标定
-- [ ] AT-M8-01 （见文档）
-- [ ] AT-M8-02 新 getter 与新品类完整性
-- [ ] AT-M8-03 标定可追溯
-- [ ] AT-M8-04 黄金集准确率不回退（REG-5）
-- [ ] AT-M2-02 live LLM 复跑 — **手动**
+### M8 — 数据 v2 + 标定（DONE）
+- [x] AT-M8-01 niches.json v2 向后兼容 → `test_at_m8_01_v2_backward_compatible` (6c33000)
+- [x] AT-M8-02 新 getter 与新品类完整性 → `test_at_m8_02_new_getters_complete` (6c33000)
+- [x] AT-M8-03 标定可追溯 → `test_at_m8_03_calibration_traceable` (6c33000)
+- [x] AT-M8-04 黄金集准确率不回退（REG-5）→ `test_at_m8_04_golden_accuracy_no_regression` (6c33000)
+- [ ] AT-M2-02 live LLM 复跑 — **手动**（需真实 LLM）
