@@ -35,6 +35,7 @@ from .base import (
     DiffusionConfig,
     DiffusionForecast,
     DiffusionModel,
+    resolve_event_base,
 )
 
 
@@ -74,12 +75,12 @@ class ParametricHawkes(DiffusionModel):
 
     def _event_type_idx(self, name: str) -> int:
         # Seed streams may carry "paid_*" treatment events (e.g. the synthetic
-        # generator's "paid_impression"); they map onto their base type for
-        # intensity indexing — the paid/organic distinction isn't modelled by
-        # the parametric baseline. Strip the prefix so seed processing doesn't
-        # crash on an unknown event name.
-        base = name[5:] if name.startswith("paid_") else name
-        return self.config.event_types.index(base)
+        # generator's "paid_impression") and launch-funnel aliases (trial /
+        # adoption / wom_referral). Both are normalised to a base type via the
+        # shared resolver so this path and neural_hawkes._etype_idx stay in sync
+        # (AT-M5-01). The paid/organic distinction isn't modelled by the
+        # parametric baseline.
+        return self.config.event_types.index(resolve_event_base(name))
 
     def _intensity(self, t: float, history: list[tuple[float, int]], k: int) -> float:
         """Compute ``lambda_k(t)`` given the history of observed events."""

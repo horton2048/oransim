@@ -51,6 +51,7 @@ from .base import (
     DiffusionConfig,
     DiffusionForecast,
     DiffusionModel,
+    resolve_event_base,
 )
 
 # --------------------------------------------------------------------- config
@@ -357,11 +358,11 @@ class CausalNeuralHawkesProcess(DiffusionModel):
     def _etype_idx(self, name: str) -> int:
         # A "paid_" prefix marks a treatment/intervention event (see
         # _treatment_id_of); that paid/organic axis is carried separately by
-        # treatment_ids, so the base type for embedding lookup is the
-        # un-prefixed event name. The synthetic generator emits "paid_impression"
-        # which must map to the "impression" base type, not crash the lookup.
-        base = name[5:] if name.startswith("paid_") else name
-        return self.config.event_types.index(base)
+        # treatment_ids. Launch-funnel aliases (trial / adoption / wom_referral)
+        # also resolve to a base type. Both go through the shared resolver so
+        # this path and hawkes._event_type_idx stay in sync (AT-M5-01). The
+        # synthetic generator emits "paid_impression" → "impression".
+        return self.config.event_types.index(resolve_event_base(name))
 
     def _treatment_id_of(self, event_name: str) -> int:
         # Convention: events prefixed "paid_" are treatment/intervention events.

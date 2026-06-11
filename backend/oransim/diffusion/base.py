@@ -24,6 +24,28 @@ from typing import Any
 
 DEFAULT_EVENT_TYPES = ("impression", "like", "comment", "share", "save", "conversion")
 
+# Launch-mode event aliases → base type (方案 §4.4). Launch seed/lifecycle streams
+# may carry adoption-funnel names that aren't among the six base engagement types;
+# they map onto a base type for intensity indexing. Defined once here so the
+# parametric (hawkes._event_type_idx) and neural (neural_hawkes._etype_idx) paths
+# resolve them identically (AT-M5-01 双处同步).
+EVENT_ALIASES: dict[str, str] = {
+    "trial": "conversion",
+    "adoption": "conversion",
+    "wom_referral": "share",
+}
+
+
+def resolve_event_base(name: str) -> str:
+    """Strip a ``paid_`` treatment prefix then resolve launch aliases to a base type.
+
+    Order: ``paid_`` prefix first (treatment axis carried separately), then alias
+    lookup. ``paid_trial`` → ``trial`` → ``conversion``. Unknown names pass through
+    unchanged so the caller's ``event_types.index`` raises a clear error.
+    """
+    base = name[5:] if name.startswith("paid_") else name
+    return EVENT_ALIASES.get(base, base)
+
 
 @dataclass
 class DiffusionConfig:
