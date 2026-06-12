@@ -9,8 +9,11 @@ AT-M8-04 黄金集准确率不回退 — 扩品类后 AT-M2-01 仍 ≥85%；B2B 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 BACKEND = Path(__file__).parent.parent / "backend"
 if str(BACKEND) not in sys.path:
@@ -150,3 +153,36 @@ def test_at_m8_04_golden_accuracy_no_regression():
     assert len(b2b) >= 3
     for r in b2b:
         assert ground(extract_spec(r["idea_text"])).rejected, f"B2B 漏过: {r['idea_text'][:24]}"
+
+
+# ═══════════════════════════════════════ M8 live 复跑 ════════════════════════
+
+
+@pytest.mark.live_llm
+def test_at_m8_live_golden_accuracy_after_v2():
+    """M8 live 复跑: 扩 v2 品类后用真实 LLM 抽取重跑黄金集准确率 ≥85%、B2B 仍拒绝。
+
+    skip-by-default (@live_llm)。运行: 设 LLM_MODE=api + LLM_API_KEY 后
+    `pytest -k m8_live --run-live`。与 mock 的 AT-M8-04 分别记录 (用例集 §8.3)。
+    """
+    os.environ["LLM_MODE"] = "api"
+    from oransim.agents.soul_llm import llm_available
+    if not llm_available():
+        pytest.skip("no live LLM provider available")
+
+    from oransim.spec.extract import extract_spec
+    from oransim.spec.ground import ground
+
+    rows = [json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines()
+            if line.strip()]
+    positives = [r for r in rows if not r.get("expect_reject")]
+    b2b = [r for r in rows if r.get("reject_reason") == "b2b"]
+
+    ok = sum(1 for r in positives
+             if not (g := ground(extract_spec(r["idea_text"]))).rejected
+             and g.niche_key == r["expected_niche_key"])
+    rate = ok / len(positives)
+    print(f"\n[M8 LIVE] golden accuracy after v2: {ok}/{len(positives)} = {rate:.1%}")
+    assert rate >= 0.85, f"live 扩品类后准确率 {rate:.1%} < 85%"
+    for r in b2b:
+        assert ground(extract_spec(r["idea_text"])).rejected, f"live: B2B 漏过 {r['idea_text'][:24]}"

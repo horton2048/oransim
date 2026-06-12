@@ -16,6 +16,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 BACKEND = Path(__file__).parent.parent / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
@@ -68,6 +70,45 @@ def test_at_m2_01_category_mapping_accuracy_mock():
     assert rate >= threshold, (
         f"品类映射准确率 {rate:.1%} < 85% ({ok}/{total}); misses={misses}"
     )
+
+
+# ═══════════════════════════════════════ AT-M2-02 (live) ════════════════════
+
+
+@pytest.mark.live_llm
+def test_at_m2_02_category_mapping_accuracy_live():
+    """同 AT-M2-01 但走真实 LLM 抽取 (LLM_MODE=api)，准确率单独记录 ≥ 85%。
+
+    skip-by-default (@live_llm)。运行: 设 LLM_MODE=api + LLM_API_KEY 后
+    `pytest -k m2_02 --run-live`。也覆盖「M8 live 复跑」(grounding 现已含 v2 品类)。
+    """
+    os.environ["LLM_MODE"] = "api"
+    from oransim.agents.soul_llm import llm_available
+    if not llm_available():
+        pytest.skip("no live LLM provider available")
+
+    ideas = _load_ideas()
+    positives = [e for e in ideas if not e.get("expect_reject")]
+    b2b = [e for e in ideas if e.get("reject_reason") == "b2b"]
+
+    ok, misses = 0, []
+    for e in positives:
+        g = _ground_idea(e["idea_text"])  # LLM_MODE=api → 真实抽取
+        if (not g.rejected) and g.niche_key == e["expected_niche_key"]:
+            ok += 1
+        else:
+            misses.append((e["expected_niche_key"], g.niche_key, g.rejected, e["idea_text"][:24]))
+
+    rate = ok / len(positives)
+    print(f"\n[AT-M2-02 LIVE] niche mapping accuracy: {ok}/{len(positives)} = {rate:.1%}")
+    for m in misses:
+        print("  MISS", m)
+    assert rate >= 0.85, f"live 品类映射准确率 {rate:.1%} < 85%; misses={misses}"
+
+    # 3 条 B2B 反例 live 下仍全部硬拒绝
+    for e in b2b:
+        g = _ground_idea(e["idea_text"])
+        assert g.rejected, f"live: B2B 漏过 {e['idea_text'][:24]}"
 
 
 # ═══════════════════════════════════════ AT-M2-03 ═══════════════════════════

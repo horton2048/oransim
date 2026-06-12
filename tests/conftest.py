@@ -26,6 +26,49 @@ _GOLDEN_POP_SIZE = "2000"
 _GOLDEN_SOUL_POOL = "5"
 
 
+# ---------------------------------------------------------------------------
+# live_llm marker — skip-by-default (用例集 §CI 模式). 标 @pytest.mark.live_llm
+# 的用例 (AT-M2-02 / M8 live 复跑) 需真实 LLM 供应商; 无 key 时自动 skip, 保
+# `LLM_MODE=mock` CI 全绿。设 LLM_MODE=api + LLM_API_KEY (或 OPENAI_API_KEY)
+# 后自动启用; 或显式传 --run-live 强制收集。
+# ---------------------------------------------------------------------------
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-live", action="store_true", default=False,
+        help="强制运行 @live_llm 用例 (默认仅在检测到真实 LLM 供应商时运行)",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "live_llm: 需真实 LLM 供应商的用例 (skip-by-default; 用 --run-live 或设 "
+        "LLM_MODE=api + LLM_API_KEY 启用)",
+    )
+
+
+def _live_llm_available() -> bool:
+    try:
+        from oransim.agents.soul_llm import llm_available
+        return bool(llm_available())
+    except Exception:
+        return False
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--run-live") or _live_llm_available():
+        return  # 启用: 不 skip
+    skip_live = pytest.mark.skip(
+        reason="live_llm: 未检测到真实 LLM 供应商 (设 LLM_MODE=api + LLM_API_KEY，"
+        "或传 --run-live)"
+    )
+    for item in items:
+        if "live_llm" in item.keywords:
+            item.add_marker(skip_live)
+
+
 @pytest.fixture(scope="session")
 def api_client():
     """A session-scoped TestClient that bootstraps api_state exactly once.
