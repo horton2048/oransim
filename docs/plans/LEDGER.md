@@ -12,7 +12,7 @@
 - **当前用例**：—（无未完成 mock 用例）
 - **上轮结束于**：M8 全部 4 AT 绿，commit 6c33000（2026-06-12）。niches.json v2（原 10 零改动 + 5 新 tier:v2 品类）；config/niches.py campaign 域 getter 默认排除 v2 保 REG-2；新 getter reference_prices/adoption_priors/bass_priors 全覆盖；spec/calibration.py 标定可追溯。**M0–M8 八里程碑全部 DONE，验收闸 183 passed / 2 skipped / REG-4 clean。**
 - **全局阻塞**：无
-- **观察项**：AT-M0-02 黄金快照本 session 累计 2 次非复现单次字节失配（每次多轮隔离复测全绿，纯新增代码非诱因）；疑 bootstrap 期全局 RNG/线程瞬时态，未阻塞，建议后续专项查。
+- **观察项（已结案 2026-06-12）**：AT-M0-02 瞬时 flake 根因 = `final_report.py:307` `generation_ms` 墙钟遥测（通常 0ms，负载下偶尔 1-4ms → 字节翻转）。现场捕获 + 唯一差异路径证据，`generation_ms` 入 `_VOLATILE_KEYS`，golden 重生成（仅该槽位变 `<normalized>`，KPI 字节不动）。负载压测 8× + 全量 3× 绿。详见 DECISIONS.md。
 - **留手动**：AT-M2-02（品类映射 live LLM 准确率）、M8 live 复跑——需真实 LLM 供应商，按约定留人工执行。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。

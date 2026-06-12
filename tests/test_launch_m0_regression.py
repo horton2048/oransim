@@ -223,6 +223,11 @@ _VOLATILE_KEYS = frozenset(
         "simulation_id", "metric_id", "sensitivity_id", "report_id",
         "comparison_id", "estimation_id", "elasticity_id",
         "run_timestamp", "fetched_at", "generated_at",
+        # generation_ms (final_report.py): 墙钟遥测, 模板路径通常 0ms, 负载下偶尔
+        # 1-4ms → 本 session 3 次「非复现」快照 flake 的根因 (现场 diff 证据:
+        # 唯一差异路径 $.schema_outputs.report_strategy_case.generation_ms 0→4)。
+        # 同 run_timestamp 类: 运行元数据, 非 KPI。DECISIONS.md 2026-06-12。
+        "generation_ms",
     }
 )
 
@@ -274,13 +279,65 @@ def test_at_m0_02_golden_snapshot(api_client):
 
         expected = golden_path.read_bytes()
         if actual != expected:
+            # 保留失败现场: 实际响应落盘 + 首个差异字节位置 + 键级 diff 摘要。
+            # 该快照存在非复现瞬时失配史 (LEDGER 观察项), 无现场无法定位根因。
+            artifact = GOLDEN_DIR / f"predict_snap_{name}.actual.json"
+            artifact.write_bytes(actual)
             mismatches.append(
                 f"payload '{name}': golden mismatch "
                 f"(expected {len(expected)}B, got {len(actual)}B). "
-                f"NEVER silently update — file a plan-level PR instead."
+                f"actual dumped to {artifact.name}. "
+                + _diff_summary(expected, actual)
+                + " NEVER silently update — file a plan-level PR instead."
             )
 
     assert not mismatches, "\n".join(mismatches)
+
+
+def _diff_summary(expected: bytes, actual: bytes, max_paths: int = 8) -> str:
+    """首个差异字节偏移 + 递归键级 diff 路径 (定位失配子系统用)。"""
+    import json
+
+    first = next(
+        (i for i, (a, b) in enumerate(zip(expected, actual, strict=False)) if a != b),
+        min(len(expected), len(actual)),
+    )
+    ctx_e = expected[max(0, first - 40): first + 80]
+    ctx_a = actual[max(0, first - 40): first + 80]
+
+    paths: list[str] = []
+
+    def _walk(e, a, path):
+        if len(paths) >= max_paths:
+            return
+        if type(e) is not type(a):
+            paths.append(f"{path}: type {type(e).__name__}→{type(a).__name__}")
+            return
+        if isinstance(e, dict):
+            for k in e.keys() | a.keys():
+                if k not in e:
+                    paths.append(f"{path}.{k}: +added")
+                elif k not in a:
+                    paths.append(f"{path}.{k}: -removed")
+                else:
+                    _walk(e[k], a[k], f"{path}.{k}")
+        elif isinstance(e, list):
+            if len(e) != len(a):
+                paths.append(f"{path}: len {len(e)}→{len(a)}")
+            for i, (ei, ai) in enumerate(zip(e, a, strict=False)):
+                _walk(ei, ai, f"{path}[{i}]")
+        elif e != a:
+            paths.append(f"{path}: {e!r}→{a!r}"[:160])
+
+    try:
+        _walk(json.loads(expected), json.loads(actual), "$")
+    except Exception as exc:  # noqa: BLE001 — diff aid only, never mask the assert
+        paths.append(f"(json diff unavailable: {exc})")
+
+    return (
+        f"first byte diff @ {first}: ...{ctx_e!r}... vs ...{ctx_a!r}... "
+        f"| changed paths: {paths[:max_paths]}"
+    )
 
 
 def test_at_m0_01_audience_filter_id_semantics():
