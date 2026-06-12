@@ -13,12 +13,13 @@
 - **上轮结束于**：M8 全部 4 AT 绿，commit 6c33000（2026-06-12）。niches.json v2（原 10 零改动 + 5 新 tier:v2 品类）；config/niches.py campaign 域 getter 默认排除 v2 保 REG-2；新 getter reference_prices/adoption_priors/bass_priors 全覆盖；spec/calibration.py 标定可追溯。**M0–M8 八里程碑全部 DONE，验收闸 183 passed / 2 skipped / REG-4 clean。**
 - **全局阻塞**：无
 - **观察项（已结案 2026-06-12）**：AT-M0-02 瞬时 flake 根因 = `final_report.py:307` `generation_ms` 墙钟遥测（通常 0ms，负载下偶尔 1-4ms → 字节翻转）。现场捕获 + 唯一差异路径证据，`generation_ms` 入 `_VOLATILE_KEYS`，golden 重生成（仅该槽位变 `<normalized>`，KPI 字节不动）。负载压测 8× + 全量 3× 绿。详见 DECISIONS.md。
-- **留手动（已就绪为一键运行）**：AT-M2-02（品类映射 live LLM 准确率）、M8 live 复跑——已落为 `@pytest.mark.live_llm` skip-by-default 用例（`test_at_m2_02_category_mapping_accuracy_live`、`test_at_m8_live_golden_accuracy_after_v2`）。无 key 时自动 skip（mock CI 不受影响）。运行：
-  ```
-  $env:LLM_MODE='api'; $env:LLM_API_KEY='<your-key>'
-  pwsh -c "python -m pytest tests/ -k 'm2_02 or m8_live' --run-live -s"
-  ```
-  断言 live 准确率 ≥85% + B2B 仍硬拒绝；与 mock 结果分别记录（用例集 §8.3）。
+- **live 复跑（✅ 已实测验证 2026-06-12）**：AT-M2-02 与 M8 live 复跑均已用**真实 LLM（MiniMax-Text-01，`.env` 配置）**跑通：
+  - `test_at_m2_02_category_mapping_accuracy_live`：**90.9% (20/22) ≥85%**，B2B 4/4 硬拒绝。
+  - `test_at_m8_live_golden_accuracy_after_v2`：**90.9% (20/22) ≥85%**，B2B 4/4 硬拒绝。
+  - live 准确率与 mock 完全一致（同 2 个 travel-邻接漏判：三脚架/帆布包），证明 grounding 对抽取源稳健。
+  - 用例为 `@pytest.mark.live_llm` skip-by-default（无 key 时自动 skip，CI 不受影响）。复跑命令：
+    `pwsh scripts/run-live.ps1`（加载 .env → `pytest -k 'm2_02 or m8_live' --run-live -s`）。
+  - 注：MiniMax-Text-01 不支持 `response_format=json_object`（会 400），本项目 call_llm_json_with_retry 不发该参数，天然兼容。
 
 > M-1（前置·已完成）：基线刷绿——见 DECISIONS.md。验收闸 `pwsh scripts/accept.ps1` 当前 exit 0。
 
