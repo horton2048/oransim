@@ -306,6 +306,44 @@ async def launch_simulate(req: SimulateRequest):
     return _stream_json(_simulate_sync, req)
 
 
+@router.get("/api/launch/replay/{spec_id}")
+async def launch_replay(spec_id: str):
+    """把 spec_id 的上市推演转成回放前端 replay.json (AT-FE-4-02)。
+
+    复用 launch_replay_export.export() — 转换逻辑全系统唯一一份 (replay-viz/, CLI 与本路由共用)。
+    R5: store 持 spec; LaunchReport 由 _simulate_sync 确定性重建, 不依赖 session 缓存报告。
+    供主 SPA「战况回放」tab 的 iframe (?session=<spec_id>) 取数。
+    """
+    from ..spec import store
+
+    if not store.exists(spec_id):
+        raise HTTPException(status_code=404, detail=f"unknown spec_id {spec_id}")
+    report = _simulate_sync(SimulateRequest(spec_id=spec_id))
+    # 回放适配器在 replay-viz/ (单一转换源, D4/D15)。打包/部署解析顺序:
+    #   1) OSIM_REPLAY_VIZ_DIR 显式配置  2) monorepo 默认 (仓库根/replay-viz)。
+    # 找不到 → 显式 500 (不让 ImportError 崩得莫名)。
+    import os
+    import sys
+    from pathlib import Path
+
+    rv = os.environ.get("OSIM_REPLAY_VIZ_DIR") or str(
+        Path(__file__).resolve().parents[3] / "replay-viz"
+    )
+    if not (Path(rv) / "launch_replay_export.py").exists():
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"回放适配器未找到于 {rv} — 随后端一同部署 replay-viz/，"
+                "或设环境变量 OSIM_REPLAY_VIZ_DIR 指向它 (D15)。"
+            ),
+        )
+    if rv not in sys.path:
+        sys.path.insert(0, rv)
+    from launch_replay_export import export as _export_replay
+
+    return _export_replay(report)
+
+
 @router.post("/api/launch/sandbox")
 async def launch_sandbox(req: SandboxCreateRequest):
     """用编译出的 Scenario 建 mode=launch session (复用 SandboxStore)。"""

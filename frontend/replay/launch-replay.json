@@ -1,0 +1,536 @@
+{
+ "version": 1,
+ "meta": {
+  "caption": "一款保湿面膜，定价 89 元，小红书美妆博主种草。",
+  "run_timestamp": null,
+  "generated_by": "launch_replay_export.py v1",
+  "disclaimer": "这是带标注不确定性的情景推演，不是预测",
+  "grounding_confidence": 0.92,
+  "peak_day": 6,
+  "synthetic_fields": [
+   "cities[] (层级占比取 effective_city_dist 真值; 坐标 GAZETTEER; 名额按占比合成)",
+   "souls[].t (后端无 timestamp，按扩散曲线确定性合成)",
+   "souls[].city (persona 无城市，按 effective_city_dist 加权确定性指派)",
+   "souls[].sentiment (persona 无情绪，按 purchase_intent_7d 分档派生)",
+   "souls[].persona (niche·tier 派生短标签)",
+   "kols[] (launch 报告无 KOL 块，默认空; 引爆幕降级)",
+   "per_platform (channels_hint 真; 曝光/ROI 比例合成)",
+   "funnel_percentiles (占位; 判决面板已改读 metrics 真值)",
+   "budget (launch 无顶层 budget，由 revenue/payback 反推)"
+  ]
+ },
+ "budget": 22687.5,
+ "platform_alloc": {
+  "xiaohongshu": 1.0
+ },
+ "kpis": {
+  "impressions": 472656.25,
+  "clicks": 139.14678446451822,
+  "conversions": 27.728573878839324,
+  "revenue": 1247.7858245477694,
+  "roi": 0.054998824222491215,
+  "aov": 45.0,
+  "ctr": 0.000294,
+  "cvr": 0.199276
+ },
+ "funnel_percentiles": {
+  "A1_awareness": {
+   "p25": 472656.25,
+   "p50": 472656.25,
+   "p75": 472656.25
+  },
+  "A3_engagement": {
+   "p25": 133.82099100748698,
+   "p50": 139.14678446451822,
+   "p75": 139.36957499186198
+  },
+  "A4_conversion": {
+   "p25": 26.7973768568959,
+   "p50": 27.728573878839324,
+   "p75": 27.820440626351328
+  }
+ },
+ "per_platform": {
+  "xiaohongshu": {
+   "impressions": 472656.25,
+   "roi": 0.055
+  }
+ },
+ "days": 90,
+ "daily_total": [
+  5.6745,
+  7.8136,
+  10.3707,
+  13.1113,
+  15.5907,
+  17.2376,
+  17.5838,
+  16.5165,
+  14.349,
+  11.641,
+  8.9288,
+  6.5572,
+  4.6631,
+  3.2406,
+  2.2162,
+  1.499,
+  1.0063,
+  0.6722,
+  0.4475,
+  0.2972,
+  0.1971,
+  0.1306,
+  0.0865,
+  0.0572,
+  0.0379,
+  0.0251,
+  0.0166,
+  0.011,
+  0.0073,
+  0.0048,
+  0.0032,
+  0.0021,
+  0.0014,
+  0.0009,
+  0.0006,
+  0.0004,
+  0.0003,
+  0.0002,
+  0.0001,
+  0.0001,
+  0.0001,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "peak_day": 6,
+ "half_life": 6,
+ "saturation_date": 11,
+ "market_potential_m": 160.0,
+ "organic_share": null,
+ "branching_ratio": null,
+ "sentiment": {
+  "net_sentiment_score": null,
+  "high_intent_pct": 0.0,
+  "key_opinion_themes": [
+   {
+    "theme": "价格一看就贵 不是我这个价位",
+    "count": 1
+   },
+   {
+    "theme": "Z世代味太重 看不懂",
+    "count": 1
+   },
+   {
+    "theme": "老年感重 不是我的风格",
+    "count": 1
+   }
+  ]
+ },
+ "cities": [
+  {
+   "name": "上海",
+   "lat": 31.23,
+   "lng": 121.47,
+   "tier": 1,
+   "weight": 4.45
+  },
+  {
+   "name": "北京",
+   "lat": 39.9,
+   "lng": 116.41,
+   "tier": 1,
+   "weight": 4.45
+  },
+  {
+   "name": "东莞",
+   "lat": 23.02,
+   "lng": 113.75,
+   "tier": 2,
+   "weight": 3.975
+  },
+  {
+   "name": "南京",
+   "lat": 32.06,
+   "lng": 118.8,
+   "tier": 2,
+   "weight": 3.975
+  },
+  {
+   "name": "天津",
+   "lat": 39.08,
+   "lng": 117.2,
+   "tier": 2,
+   "weight": 3.975
+  },
+  {
+   "name": "成都",
+   "lat": 30.66,
+   "lng": 104.07,
+   "tier": 2,
+   "weight": 3.975
+  },
+  {
+   "name": "保定",
+   "lat": 38.87,
+   "lng": 115.46,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "南宁",
+   "lat": 22.82,
+   "lng": 108.32,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "南昌",
+   "lat": 28.68,
+   "lng": 115.86,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "厦门",
+   "lat": 24.48,
+   "lng": 118.09,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "合肥",
+   "lat": 31.86,
+   "lng": 117.28,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "哈尔滨",
+   "lat": 45.8,
+   "lng": 126.53,
+   "tier": 3,
+   "weight": 3.8
+  },
+  {
+   "name": "九江",
+   "lat": 29.71,
+   "lng": 116.0,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "兰州",
+   "lat": 36.06,
+   "lng": 103.83,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "呼和浩特",
+   "lat": 40.84,
+   "lng": 111.75,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "宿迁",
+   "lat": 33.96,
+   "lng": 118.28,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "桂林",
+   "lat": 25.27,
+   "lng": 110.29,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "洛阳",
+   "lat": 34.62,
+   "lng": 112.45,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "淮安",
+   "lat": 33.61,
+   "lng": 119.02,
+   "tier": 4,
+   "weight": 4.014286
+  },
+  {
+   "name": "周口",
+   "lat": 33.62,
+   "lng": 114.65,
+   "tier": 5,
+   "weight": 4.05
+  },
+  {
+   "name": "大理",
+   "lat": 25.61,
+   "lng": 100.27,
+   "tier": 5,
+   "weight": 4.05
+  },
+  {
+   "name": "西宁",
+   "lat": 36.62,
+   "lng": 101.78,
+   "tier": 5,
+   "weight": 4.05
+  },
+  {
+   "name": "遵义",
+   "lat": 27.73,
+   "lng": 106.92,
+   "tier": 5,
+   "weight": 4.05
+  },
+  {
+   "name": "银川",
+   "lat": 38.49,
+   "lng": 106.23,
+   "tier": 5,
+   "weight": 4.05
+  },
+  {
+   "name": "驻马店",
+   "lat": 33.01,
+   "lng": 114.02,
+   "tier": 5,
+   "weight": 4.05
+  }
+ ],
+ "unmapped_cities": [],
+ "kols": [],
+ "souls": [
+  {
+   "t": 2.83,
+   "t_synthetic": true,
+   "persona": "beauty·T2",
+   "city": "南京",
+   "text": "Z世代味太重 看不懂",
+   "sentiment": -1,
+   "will_click": false,
+   "would_pay_cny": 39.46,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 4.16,
+   "t_synthetic": true,
+   "persona": "beauty·T2",
+   "city": "成都",
+   "text": "老年感重 不是我的风格",
+   "sentiment": -1,
+   "will_click": false,
+   "would_pay_cny": 25.5,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 8.37,
+   "t_synthetic": true,
+   "persona": "beauty·T4",
+   "city": "洛阳",
+   "text": "又是美颜滤镜 真货肯定没这效果",
+   "sentiment": -1,
+   "will_click": false,
+   "would_pay_cny": 41.03,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 10.31,
+   "t_synthetic": true,
+   "persona": "beauty·T5+",
+   "city": "大理",
+   "text": "价格一看就贵 不是我这个价位",
+   "sentiment": -1,
+   "will_click": false,
+   "would_pay_cny": 11.0,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 12.28,
+   "t_synthetic": true,
+   "persona": "beauty·T5+",
+   "city": "遵义",
+   "text": "",
+   "sentiment": 0,
+   "will_click": true,
+   "would_pay_cny": 82.82,
+   "purchase_intent_7d": 0.35
+  }
+ ],
+ "metrics": {
+  "unique_reach": {
+   "p35": 472656.25,
+   "p50": 472656.25,
+   "p65": 472656.25,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "trials": {
+   "p35": 133.82099100748698,
+   "p50": 139.14678446451822,
+   "p65": 139.36957499186198,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "adopters": {
+   "p35": 26.7973768568959,
+   "p50": 27.728573878839324,
+   "p65": 27.820440626351328,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "adoption_rate": {
+   "p35": 5.669527665591199e-05,
+   "p50": 5.8665412503990636e-05,
+   "p65": 5.885977520947058e-05,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "revenue": {
+   "p35": 1205.8819585603155,
+   "p50": 1247.7858245477694,
+   "p65": 1251.9198281858096,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "payback": {
+   "p35": 0.05315182186491749,
+   "p50": 0.054998824222491215,
+   "p65": 0.05518103925887866,
+   "p35_label": "下行情形",
+   "band": true
+  },
+  "n_seeds": 5,
+  "quantile_source": "ScenarioRunner 多 seed Monte Carlo 经验分位数"
+ },
+ "intervention_cards": [
+  {
+   "name": "price_up_30",
+   "label": "价格 +30%",
+   "delta": {
+    "impressions": 0.0,
+    "clicks": 1.0417724609374943,
+    "conversions": -2.0847896241253387,
+    "cost": 0.0,
+    "revenue": 255.9628661079762,
+    "ctr": 2.2040805785124035e-06,
+    "cvr": -0.01634842978523965,
+    "roi": 0.011282109800902496
+   },
+   "branch": false,
+   "note": "价格弹性 (图级 do(price_point))"
+  },
+  {
+   "name": "no_kol_launch",
+   "label": "不请达人",
+   "delta": {
+    "impressions": 0.0,
+    "clicks": -1.4860290527343807,
+    "conversions": -0.487870985963081,
+    "cost": 0.0,
+    "revenue": -21.95419436833845,
+    "ctr": -3.143995351239683e-06,
+    "cvr": -0.0013730321645396004,
+    "roi": -0.0009676779886871323
+   },
+   "branch": false,
+   "note": "kol_per_platform=None"
+  },
+  {
+   "name": "competitor_response",
+   "label": "如果竞品跟进——这是分支不是预测：竞品 substitute_pressure=0.5",
+   "delta": {
+    "ad_recall": 0.0,
+    "add_to_cart": 0.0,
+    "audience_match": 0.0,
+    "brand_awareness": 0.0,
+    "brand_equity": 0.0,
+    "brand_favor": 0.0,
+    "brand_lift_aware": 0.0,
+    "brand_recall": 0.0,
+    "brand_search_lift": 0.0,
+    "click": 0.0,
+    "conversion": 0.0,
+    "ecpm_bid": 0.0,
+    "engagement": 0.0,
+    "exposure_count": 0.0,
+    "frequency": 0.0,
+    "impression_dist": 0.0,
+    "organic_amplification": 0.0,
+    "peer_influence": 0.0,
+    "product_view": 0.0,
+    "recsys_amplification": 0.0,
+    "repurchase": 0.0,
+    "site_visit": 0.0,
+    "unique_reach": 0.0,
+    "user_fatigue": 0.0,
+    "viral_score": 0.0
+   },
+   "branch": true,
+   "note": "competitor_action do() + equilibrium_under_do"
+  }
+ ],
+ "audit_risk": 0.0,
+ "objections_as_risk": [
+  "价格一看就贵 不是我这个价位",
+  "Z世代味太重 看不懂",
+  "老年感重 不是我的风格",
+  "又是美颜滤镜 真货肯定没这效果"
+ ],
+ "season_window": {
+  "note": "假日/季节因子最佳/最差上市窗口 (data/macro)",
+  "category_hint": "beauty"
+ }
+}

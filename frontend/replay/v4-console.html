@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORANSIM · 投放预演台</title>
+
+<!-- Reliable: IBM Plex Mono (telemetry digits) + Noto Sans SC (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+<style>
+/* Distinctive Chinese display: 得意黑 Smiley Sans (graceful fallback to Noto 900) */
+@font-face{
+  font-family:'Smiley Sans';
+  src:url('https://cdn.jsdelivr.net/gh/atelier-anchor/smiley-sans@v1.1.1/dist/SmileySans-Oblique.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/cn-fontsource-smiley-sans-oblique/font.woff2') format('woff2');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+
+:root{
+  --bg:#0A0C12; --bg2:#070910; --panel:#11141C; --panel2:#0E121A;
+  --edge:#1E2430; --edge2:#272f3e; --ink:#E8ECF4; --ink-dim:#9aa3b5; --ink-faint:#5b6478;
+  --amber:#F4B740; --amber-hi:#FFD479; --amber-deep:#b9831f;
+  --teal:#5FB0C9; --pos:#59C28A; --neg:#FF5C5C; --neu:#8A94A6;
+  --glow:0 0 0 1px rgba(244,183,64,.0), 0 0 24px -6px rgba(244,183,64,.45);
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --disp:'Smiley Sans','Noto Sans SC',sans-serif;
+  --body:'Noto Sans SC',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 78% -10%, rgba(244,183,64,.06), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, rgba(95,176,201,.05), transparent 55%),
+    var(--bg);
+  color:var(--ink); font-family:var(--body); font-size:13px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+/* faint telemetry grid + grain overlay */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size:46px 46px;
+  mask-image:radial-gradient(120% 120% at 50% 0%, #000 40%, transparent 100%);
+}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#222a38;border-radius:9px;border:2px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:#303a4d}
+
+/* ---------- shell ---------- */
+.app{position:relative; z-index:1; height:100vh; display:flex; flex-direction:column}
+.topbar{
+  height:54px; flex:0 0 auto; display:flex; align-items:center; gap:18px;
+  padding:0 20px; border-bottom:1px solid var(--edge);
+  background:linear-gradient(180deg, rgba(20,24,34,.7), rgba(10,12,18,.4)); backdrop-filter:blur(8px);
+}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:600; letter-spacing:.32em}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 14px 2px var(--amber-hi);animation:pulse 3.4s ease-in-out infinite}
+.brand b{font-size:16px}
+.brand b em{font-style:normal;color:var(--amber)}
+.brand .sub{font-family:var(--body); font-weight:400; letter-spacing:.18em; color:var(--ink-faint); font-size:10px; margin-left:2px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.topbar .spacer{flex:1}
+.pill{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--ink-dim);
+  padding:5px 11px;border:1px solid var(--edge);border-radius:30px;background:var(--panel2)}
+.pill .k{width:6px;height:6px;border-radius:50%;background:var(--pos);box-shadow:0 0 8px var(--pos)}
+.pill b{color:var(--ink);font-weight:600}
+.pill.warn .k{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+.grid{flex:1; display:grid; grid-template-columns:320px 1fr 360px; min-height:0}
+.col{min-height:0; overflow:auto; padding:18px}
+.col.left{border-right:1px solid var(--edge); background:linear-gradient(180deg,var(--panel2),transparent 240px)}
+.col.right{border-left:1px solid var(--edge); background:linear-gradient(180deg,var(--panel2),transparent 240px)}
+
+/* section heading */
+.sh{display:flex;align-items:center;gap:9px;margin:2px 0 14px; color:var(--ink-dim);
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+.sh .idx{color:var(--amber);font-weight:600}
+.sh::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--edge2),transparent)}
+.sh.zh{font-family:var(--disp);font-size:13px;letter-spacing:.1em;text-transform:none;color:var(--ink)}
+
+/* ---------- form ---------- */
+.field{margin-bottom:15px}
+.field > label{display:block;color:var(--ink-dim);font-size:11px;margin-bottom:6px;letter-spacing:.04em}
+textarea,select,input[type=text]{
+  width:100%;background:var(--panel);border:1px solid var(--edge);color:var(--ink);
+  border-radius:8px;padding:9px 11px;font-family:var(--body);font-size:13px;resize:vertical;transition:.18s}
+textarea{min-height:70px;line-height:1.6}
+textarea:focus,select:focus{outline:none;border-color:var(--amber-deep);box-shadow:0 0 0 3px rgba(244,183,64,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.chkrow{display:flex;align-items:center;gap:8px;color:var(--ink-dim);font-size:12px;cursor:pointer;user-select:none}
+.chkrow input{accent-color:var(--amber)}
+
+/* slider */
+.slabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.slabel .v{font-family:var(--mono);color:var(--amber);font-weight:600;font-size:14px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--amber) var(--p,50%), #222a38 var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--amber-hi);box-shadow:0 0 0 4px rgba(244,183,64,.18),0 2px 6px rgba(0,0,0,.5);cursor:pointer;transition:.12s}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px rgba(244,183,64,.22),0 0 14px var(--amber)}
+
+/* platform split */
+.split{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--edge);margin-top:4px}
+.split .seg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#0A0C12;font-weight:600;transition:.25s}
+.split .dy{background:linear-gradient(180deg,var(--amber-hi),var(--amber))}
+.split .xh{background:linear-gradient(180deg,#7cc6dd,var(--teal))}
+
+/* presets */
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.preset{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--edge);border-radius:8px;
+  background:var(--panel);color:var(--ink-dim);cursor:pointer;font-size:12px;transition:.16s}
+.preset:hover{border-color:var(--amber-deep);color:var(--ink);background:#161b25;transform:translateY(-1px)}
+.preset .e{font-size:14px}
+
+.adv summary{list-style:none;cursor:pointer;color:var(--ink-faint);font-family:var(--mono);font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;padding:8px 0;border-top:1px solid var(--edge);margin-top:6px}
+.adv summary::-webkit-details-marker{display:none}
+.adv summary::before{content:"▸ ";color:var(--amber)}
+.adv[open] summary::before{content:"▾ "}
+
+/* run button */
+.run{position:sticky;bottom:-18px;margin:18px -18px -18px;padding:18px;
+  background:linear-gradient(180deg,transparent, var(--bg2) 40%)}
+.runbtn{width:100%;border:none;border-radius:10px;padding:14px;cursor:pointer;
+  font-family:var(--disp);font-size:16px;letter-spacing:.08em;color:#160d00;
+  background:linear-gradient(180deg,var(--amber-hi),var(--amber));
+  box-shadow:0 0 0 1px var(--amber-deep),0 8px 26px -8px rgba(244,183,64,.6);transition:.18s;position:relative;overflow:hidden}
+.runbtn:hover{transform:translateY(-2px);box-shadow:0 0 0 1px var(--amber-hi),0 12px 34px -8px rgba(244,183,64,.8)}
+.runbtn:active{transform:translateY(0)}
+.runbtn:disabled{opacity:.55;cursor:wait;transform:none}
+.runbtn .sweep{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:translateX(-120%)}
+.runbtn.busy .sweep{animation:sweep 1.1s linear infinite}
+@keyframes sweep{to{transform:translateX(120%)}}
+
+/* ---------- center ---------- */
+.scenario{display:flex;align-items:center;gap:14px;padding:11px 15px;border:1px solid var(--edge);border-radius:10px;
+  background:var(--panel);margin-bottom:16px}
+.scenario .cap{flex:1;font-size:13px;color:var(--ink)}
+.scenario .cap small{display:block;color:var(--ink-faint);font-family:var(--mono);font-size:10px;letter-spacing:.1em;margin-bottom:3px}
+.scenario .tag{font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid var(--amber-deep);border-radius:20px;padding:4px 10px;white-space:nowrap}
+
+/* KPI grid */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.kpi{position:relative;border:1px solid var(--edge);border-radius:12px;padding:15px 16px 14px;
+  background:linear-gradient(160deg,var(--panel),var(--panel2));overflow:hidden}
+.kpi::after{content:"";position:absolute;left:0;top:0;width:100%;height:2px;
+  background:linear-gradient(90deg,var(--amber),transparent 70%);opacity:.0;transition:.4s}
+.kpi.lit::after{opacity:.7}
+.kpi .lab{display:flex;justify-content:space-between;color:var(--ink-dim);font-size:11px;letter-spacing:.05em}
+.kpi .lab .en{font-family:var(--mono);font-size:9px;color:var(--ink-faint);letter-spacing:.15em;text-transform:uppercase}
+.kpi .val{font-family:var(--mono);font-weight:600;font-size:27px;color:var(--ink);margin-top:9px;letter-spacing:-.01em;line-height:1}
+.kpi .val .u{font-size:13px;color:var(--ink-dim);font-weight:400;margin-left:3px}
+.kpi .ci{margin-top:9px;height:14px;display:flex;align-items:center;gap:7px}
+.kpi .ci .bar{flex:1;height:3px;border-radius:3px;background:#1c2330;position:relative;overflow:hidden}
+.kpi .ci .bar i{position:absolute;top:0;height:100%;background:var(--amber);border-radius:3px;left:50%;width:0;transform:translateX(-50%);opacity:.55}
+.kpi .ci .pm{font-family:var(--mono);font-size:9px;color:var(--ink-faint)}
+.kpi .delta{font-family:var(--mono);font-size:11px;font-weight:600}
+.kpi .delta.up{color:var(--pos)} .kpi .delta.down{color:var(--neg)}
+.kpi.hero{grid-column:span 3;display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:0;background:none;border:none}
+.kpi.hero > div{border:1px solid var(--edge);border-right:none;padding:15px 16px;background:linear-gradient(160deg,var(--panel),var(--panel2))}
+.kpi.hero > div:first-child{border-radius:12px 0 0 12px}
+.kpi.hero > div:last-child{border-right:1px solid var(--edge);border-radius:0 12px 12px 0}
+
+/* per-platform + macro */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.card{border:1px solid var(--edge);border-radius:12px;background:var(--panel);padding:15px}
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{text-align:right;color:var(--ink-faint);font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;padding:0 0 9px;font-weight:400}
+.ptable th:first-child,.ptable td:first-child{text-align:left}
+.ptable td{padding:8px 0;border-top:1px solid var(--edge);font-family:var(--mono);color:var(--ink);text-align:right}
+.ptable .pf{display:flex;align-items:center;gap:8px;font-family:var(--body)}
+.ptable .pf i{width:8px;height:8px;border-radius:2px}
+.macro-strip{display:flex;flex-wrap:wrap;gap:8px}
+.mfac{display:flex;flex-direction:column;gap:3px;padding:8px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--panel2);min-width:92px}
+.mfac .t{color:var(--ink-faint);font-size:10px}
+.mfac .v{font-family:var(--mono);color:var(--amber);font-size:14px;font-weight:600}
+.mfac .v.mut{color:var(--ink)}
+
+/* chart */
+.chart-wrap{border:1px solid var(--edge);border-radius:12px;background:var(--panel);padding:15px 15px 8px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ink-dim)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:3px;border-radius:3px}
+svg{display:block;width:100%}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--edge);overflow-x:auto}
+.tab{padding:9px 13px;color:var(--ink-faint);font-size:12px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.tab:hover{color:var(--ink-dim)}
+.tab.on{color:var(--amber);border-bottom-color:var(--amber)}
+.tab.soon{opacity:.4;cursor:not-allowed}
+.tab.soon::after{content:"·占位";font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--ink-faint);margin-left:4px}
+
+/* ---------- right / sentiment ---------- */
+.sent-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:14px}
+.gauge{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--pos);line-height:1}
+.gauge small{display:block;font-family:var(--body);font-size:10px;color:var(--ink-faint);letter-spacing:.1em;font-weight:400;margin-bottom:4px}
+.sent-bar{display:flex;height:10px;border-radius:6px;overflow:hidden;border:1px solid var(--edge);margin-bottom:6px}
+.sent-bar i{transition:.5s}
+.sent-legend{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-bottom:16px}
+.feel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.feel{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--panel2)}
+.feel .n{color:var(--ink-dim);font-size:12px}
+.feel .c{font-family:var(--mono);font-weight:600;color:var(--amber)}
+.themes{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.theme{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-dim)}
+.theme .tb{flex:1;height:5px;border-radius:5px;background:#1c2330;overflow:hidden}
+.theme .tb i{display:block;height:100%;background:linear-gradient(90deg,var(--amber-deep),var(--amber));border-radius:5px}
+.theme .tc{font-family:var(--mono);font-size:10px;color:var(--ink-faint);width:18px;text-align:right}
+
+/* soul cards */
+.souls{display:flex;flex-direction:column;gap:9px}
+.soul{border:1px solid var(--edge);border-radius:10px;background:linear-gradient(150deg,var(--panel),var(--panel2));
+  padding:11px 12px;opacity:0;transform:translateY(8px)}
+.soul.in{animation:soulin .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes soulin{to{opacity:1;transform:none}}
+.soul .sh1{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.soul .av{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:13px;color:#0A0C12}
+.soul .who{flex:1;font-size:11px;color:var(--ink-dim);font-family:var(--mono);letter-spacing:.02em}
+.soul .verdict{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:20px;letter-spacing:.05em}
+.soul .verdict.click{color:var(--pos);border:1px solid rgba(89,194,138,.4);background:rgba(89,194,138,.08)}
+.soul .verdict.skip{color:var(--neg);border:1px solid rgba(255,92,92,.4);background:rgba(255,92,92,.08)}
+.soul .reason{color:var(--ink);font-size:12.5px;margin-bottom:6px}
+.soul .reason::before{content:"“";color:var(--amber);font-family:var(--disp);margin-right:1px}
+.soul .reason::after{content:"”";color:var(--amber);font-family:var(--disp)}
+.soul .foot{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-faint)}
+.soul .feeltag{color:var(--amber-hi)}
+.soul .intent{margin-left:auto;font-family:var(--mono);font-size:10px}
+.soul .intent b{color:var(--amber)}
+
+/* placeholder card */
+.placeholder{border:1px dashed var(--edge2);border-radius:12px;background:repeating-linear-gradient(135deg,transparent,transparent 11px,rgba(255,255,255,.012) 11px,rgba(255,255,255,.012) 22px);
+  padding:40px 20px;text-align:center;color:var(--ink-faint)}
+.placeholder .big{font-family:var(--disp);font-size:20px;color:var(--ink-dim);margin-bottom:8px}
+.placeholder code{font-family:var(--mono);font-size:11px;color:var(--amber)}
+
+/* empty / idle hint before first run */
+.idle-veil{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(10,12,18,.55);backdrop-filter:blur(2px);z-index:4;border-radius:12px;text-align:center}
+.idle-veil .t{font-family:var(--disp);font-size:18px;color:var(--ink-dim)}
+.idle-veil .s{font-size:12px;color:var(--ink-faint)}
+
+/* ---------- reveal overlay ---------- */
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:radial-gradient(800px 500px at 50% 45%, rgba(20,24,34,.92), rgba(7,9,16,.96));backdrop-filter:blur(6px)}
+.overlay.on{display:flex}
+.ov-counter{font-family:var(--mono);font-size:64px;font-weight:600;color:var(--amber);letter-spacing:.02em;line-height:1;
+  text-shadow:0 0 40px rgba(244,183,64,.5)}
+.ov-label{font-family:var(--disp);font-size:18px;color:var(--ink);margin-top:14px;letter-spacing:.06em}
+.ov-sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:8px;letter-spacing:.18em;text-transform:uppercase}
+.ov-field{position:relative;width:340px;height:120px;margin-top:26px}
+.ov-field .star{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--amber);opacity:0}
+.ov-bar{width:300px;height:2px;background:#222a38;margin-top:24px;border-radius:2px;overflow:hidden}
+.ov-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber-deep),var(--amber-hi))}
+
+/* ---------- v4: chip multiselect ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 10px;border:1px solid var(--edge);border-radius:20px;background:var(--panel);
+  color:var(--ink-faint);font-size:11px;cursor:pointer;user-select:none;transition:.15s}
+.chip.on{color:#160d00;background:linear-gradient(180deg,var(--amber-hi),var(--amber));border-color:var(--amber-deep)}
+.chip:hover{border-color:var(--amber-deep)}
+input[type=date]{width:100%;background:var(--panel);border:1px solid var(--edge);color:var(--ink);
+  border-radius:8px;padding:8px 11px;font-family:var(--mono);font-size:12px;color-scheme:dark}
+input[type=date]:focus{outline:none;border-color:var(--amber-deep)}
+
+/* ---------- v4: funnel bands ---------- */
+.funnel{display:flex;flex-direction:column;gap:9px}
+.fstage{display:grid;grid-template-columns:96px 1fr 150px;align-items:center;gap:10px;font-size:11px}
+.fstage .fn{color:var(--ink-dim)}
+.fstage .fn small{display:block;font-family:var(--mono);font-size:8px;color:var(--ink-faint);letter-spacing:.12em;text-transform:uppercase}
+.fstage .ftrack{position:relative;height:16px;background:#161c28;border-radius:4px;overflow:hidden}
+.fstage .fband{position:absolute;top:3px;bottom:3px;background:rgba(244,183,64,.22);border-radius:3px}
+.fstage .fp50{position:absolute;top:0;bottom:0;width:2px;background:var(--amber-hi);box-shadow:0 0 8px var(--amber)}
+.fstage .fv{font-family:var(--mono);font-size:10px;color:var(--ink-dim);text-align:right;white-space:nowrap}
+.fstage .fv b{color:var(--ink)}
+
+/* ---------- v4: tornado ---------- */
+.tornado{display:flex;flex-direction:column;gap:7px}
+.trow{display:grid;grid-template-columns:110px 1fr 64px;align-items:center;gap:10px;font-size:11px;color:var(--ink-dim)}
+.trow .tt{position:relative;height:12px;background:#161c28;border-radius:3px}
+.trow .tt::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--edge2)}
+.trow .tneg,.trow .tpos{position:absolute;top:2px;bottom:2px;border-radius:2px}
+.trow .tneg{right:50%;background:linear-gradient(270deg,rgba(255,92,92,.25),rgba(255,92,92,.7))}
+.trow .tpos{left:50%;background:linear-gradient(90deg,rgba(89,194,138,.25),rgba(89,194,138,.7))}
+.trow .te{font-family:var(--mono);font-size:10px;text-align:right}
+
+/* ---------- v4: KOL table ---------- */
+.kolsum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.kolsum .ks{font-family:var(--mono);font-size:10px;color:var(--ink-dim);border:1px solid var(--edge);border-radius:20px;padding:3px 9px}
+.kolsum .ks b{color:var(--amber)}
+.ktable{width:100%;border-collapse:collapse;font-size:11px}
+.ktable th{text-align:right;color:var(--ink-faint);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:0 0 7px;font-weight:400}
+.ktable th:first-child,.ktable td:first-child{text-align:left}
+.ktable td{padding:5px 0;border-top:1px solid var(--edge);font-family:var(--mono);color:var(--ink-dim);text-align:right}
+.ktable td:first-child{color:var(--ink);font-family:var(--body)}
+.ktable .tier{font-size:9px;border:1px solid var(--edge2);border-radius:3px;padding:0 4px;color:var(--ink-faint);margin-left:5px}
+
+/* ---------- v4: report card ---------- */
+.report .rsec{border:1px solid var(--edge);border-radius:10px;background:var(--panel2);padding:11px 13px;margin-bottom:9px}
+.report .rsec h4{margin:0 0 7px;font-family:var(--disp);font-size:13px;color:var(--amber-hi);font-weight:400}
+.report .rsec p{margin:0;font-size:12px;color:var(--ink-dim);line-height:1.8}
+.report .rsec b{color:var(--ink);font-family:var(--mono)}
+.report details summary{cursor:pointer;color:var(--ink-faint);font-family:var(--mono);font-size:10px;letter-spacing:.15em}
+.report pre{white-space:pre-wrap;font-family:var(--body);font-size:11.5px;color:var(--ink-dim);line-height:1.8;margin:8px 0 0}
+.rstamp{font-family:var(--mono);font-size:9px;color:var(--ink-faint);letter-spacing:.1em}
+
+/* ---------- v4: souls pager ---------- */
+.soulpager{margin-top:10px;width:100%;background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+  color:var(--ink-dim);padding:8px;cursor:pointer;font-size:12px;transition:.15s;font-family:var(--body)}
+.soulpager:hover{border-color:var(--amber-deep);color:var(--ink)}
+
+/* ---------- v4: replay overlay (iframe v3) ---------- */
+.replaybtn{font-family:var(--disp);font-size:13px;letter-spacing:.06em;color:var(--amber);white-space:nowrap;
+  border:1px solid var(--amber-deep);border-radius:8px;background:rgba(244,183,64,.07);padding:8px 14px;cursor:pointer;transition:.16s}
+.replaybtn:hover{background:rgba(244,183,64,.16);box-shadow:0 0 18px -4px rgba(244,183,64,.5);transform:translateY(-1px)}
+.replayOv{position:fixed;inset:0;z-index:100;display:none;background:#06080f}
+.replayOv.on{display:block}
+.replayOv iframe{width:100%;height:100%;border:0;background:#06080f;display:block}
+.replayOv .rclose{position:absolute;top:10px;right:14px;z-index:102;font-family:var(--mono);font-size:12px;
+  color:var(--ink);background:#0a0e18e6;border:1px solid var(--edge2);border-radius:8px;padding:7px 13px;cursor:pointer}
+.replayOv .rclose:hover{color:var(--amber);border-color:var(--amber-deep)}
+.replayOv .rext{position:absolute;top:12px;right:104px;z-index:102;font-family:var(--mono);font-size:10px;
+  color:var(--ink-faint);background:#0a0e18cc;border:1px dashed var(--edge2);border-radius:8px;padding:7px 11px;text-decoration:none}
+.replayOv .rext:hover{color:var(--teal)}
+.replayOv .rnote{position:absolute;top:12px;left:14px;z-index:102;font-family:var(--mono);font-size:10px;
+  color:var(--amber);background:#0a0e18cc;border:1px dashed var(--amber-deep);border-radius:8px;padding:7px 11px;pointer-events:none}
+
+/* ---------- v4: honesty layer ---------- */
+.demoWm{position:fixed;left:338px;bottom:14px;z-index:80;font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  color:var(--amber);border:1px dashed var(--amber-deep);padding:4px 10px;opacity:.75;pointer-events:none;background:#0a0c12aa}
+.synthTag{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--amber);border:1px dashed var(--amber-deep);
+  padding:1px 6px;margin-left:8px;opacity:.85;font-weight:400;letter-spacing:.05em;border-radius:3px}
+.stub{display:inline-block;font-family:var(--mono);font-size:8px;color:var(--ink-faint);border:1px dashed var(--edge2);
+  padding:0 5px;margin-left:6px;letter-spacing:.08em;border-radius:3px;vertical-align:1px}
+.aboutBadge{position:fixed;right:374px;bottom:14px;z-index:81;font-family:var(--mono);font-size:10px;color:var(--ink-faint);
+  border:1px solid var(--edge);padding:4px 10px;cursor:pointer;background:#0a0c12cc;letter-spacing:.1em;border-radius:4px}
+.aboutBadge:hover{color:var(--amber);border-color:var(--amber-deep)}
+.aboutPanel{position:fixed;right:374px;bottom:46px;z-index:81;width:400px;background:#0d1019f5;border:1px solid var(--edge2);
+  padding:15px 17px;font-size:11px;line-height:1.9;color:var(--ink-dim);display:none;border-radius:10px}
+.aboutPanel.on{display:block}
+.aboutPanel .abK{font-family:var(--mono);font-size:9px;letter-spacing:.25em;color:var(--amber);margin-top:9px}
+
+@media(max-width:1180px){.grid{grid-template-columns:280px 1fr}.col.right{display:none}
+  .aboutBadge,.aboutPanel{right:20px}.demoWm{left:298px}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><b>ORAN<em>SIM</em></b><span class="sub">投放预演台 / CONSUMER SIMULATION</span></div>
+    <div class="spacer"></div>
+    <div class="pill"><span class="k"></span>人口&nbsp;<b id="st-pop">100,000</b></div>
+    <div class="pill"><span class="k"></span>灵魂&nbsp;<b id="st-soul">100</b></div>
+    <div class="pill warn"><span class="k"></span>LLM&nbsp;<b id="st-llm">MiniMax-Text-01</b></div>
+    <div class="pill" style="font-family:var(--mono)"><b id="st-date">2026-06-08</b></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+
+    <!-- LEFT : 投放台 -->
+    <div class="col left">
+      <div class="sh"><span class="idx">01</span> 投放台 / BRIEF</div>
+
+      <div class="presets">
+        <div class="preset" data-preset="light"><span class="e">⚡</span> 轻量</div>
+        <div class="preset" data-preset="hit"><span class="e">🔥</span> 爆款</div>
+        <div class="preset" data-preset="crisis"><span class="e">⚠️</span> 危机</div>
+        <div class="preset" data-preset="full"><span class="e">🧠</span> 完整</div>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <label>创意文案 · CAPTION</label>
+        <textarea id="caption">夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆</textarea>
+      </div>
+
+      <div class="field row2">
+        <div><label>视觉风格</label>
+          <select id="visual"><option value="bright">明亮 bright</option><option>暗调 dark</option><option>极简 minimal</option><option>浮夸 flashy</option></select></div>
+        <div><label>配乐情绪</label>
+          <select id="music"><option value="upbeat">欢快 upbeat</option><option>平静 calm</option><option>ASMR</option><option>戏剧 dramatic</option></select></div>
+      </div>
+
+      <div class="field"><label class="chkrow"><input type="checkbox" id="celeb"> 明星代言加成<span class="stub">占位 · 不参与演算</span></label></div>
+
+      <div class="field">
+        <div class="slabel"><label style="margin:0">投放预算</label><span class="v" id="budget-v">¥80,000</span></div>
+        <input type="range" id="budget" min="5000" max="500000" step="5000" value="80000">
+      </div>
+
+      <div class="field">
+        <div class="slabel"><label style="margin:0">平台分配 · 抖音 / 小红书</label><span class="v" id="alloc-v">60 / 40</span></div>
+        <input type="range" id="alloc" min="0" max="100" step="5" value="60">
+        <div class="split"><div class="seg dy" id="seg-dy" style="width:60%">抖音</div><div class="seg xh" id="seg-xh" style="width:40%">小红书</div></div>
+      </div>
+
+      <div class="field">
+        <label>KOL 领域 · NICHE</label>
+        <select id="niche"><option value="beauty">美妆</option><option>母婴</option><option>数码</option><option>美食</option><option>穿搭</option><option>健身</option><option>理财</option><option>旅行</option></select>
+      </div>
+
+      <div class="field">
+        <label>投放日期 · TODAY</label>
+        <input type="date" id="today" value="2026-06-12">
+      </div>
+
+      <div class="field">
+        <label>人群城市层级 · CITY TIERS</label>
+        <div class="chips" id="tiers">
+          <span class="chip on" data-v="t1">一线</span><span class="chip on" data-v="t1.5">新一线</span>
+          <span class="chip on" data-v="t2">二线</span><span class="chip on" data-v="t3">下沉</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>人群年龄段 · AGE BUCKETS</label>
+        <div class="chips" id="ages">
+          <span class="chip on" data-v="18-24">18-24</span><span class="chip on" data-v="25-34">25-34</span>
+          <span class="chip on" data-v="35-44">35-44</span><span class="chip on" data-v="45+">45+</span>
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>高级参数</summary>
+        <div class="field row2" style="margin-top:12px">
+          <div><label>灵魂采样 n_souls<span class="stub">占位</span></label><select id="nsouls"><option>60</option><option>100</option><option>300</option></select></div>
+          <div><label>时段 daypart</label><select id="daypart"><option value="evening">18-22 黄金档</option><option>上午</option><option>午间</option><option>下午</option><option>深夜</option></select></div>
+        </div>
+        <div class="field"><label class="chkrow"><input type="checkbox" id="usellm"> 启用真 LLM 灵魂（更慢更准）<span class="stub">占位 · 不参与演算</span></label></div>
+        <div class="field"><label class="chkrow"><input type="checkbox" id="cross" checked> 跨平台去重<span class="stub">占位 · 不参与演算</span></label></div>
+      </details>
+
+      <div class="run">
+        <button class="runbtn" id="runbtn"><span class="sweep"></span>▶ 开始预演</button>
+      </div>
+    </div>
+
+    <!-- CENTER : 预测 -->
+    <div class="col center">
+      <div class="sh"><span class="idx">02</span> 预测 / PREDICTION</div>
+
+      <div class="scenario">
+        <div class="cap"><small>SCENARIO · cr_49540</small><span id="sc-cap">夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆</span></div>
+        <div class="tag" id="sc-budget">¥80,000 · 抖音60/小红书40</div>
+        <button class="replaybtn" id="replaybtn" style="display:none" title="回放为基线真样本战况，不随当前操作台参数变化">▶ 战况回放</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab on">KPI 总览</div>
+        <div class="tab soon">百万智能体</div>
+        <div class="tab soon">因果图</div>
+        <div class="tab soon">AI 群聊</div>
+        <div class="tab soon">结构化输出</div>
+      </div>
+
+      <div style="position:relative">
+        <div class="idle-veil" id="idle"><div class="t">待预演</div><div class="s">设定创意与预算，点「开始预演」让十万消费者替你试一遍</div></div>
+
+        <div style="margin:-6px 0 10px;display:none" id="synthnote"><span class="synthTag">确定性演算，非重新推演</span></div>
+
+        <!-- KPI grid -->
+        <div class="kpis" id="kpis">
+          <div class="kpi" data-k="impressions"><div class="lab"><span>曝光</span><span class="en">IMPRESSIONS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="clicks"><div class="lab"><span>点击</span><span class="en">CLICKS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="conversions"><div class="lab"><span>转化</span><span class="en">CONVERSIONS</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="ctr"><div class="lab"><span>点击率</span><span class="en">CTR</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="cvr"><div class="lab"><span>转化率</span><span class="en">CVR</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+          <div class="kpi" data-k="roi"><div class="lab"><span>回报</span><span class="en">ROI</span></div><div class="val" data-v>—</div><div class="ci"><div class="bar"><i></i></div><span class="pm"></span></div></div>
+        </div>
+
+        <div class="twocol">
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:12px">分平台拆解</div>
+            <table class="ptable">
+              <thead><tr><th>平台</th><th>曝光</th><th>CTR</th><th>CVR</th><th>ROI</th></tr></thead>
+              <tbody id="ptbody"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:12px">宏观因子</div>
+            <div class="macro-strip" id="macro"></div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-head">
+            <div class="sh zh" style="margin:0">Hawkes 14 天传播扩散 <span id="halflife" style="font-family:var(--mono);font-size:10px;color:var(--ink-faint)"></span></div>
+            <div class="legend"><span><i style="background:var(--amber)"></i>付费</span><span><i style="background:var(--teal)"></i>自然</span></div>
+          </div>
+          <svg id="hawkes" viewBox="0 0 720 220" preserveAspectRatio="none"></svg>
+        </div>
+
+        <!-- v4 P1: funnel confidence bands -->
+        <div class="card" style="margin-top:14px">
+          <div class="sh zh" style="margin-bottom:12px">漏斗五级 · 置信带 <span style="font-family:var(--mono);font-size:9px;color:var(--ink-faint)">P25 — P50 — P75 · 蒙特卡洛 ×10</span><span class="synthTag" data-synth style="display:none">确定性演算，非重新推演</span></div>
+          <div class="funnel" id="funnel"></div>
+        </div>
+
+        <!-- v4 P5: sensitivity tornado -->
+        <div class="twocol" style="margin-top:14px">
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:12px">敏感性龙卷风 <span style="font-family:var(--mono);font-size:9px;color:var(--ink-faint)">ΔGMV @ ±20% 扰动</span></div>
+            <div class="tornado" id="tornado"></div>
+          </div>
+          <!-- v4 P2: KOL plan -->
+          <div class="card">
+            <div class="sh zh" style="margin-bottom:10px">KOL 优选清单 <span id="kol-niche" style="font-family:var(--mono);font-size:10px;color:var(--amber)">美妆</span><span class="synthTag" data-synth style="display:none">基线 MILP 解 · 不随当前参数重算</span></div>
+            <div class="kolsum" id="kolsum"></div>
+            <table class="ktable">
+              <thead><tr><th>达人</th><th>粉丝</th><th>成本¥</th><th>触达</th><th>ROI</th></tr></thead>
+              <tbody id="kolbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- v4 P3: report card -->
+        <div class="card report" style="margin-top:14px;margin-bottom:18px">
+          <div class="sh zh" style="margin-bottom:12px">市场洞察报告 <span class="rstamp" id="rstamp"></span><span class="synthTag" data-synth style="display:none">数字绑定当前演算</span></div>
+          <div id="rsecs"></div>
+          <details><summary>▸ 查看报告全文（原始样本）</summary><pre id="rfull"></pre></details>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT : 民意 -->
+    <div class="col right">
+      <div class="sh"><span class="idx">03</span> AI 民意 / SENTIMENT</div>
+
+      <div style="position:relative">
+        <div class="idle-veil" id="idle2" style="border-radius:10px"><div class="t">—</div><div class="s">等待预演结果</div></div>
+
+        <div class="sent-head">
+          <div class="gauge" id="netscore">—<small>净情感分 NET</small></div>
+          <div style="flex:1">
+            <div class="sent-bar" id="sentbar">
+              <i style="width:0;background:var(--pos)"></i><i style="width:0;background:var(--neu)"></i><i style="width:0;background:var(--neg)"></i>
+            </div>
+            <div class="sent-legend"><span id="sl-pos">正 —</span><span id="sl-neu">中 —</span><span id="sl-neg">负 —</span></div>
+            <div style="font-size:11px;color:var(--ink-dim);margin-top:4px">高意向占比 <b id="hi-pct" style="color:var(--amber);font-family:var(--mono)">—</b></div>
+          </div>
+        </div>
+
+        <div class="sh zh">情绪分布</div>
+        <div class="feel-grid" id="feels"></div>
+
+        <div class="sh zh">关键舆论主题</div>
+        <div class="themes" id="themes"></div>
+
+        <div class="sh zh">灵魂语录 · <span id="soul-n" style="font-family:var(--mono);color:var(--amber)">0</span></div>
+        <div class="souls" id="souls"></div>
+        <button class="soulpager" id="soulpager" style="display:none">换一批 ▸ <span id="soulpage" style="font-family:var(--mono);font-size:10px;color:var(--ink-faint)"></span></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REVEAL OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-counter" id="ovc">0</div>
+  <div class="ov-label" id="ovl">正在唤醒虚拟消费者…</div>
+  <div class="ov-sub">ORANSIM · SIMULATING POPULATION</div>
+  <div class="ov-field" id="ovfield"></div>
+  <div class="ov-bar"><i id="ovbar"></i></div>
+</div>
+
+<!-- v4: replay overlay (lazy iframe → v3 phosphor theater) -->
+<div class="replayOv" id="replayOv">
+  <span class="rnote">基线真样本回放 · 不随当前操作台参数</span>
+  <a class="rext" href="v3-final.html?demo=1" target="_blank" rel="noopener">在新标签页打开 ↗</a>
+  <button class="rclose" id="replayClose">✕ 关闭</button>
+  <iframe id="replayFrame" title="ORANSIM 战况回放"></iframe>
+</div>
+
+<!-- v4: honesty layer -->
+<div class="demoWm">演示数据 · 内嵌真实响应样本 · 未连后端</div>
+<div class="aboutBadge" id="aboutBadge">ⓘ 关于本演示</div>
+<div class="aboutPanel" id="aboutPanel">
+  <div class="abK">① 真样本</div>
+  KPI 基线、分平台拆解、宏观因子、Hawkes 曲线、漏斗置信带、KOL 优选清单、敏感性弹性、舆情与 60 条灵魂语录，均来自一次真实 <span style="font-family:var(--mono)">/api/predict</span> 响应（112KB 原样内嵌，未篡改）。注意：该样本自身的分平台合计与总 KPI 不完全自洽（如 conversions 分平台合计 ≈6,241 vs 总 KPI 5,383）——本台总 KPI 卡直读 <span style="font-family:var(--mono)">kpis</span>、分平台表直读 <span style="font-family:var(--mono)">per_platform</span>，各自保真，不强行对账。
+  <div class="abK">② 换算值</div>
+  拖动预算 / 平台分配 / 日期 / 人群后联动变化的数字，是对真样本的确定性换算（基线值 × 花费比 × 时段/节假日乘子 × 人群收窄惩罚），<b style="color:var(--amber)">不是</b>重新跑 LLM 推演——故均标注「确定性演算」。其中非基线档的时段/节假日/周末乘子与人群收窄惩罚的<b style="color:var(--amber)">数值为演示假设</b>（量级非样本推得；仅基线黄金档乘子 ×1.3/×1.2 锚定样本 macro）。KPI 卡 ± 区间 = 样本各平台标准差直加，随演算等比缩放，无虚构系数。
+  <div class="abK">③ 设计声明</div>
+  操作台 = 工作台面（琥珀暖光），战况回放 = 磷光影院（暗场冷光），模式切换是设计意图，双色温并非风格不统一。「战况回放」播放的是基线真样本战况，<b style="color:var(--amber)">不随当前操作台参数变化</b>。标「占位」的控件暂不参与演算。
+</div>
+
+<!-- ===== real /api/predict sample (embedded, no backend needed) ===== -->
+<script id="oransim-data" type="application/json">
+{"scenario_summary": {"creative_id": "cr_49540", "caption": "夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆", "total_budget": 80000.0, "platform_alloc": {"douyin": 0.6, "xhs": 0.4}}, "kpis": {"impressions": 2038095.2381, "clicks": 27052.8051, "conversions": 5382.8141, "cost": 80000.0, "revenue": 242226.6333, "ctr": 0.0133, "cvr": 0.199, "roi": 2.0278}, "per_platform": {"douyin": {"impressions": 1371428.5714, "impressions_std": 0.0, "clicks": 21167.8801, "clicks_std": 4.6805, "conversions": 4886.2156, "conversions_std": 4.2239, "ctr": 0.0154, "ctr_std": 0.0, "cvr": 0.2308, "cvr_std": 0.0002, "roi": 3.5808, "roi_std": 0.004, "revenue": 219879.7004, "revenue_std": 190.0771, "cost": 48000.0, "cost_std": 0.0}, "xhs": {"impressions": 666666.6667, "impressions_std": 0.0, "clicks": 5884.925, "clicks_std": 3.6756, "conversions": 1354.7283, "conversions_std": 2.8984, "ctr": 0.0088, "ctr_std": 0.0, "cvr": 0.2302, "cvr_std": 0.0004, "roi": 0.9051, "roi_std": 0.0041, "revenue": 60962.773, "revenue_std": 130.4264, "cost": 32000.0, "cost_std": 0.0}}, "macro": {"today": "2026-06-08", "holiday": {"label": "平日", "lift": 1.0, "days_to": 0}, "season_mult": 1.0, "dow_mult": 1.0, "daypart": {"label": "18-22 黄金档", "ctr_mult": 1.3, "cvr_mult": 1.2}, "weather_mult": 1.0, "sentiment_mult": 1.0, "ctr_macro_lift": 1.3, "cvr_macro_lift": 1.2, "world_category_lift": 1.0, "world": {"sentiment": "neutral", "n_events": 0, "top_events": [], "source": "fallback-mock", "fetched_at": "2026-06-08T18:02:29.540655"}, "creative_audit_risk": 0.0, "creative_aigc_score": 0.05, "creative_category": "general"}, "soul_quotes": [{"persona_id": 72078, "persona_oneliner": "22岁女·玉林·学生·月入分位2/10", "persona_card": "22岁女·玉林·学生·月入分位2/10\n兴趣：游戏, 健身, 母婴, 旅行, 穿搭\n原型画像：健身精致生活派\n常看内容：游戏 / 健身 / 母婴\n不爱看：美食 / 汽车 / 宠物\n性格：容易焦虑\n性格特征：\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "已下单", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 49936, "persona_oneliner": "68岁女·保定·退休·月入分位5/10", "persona_card": "68岁女·保定·退休·月入分位5/10\n兴趣：理财, 健身, 旅行, 游戏, 美食\n原型画像：健身精致生活派\n常看内容：理财 / 健身 / 旅行\n不爱看：咖啡 / 汽车 / 母婴\n性格：佛系\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "正好最近在看这个", "comment": "求链接姐妹", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 99290, "persona_oneliner": "54岁男·济南·蓝领·月入分位1/10", "persona_card": "54岁男·济南·蓝领·月入分位1/10\n兴趣：游戏, 汽车, 读书, 理财, 家居\n原型画像：职场妈妈价格敏感型\n常看内容：游戏 / 汽车 / 读书\n不爱看：旅行 / 宠物 / 母婴\n性格：佛系\n性格特征：\n  • 对新鲜事物特别敏感", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 44453, "persona_oneliner": "63岁女·长沙·蓝领·月入分位9/10", "persona_card": "63岁女·长沙·蓝领·月入分位9/10\n兴趣：健身, 美妆, 汽车, 美食, 家居\n原型画像：Z 世代美妆早鸟\n常看内容：健身 / 美妆 / 汽车\n不爱看：咖啡 / 理财 / 游戏\n性格：外向爱分享\n性格特征：\n  • 冲动消费多\n  • 爱分享 · 晒图评论频繁\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "封面颜色挺清爽", "comment": "看起来不错等降价", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 36944, "persona_oneliner": "48岁女·杭州·白领·月入分位3/10", "persona_card": "48岁女·杭州·白领·月入分位3/10\n兴趣：美食, 汽车, 旅行, 理财, 穿搭\n原型画像：文艺旅行向往者\n常看内容：美食 / 汽车 / 旅行\n不爱看：读书 / 美妆 / 家居\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感\n  • 注重细节 · 反复比价\n  • 对广告本能反感\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "种草了", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 30279, "persona_oneliner": "38岁男·保定·蓝领·月入分位5/10", "persona_card": "38岁男·保定·蓝领·月入分位5/10\n兴趣：读书, 家居, 咖啡, 健身, 数码\n原型画像：健身精致生活派\n常看内容：读书 / 家居 / 咖啡\n不爱看：美妆 / 宠物 / 母婴\n性格：佛系\n性格特征：\n  • 对广告本能反感", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "已下单", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 13133, "persona_oneliner": "41岁男·上海·个体·月入分位4/10", "persona_card": "41岁男·上海·个体·月入分位4/10\n兴趣：宠物, 咖啡, 游戏, 汽车, 健身\n原型画像：职场妈妈价格敏感型\n常看内容：宠物 / 咖啡 / 游戏\n不爱看：理财 / 旅行 / 穿搭\n性格：偏保守，外向爱分享\n性格特征：\n  • 倾向经过验证的选择\n  • 冲动消费多\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "求链接姐妹", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 58214, "persona_oneliner": "72岁女·保定·退休·月入分位2/10", "persona_card": "72岁女·保定·退休·月入分位2/10\n兴趣：数码, 母婴, 读书, 理财, 游戏\n原型画像：通用中间派\n常看内容：数码 / 母婴 / 读书\n不爱看：美食 / 咖啡 / 家居\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "封面颜色挺清爽", "comment": "求链接姐妹", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 85697, "persona_oneliner": "54岁女·苏州·蓝领·月入分位3/10", "persona_card": "54岁女·苏州·蓝领·月入分位3/10\n兴趣：旅行, 美食, 游戏, 母婴, 理财\n原型画像：Z 世代美妆早鸟\n常看内容：旅行 / 美食 / 游戏\n不爱看：美妆 / 健身 / 咖啡\n性格：佛系\n性格特征：\n  • 对广告本能反感", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "已下单", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 14148, "persona_oneliner": "46岁女·济南·无业·月入分位7/10", "persona_card": "46岁女·济南·无业·月入分位7/10\n兴趣：旅行, 美妆, 穿搭, 宠物, 读书\n原型画像：Z 世代美妆早鸟\n常看内容：旅行 / 美妆 / 穿搭\n不爱看：家居 / 健身 / 游戏\n性格：外向爱分享\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "BGM 很抓耳", "comment": "种草了", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 62179, "persona_oneliner": "21岁女·九江·学生·月入分位6/10", "persona_card": "21岁女·九江·学生·月入分位6/10\n兴趣：美食, 母婴, 咖啡, 读书, 数码\n原型画像：健身精致生活派\n常看内容：美食 / 母婴 / 咖啡\n不爱看：美妆 / 游戏 / 汽车\n性格：偏保守，外向爱分享\n性格特征：\n  • 倾向经过验证的选择\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "BGM 很抓耳", "comment": "这个色我真的爱", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 83287, "persona_oneliner": "46岁男·达州·个体·月入分位9/10", "persona_card": "46岁男·达州·个体·月入分位9/10\n兴趣：宠物, 读书, 咖啡, 健身, 游戏\n原型画像：文艺旅行向往者\n常看内容：宠物 / 读书 / 咖啡\n不爱看：美妆 / 美食 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "价格看着能接受", "comment": "种草了", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 87133, "persona_oneliner": "66岁男·广州·退休·月入分位6/10", "persona_card": "66岁男·广州·退休·月入分位6/10\n兴趣：汽车, 穿搭, 家居, 母婴, 宠物\n原型画像：健身精致生活派\n常看内容：汽车 / 穿搭 / 家居\n不爱看：健身 / 旅行 / 理财\n性格：情绪稳定\n性格特征：\n  • 沉默围观 · 很少留言\n  • 情绪稳定 · 不追热点", "will_click": true, "reason": "有真人试色 / 实拍", "comment": "这个色我真的爱", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 50776, "persona_oneliner": "30岁男·绵阳·白领·月入分位4/10", "persona_card": "30岁男·绵阳·白领·月入分位4/10\n兴趣：游戏, 穿搭, 美食, 旅行, 美妆\n原型画像：Z 世代美妆早鸟\n常看内容：游戏 / 穿搭 / 美食\n不爱看：母婴 / 健身 / 咖啡\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "价格看着能接受", "comment": "已下单", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 63965, "persona_oneliner": "32岁男·烟台·白领·月入分位3/10", "persona_card": "32岁男·烟台·白领·月入分位3/10\n兴趣：汽车, 咖啡, 数码, 家居, 读书\n原型画像：理性科技中产\n常看内容：汽车 / 咖啡 / 数码\n不爱看：母婴 / 旅行 / 健身\n性格：佛系\n性格特征：\n  • 注重细节 · 反复比价\n  • 对广告本能反感", "will_click": false, "reason": "这个达人以前翻过车 不太信", "comment": "又是恰饭", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}, {"persona_id": 44475, "persona_oneliner": "70岁男·保定·退休·月入分位2/10", "persona_card": "70岁男·保定·退休·月入分位2/10\n兴趣：汽车, 美妆, 游戏, 读书, 穿搭\n原型画像：职场妈妈价格敏感型\n常看内容：汽车 / 美妆 / 游戏\n不爱看：母婴 / 健身 / 宠物\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "BGM 很抓耳", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 24447, "persona_oneliner": "70岁男·九江·退休·月入分位4/10", "persona_card": "70岁男·九江·退休·月入分位4/10\n兴趣：读书, 宠物, 游戏, 母婴, 咖啡\n原型画像：Z 世代美妆早鸟\n常看内容：读书 / 宠物 / 游戏\n不爱看：美妆 / 数码 / 理财\n性格：喜欢尝新，容易焦虑\n性格特征：\n  • 对新鲜事物特别敏感\n  • 注重细节 · 反复比价\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 48889, "persona_oneliner": "41岁女·长沙·白领·月入分位9/10", "persona_card": "41岁女·长沙·白领·月入分位9/10\n兴趣：旅行, 健身, 游戏, 穿搭, 汽车\n原型画像：健身精致生活派\n常看内容：旅行 / 健身 / 游戏\n不爱看：美食 / 母婴 / 家居\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "跟我家娃挺配", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 61220, "persona_oneliner": "28岁男·成都·白领·月入分位9/10", "persona_card": "28岁男·成都·白领·月入分位9/10\n兴趣：数码, 汽车, 咖啡, 穿搭, 家居\n原型画像：职场妈妈价格敏感型\n常看内容：数码 / 汽车 / 咖啡\n不爱看：健身 / 宠物 / 母婴\n性格：外向爱分享\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "BGM 很抓耳", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 80713, "persona_oneliner": "34岁男·九江·公务员/教师·月入分位8/10", "persona_card": "34岁男·九江·公务员/教师·月入分位8/10\n兴趣：旅行, 家居, 读书, 咖啡, 汽车\n原型画像：职场妈妈价格敏感型\n常看内容：旅行 / 家居 / 读书\n不爱看：母婴 / 穿搭 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "价格看着能接受", "comment": "种草了", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 55312, "persona_oneliner": "72岁女·烟台·退休·月入分位2/10", "persona_card": "72岁女·烟台·退休·月入分位2/10\n兴趣：汽车, 宠物, 数码, 美食, 理财\n原型画像：理性科技中产\n常看内容：汽车 / 宠物 / 数码\n不爱看：咖啡 / 游戏 / 读书\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "正好最近在看这个", "comment": "求链接姐妹", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 88019, "persona_oneliner": "42岁男·北京·蓝领·月入分位8/10", "persona_card": "42岁男·北京·蓝领·月入分位8/10\n兴趣：理财, 美妆, 咖啡, 读书, 宠物\n原型画像：职场妈妈价格敏感型\n常看内容：理财 / 美妆 / 咖啡\n不爱看：穿搭 / 旅行 / 美食\n性格：偏保守\n性格特征：\n  • 倾向经过验证的选择\n  • 冲动消费多\n  • 对广告本能反感", "will_click": true, "reason": "BGM 很抓耳", "comment": "求链接姐妹", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 81582, "persona_oneliner": "27岁男·达州·个体·月入分位8/10", "persona_card": "27岁男·达州·个体·月入分位8/10\n兴趣：游戏, 穿搭, 母婴, 美妆, 旅行\n原型画像：文艺旅行向往者\n常看内容：游戏 / 穿搭 / 母婴\n不爱看：数码 / 理财 / 美食\n性格：外向爱分享，容易焦虑\n性格特征：\n  • 爱分享 · 晒图评论频繁\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "看起来不错等降价", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 87278, "persona_oneliner": "41岁女·玉林·白领·月入分位6/10", "persona_card": "41岁女·玉林·白领·月入分位6/10\n兴趣：美妆, 美食, 理财, 游戏, 宠物\n原型画像：Z 世代美妆早鸟\n常看内容：美妆 / 美食 / 理财\n不爱看：家居 / 读书 / 旅行\n性格：容易焦虑\n性格特征：\n  • 对新鲜事物特别敏感\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "价格看着能接受", "comment": "这个色我真的爱", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 49668, "persona_oneliner": "55岁男·绵阳·自由职业·月入分位5/10", "persona_card": "55岁男·绵阳·自由职业·月入分位5/10\n兴趣：宠物, 家居, 咖啡, 旅行, 读书\n原型画像：健身精致生活派\n常看内容：宠物 / 家居 / 咖啡\n不爱看：美食 / 理财 / 汽车\n性格：佛系\n性格特征：\n  • 注重细节 · 反复比价\n  • 沉默围观 · 很少留言", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "种草了", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 11898, "persona_oneliner": "38岁男·苏州·白领·月入分位6/10", "persona_card": "38岁男·苏州·白领·月入分位6/10\n兴趣：游戏, 美食, 咖啡, 穿搭, 读书\n原型画像：健身精致生活派\n常看内容：游戏 / 美食 / 咖啡\n不爱看：旅行 / 数码 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "种草了", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 50971, "persona_oneliner": "23岁男·达州·学生·月入分位2/10", "persona_card": "23岁男·达州·学生·月入分位2/10\n兴趣：穿搭, 旅行, 家居, 咖啡, 数码\n原型画像：Z 世代美妆早鸟\n常看内容：穿搭 / 旅行 / 家居\n不爱看：美妆 / 美食 / 宠物\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 24742, "persona_oneliner": "55岁男·绵阳·白领·月入分位7/10", "persona_card": "55岁男·绵阳·白领·月入分位7/10\n兴趣：读书, 家居, 咖啡, 母婴, 数码\n原型画像：健身精致生活派\n常看内容：读书 / 家居 / 咖啡\n不爱看：游戏 / 健身 / 美妆\n性格：容易焦虑\n性格特征：\n  • 注重细节 · 反复比价\n  • 爱分享 · 晒图评论频繁\n  • 容易被真诚文案打动\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "BGM 很抓耳", "comment": "这个色我真的爱", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 28481, "persona_oneliner": "56岁女·淮安·白领·月入分位5/10", "persona_card": "56岁女·淮安·白领·月入分位5/10\n兴趣：家居, 母婴, 美食, 咖啡, 游戏\n原型画像：职场妈妈价格敏感型\n常看内容：家居 / 母婴 / 美食\n不爱看：汽车 / 理财 / 健身\n性格：佛系\n性格特征：\n  • 对新鲜事物特别敏感", "will_click": true, "reason": "BGM 很抓耳", "comment": "看起来不错等降价", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 50419, "persona_oneliner": "18岁男·保定·白领·月入分位3/10", "persona_card": "18岁男·保定·白领·月入分位3/10\n兴趣：游戏, 母婴, 咖啡, 健身, 理财\n原型画像：游戏宅数字土著\n常看内容：游戏 / 母婴 / 咖啡\n不爱看：宠物 / 汽车 / 穿搭\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感", "will_click": false, "reason": "又是美颜滤镜 真货肯定没这效果", "comment": "", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}, {"persona_id": 9716, "persona_oneliner": "33岁女·烟台·个体·月入分位9/10", "persona_card": "33岁女·烟台·个体·月入分位9/10\n兴趣：母婴, 健身, 读书, 穿搭, 美妆\n原型画像：通用中间派\n常看内容：母婴 / 健身 / 读书\n不爱看：宠物 / 汽车 / 游戏\n性格：佛系\n性格特征：\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "正好最近在看这个", "comment": "看起来不错等降价", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 82310, "persona_oneliner": "43岁男·合肥·白领·月入分位2/10", "persona_card": "43岁男·合肥·白领·月入分位2/10\n兴趣：游戏, 旅行, 汽车, 咖啡, 健身\n原型画像：理性科技中产\n常看内容：游戏 / 旅行 / 汽车\n不爱看：理财 / 美妆 / 数码\n性格：佛系\n性格特征：\n  • 注重细节 · 反复比价", "will_click": true, "reason": "正好最近在看这个", "comment": "看起来不错等降价", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 47780, "persona_oneliner": "44岁女·宿迁·白领·月入分位0/10", "persona_card": "44岁女·宿迁·白领·月入分位0/10\n兴趣：美妆, 美食, 数码, 游戏, 读书\n原型画像：理性科技中产\n常看内容：美妆 / 美食 / 数码\n不爱看：穿搭 / 健身 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "正好最近在看这个", "comment": "这个色我真的爱", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 44121, "persona_oneliner": "51岁男·杭州·个体·月入分位8/10", "persona_card": "51岁男·杭州·个体·月入分位8/10\n兴趣：宠物, 家居, 旅行, 游戏, 汽车\n原型画像：文艺旅行向往者\n常看内容：宠物 / 家居 / 旅行\n不爱看：数码 / 美妆 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "BGM 很抓耳", "comment": "已下单", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 62896, "persona_oneliner": "36岁女·保定·白领·月入分位5/10", "persona_card": "36岁女·保定·白领·月入分位5/10\n兴趣：家居, 母婴, 理财, 读书, 美食\n原型画像：健身精致生活派\n常看内容：家居 / 母婴 / 理财\n不爱看：汽车 / 健身 / 游戏\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感\n  • 沉默围观 · 很少留言", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 21518, "persona_oneliner": "25岁女·深圳·白领·月入分位3/10", "persona_card": "25岁女·深圳·白领·月入分位3/10\n兴趣：数码, 母婴, 穿搭, 旅行, 美食\n原型画像：职场妈妈价格敏感型\n常看内容：数码 / 母婴 / 穿搭\n不爱看：咖啡 / 汽车 / 读书\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": false, "reason": "老年感重 不是我的风格", "comment": "广子+1", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}, {"persona_id": 34134, "persona_oneliner": "50岁男·驻马店·个体·月入分位1/10", "persona_card": "50岁男·驻马店·个体·月入分位1/10\n兴趣：咖啡, 家居, 数码, 读书, 游戏\n原型画像：职场妈妈价格敏感型\n常看内容：咖啡 / 家居 / 数码\n不爱看：母婴 / 穿搭 / 旅行\n性格：喜欢尝新，外向爱分享，容易焦虑\n性格特征：\n  • 对新鲜事物特别敏感\n  • 爱分享 · 晒图评论频繁\n  • 容易被真诚文案打动\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "这个色我真的爱", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 5548, "persona_oneliner": "54岁男·厦门·无业·月入分位3/10", "persona_card": "54岁男·厦门·无业·月入分位3/10\n兴趣：家居, 美妆, 母婴, 理财, 游戏\n原型画像：健身精致生活派\n常看内容：家居 / 美妆 / 母婴\n不爱看：健身 / 美食 / 数码\n性格：偏保守\n性格特征：\n  • 倾向经过验证的选择", "will_click": true, "reason": "BGM 很抓耳", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 15443, "persona_oneliner": "33岁男·济南·白领·月入分位9/10", "persona_card": "33岁男·济南·白领·月入分位9/10\n兴趣：家居, 咖啡, 读书, 穿搭, 游戏\n原型画像：健身精致生活派\n常看内容：家居 / 咖啡 / 读书\n不爱看：健身 / 汽车 / 旅行\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "封面颜色挺清爽", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 61739, "persona_oneliner": "49岁男·西安·蓝领·月入分位6/10", "persona_card": "49岁男·西安·蓝领·月入分位6/10\n兴趣：汽车, 数码, 旅行, 美妆, 读书\n原型画像：Z 世代美妆早鸟\n常看内容：汽车 / 数码 / 旅行\n不爱看：理财 / 健身 / 美食\n性格：容易焦虑\n性格特征：\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 4391, "persona_oneliner": "56岁女·广州·白领·月入分位6/10", "persona_card": "56岁女·广州·白领·月入分位6/10\n兴趣：穿搭, 美妆, 理财, 数码, 美食\n原型画像：Z 世代美妆早鸟\n常看内容：穿搭 / 美妆 / 理财\n不爱看：健身 / 汽车 / 咖啡\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感\n  • 沉默围观 · 很少留言", "will_click": true, "reason": "价格看着能接受", "comment": "种草了", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 46595, "persona_oneliner": "29岁女·九江·蓝领·月入分位9/10", "persona_card": "29岁女·九江·蓝领·月入分位9/10\n兴趣：旅行, 美妆, 美食, 健身, 母婴\n原型画像：宠物家居温柔派\n常看内容：旅行 / 美妆 / 美食\n不爱看：家居 / 游戏 / 汽车\n性格：佛系\n性格特征：\n  • 冲动消费多\n  • 容易被焦虑痛点驱动", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "这个色我真的爱", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 89635, "persona_oneliner": "69岁男·绵阳·退休·月入分位5/10", "persona_card": "69岁男·绵阳·退休·月入分位5/10\n兴趣：游戏, 家居, 健身, 读书, 穿搭\n原型画像：健身精致生活派\n常看内容：游戏 / 家居 / 健身\n不爱看：母婴 / 旅行 / 美食\n性格：外向爱分享\n性格特征：\n  • 冲动消费多\n  • 爱分享 · 晒图评论频繁\n  • 容易被焦虑痛点驱动", "will_click": false, "reason": "剧情拉胯", "comment": "", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}, {"persona_id": 82986, "persona_oneliner": "39岁女·周口·个体·月入分位7/10", "persona_card": "39岁女·周口·个体·月入分位7/10\n兴趣：读书, 美食, 数码, 穿搭, 美妆\n原型画像：健身精致生活派\n常看内容：读书 / 美食 / 数码\n不爱看：汽车 / 旅行 / 宠物\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "跟我家娃挺配", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 46599, "persona_oneliner": "24岁女·重庆·蓝领·月入分位6/10", "persona_card": "24岁女·重庆·蓝领·月入分位6/10\n兴趣：穿搭, 母婴, 咖啡, 健身, 美食\n原型画像：通用中间派\n常看内容：穿搭 / 母婴 / 咖啡\n不爱看：理财 / 宠物 / 游戏\n性格：佛系\n性格特征：\n  • 情绪稳定 · 不追热点", "will_click": true, "reason": "BGM 很抓耳", "comment": "求链接姐妹", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 69983, "persona_oneliner": "30岁女·九江·白领·月入分位9/10", "persona_card": "30岁女·九江·白领·月入分位9/10\n兴趣：理财, 健身, 游戏, 宠物, 美食\n原型画像：健身精致生活派\n常看内容：理财 / 健身 / 游戏\n不爱看：数码 / 母婴 / 咖啡\n性格：外向爱分享，情绪稳定\n性格特征：\n  • 爱分享 · 晒图评论频繁\n  • 容易被真诚文案打动\n  • 情绪稳定 · 不追热点", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "种草了", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 66354, "persona_oneliner": "52岁女·广州·白领·月入分位9/10", "persona_card": "52岁女·广州·白领·月入分位9/10\n兴趣：数码, 理财, 咖啡, 美妆, 健身\n原型画像：游戏宅数字土著\n常看内容：数码 / 理财 / 咖啡\n不爱看：母婴 / 美食 / 家居\n性格：佛系\n性格特征：\n  • 爱分享 · 晒图评论频繁\n  • 对广告本能反感", "will_click": true, "reason": "有真人试色 / 实拍", "comment": "这个色我真的爱", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 98836, "persona_oneliner": "38岁女·重庆·个体·月入分位9/10", "persona_card": "38岁女·重庆·个体·月入分位9/10\n兴趣：穿搭, 数码, 健身, 美食, 母婴\n原型画像：游戏宅数字土著\n常看内容：穿搭 / 数码 / 健身\n不爱看：游戏 / 读书 / 旅行\n性格：外向爱分享\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "已下单", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 26616, "persona_oneliner": "54岁男·保定·公务员/教师·月入分位3/10", "persona_card": "54岁男·保定·公务员/教师·月入分位3/10\n兴趣：读书, 数码, 理财, 家居, 穿搭\n原型画像：健身精致生活派\n常看内容：读书 / 数码 / 理财\n不爱看：美食 / 汽车 / 咖啡\n性格：佛系\n性格特征：\n  • 沉默围观 · 很少留言", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 51464, "persona_oneliner": "29岁女·重庆·蓝领·月入分位9/10", "persona_card": "29岁女·重庆·蓝领·月入分位9/10\n兴趣：健身, 美食, 理财, 汽车, 母婴\n原型画像：理性科技中产\n常看内容：健身 / 美食 / 理财\n不爱看：宠物 / 家居 / 读书\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感", "will_click": false, "reason": "Z世代味太重 看不懂", "comment": "", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}, {"persona_id": 20055, "persona_oneliner": "17岁男·淮安·白领·月入分位8/10", "persona_card": "17岁男·淮安·白领·月入分位8/10\n兴趣：游戏, 咖啡, 穿搭, 美食, 健身\n原型画像：Z 世代美妆早鸟\n常看内容：游戏 / 咖啡 / 穿搭\n不爱看：理财 / 旅行 / 母婴\n性格：佛系\n性格特征：\n  • 冲动消费多\n  • 沉默围观 · 很少留言", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "看起来不错等降价", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 79641, "persona_oneliner": "34岁男·成都·蓝领·月入分位9/10", "persona_card": "34岁男·成都·蓝领·月入分位9/10\n兴趣：汽车, 美妆, 咖啡, 数码, 美食\n原型画像：通用中间派\n常看内容：汽车 / 美妆 / 咖啡\n不爱看：母婴 / 穿搭 / 健身\n性格：外向爱分享\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "看起来不错等降价", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 9149, "persona_oneliner": "20岁男·淮安·无业·月入分位4/10", "persona_card": "20岁男·淮安·无业·月入分位4/10\n兴趣：健身, 读书, 游戏, 数码, 理财\n原型画像：通用中间派\n常看内容：健身 / 读书 / 游戏\n不爱看：宠物 / 美食 / 美妆\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "达人之前买过 她推的不踩雷", "comment": "种草了", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 69182, "persona_oneliner": "23岁女·绵阳·学生·月入分位6/10", "persona_card": "23岁女·绵阳·学生·月入分位6/10\n兴趣：健身, 数码, 读书, 旅行, 游戏\n原型画像：宠物家居温柔派\n常看内容：健身 / 数码 / 读书\n不爱看：汽车 / 理财 / 母婴\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配", "feel": "购买冲动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 54112, "persona_oneliner": "66岁男·福州·退休·月入分位9/10", "persona_card": "66岁男·福州·退休·月入分位9/10\n兴趣：汽车, 美食, 宠物, 咖啡, 理财\n原型画像：职场妈妈价格敏感型\n常看内容：汽车 / 美食 / 宠物\n不爱看：数码 / 旅行 / 美妆\n性格：喜欢尝新，情绪稳定\n性格特征：\n  • 对新鲜事物特别敏感\n  • 注重细节 · 反复比价\n  • 情绪稳定 · 不追热点", "will_click": true, "reason": "封面颜色挺清爽", "comment": "看起来不错等降价", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 91182, "persona_oneliner": "72岁女·驻马店·退休·月入分位4/10", "persona_card": "72岁女·驻马店·退休·月入分位4/10\n兴趣：汽车, 穿搭, 健身, 美食, 旅行\n原型画像：健身精致生活派\n常看内容：汽车 / 穿搭 / 健身\n不爱看：数码 / 咖啡 / 理财\n性格：佛系\n性格特征：\n  • 典型佛系 · 信息密度敏感", "will_click": true, "reason": "封面颜色挺清爽", "comment": "看起来不错等降价", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 70784, "persona_oneliner": "25岁男·南京·个体·月入分位7/10", "persona_card": "25岁男·南京·个体·月入分位7/10\n兴趣：咖啡, 数码, 宠物, 母婴, 汽车\n原型画像：通用中间派\n常看内容：咖啡 / 数码 / 宠物\n不爱看：读书 / 旅行 / 美食\n性格：佛系\n性格特征：\n  • 爱分享 · 晒图评论频繁", "will_click": true, "reason": "封面颜色挺清爽", "comment": "种草了", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 46756, "persona_oneliner": "19岁女·淮安·蓝领·月入分位8/10", "persona_card": "19岁女·淮安·蓝领·月入分位8/10\n兴趣：美妆, 数码, 美食, 读书, 咖啡\n原型画像：游戏宅数字土著\n常看内容：美妆 / 数码 / 美食\n不爱看：汽车 / 宠物 / 穿搭\n性格：情绪稳定\n性格特征：\n  • 情绪稳定 · 不追热点", "will_click": true, "reason": "正好最近在看这个", "comment": "跟我家娃挺配", "feel": "心动", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 99484, "persona_oneliner": "35岁男·绵阳·自由职业·月入分位8/10", "persona_card": "35岁男·绵阳·自由职业·月入分位8/10\n兴趣：美妆, 健身, 读书, 咖啡, 游戏\n原型画像：健身精致生活派\n常看内容：美妆 / 健身 / 读书\n不爱看：穿搭 / 旅行 / 数码\n性格：佛系\n性格特征：\n  • 冲动消费多", "will_click": true, "reason": "剧情有点意思 想看完", "comment": "看起来不错等降价", "feel": "好奇", "purchase_intent_7d": 0.95, "source": "mock"}, {"persona_id": 96473, "persona_oneliner": "33岁男·广州·白领·月入分位9/10", "persona_card": "33岁男·广州·白领·月入分位9/10\n兴趣：理财, 家居, 咖啡, 穿搭, 母婴\n原型画像：文艺旅行向往者\n常看内容：理财 / 家居 / 咖啡\n不爱看：旅行 / 读书 / 宠物\n性格：喜欢尝新\n性格特征：\n  • 对新鲜事物特别敏感\n  • 沉默围观 · 很少留言", "will_click": false, "reason": "又是美颜滤镜 真货肯定没这效果", "comment": "", "feel": "无感", "purchase_intent_7d": 0.02, "source": "mock"}], "predicted_sentiment": {"sentiment_distribution": {"positive": 0.9, "neutral": 0.1, "negative": 0.0}, "net_sentiment_score": 0.6517, "high_intent_pct": 0.9, "avg_purchase_intent_7d": 0.857, "feel_breakdown": {"心动": 17, "购买冲动": 23, "好奇": 14, "无感": 6}, "key_opinion_themes": [{"theme": "文案挺真诚 不像硬广", "count": 10}, {"theme": "BGM 很抓耳", "count": 10}, {"theme": "达人之前买过 她推的不踩雷", "count": 8}, {"theme": "剧情有点意思 想看完", "count": 7}, {"theme": "正好最近在看这个", "count": 6}, {"theme": "封面颜色挺清爽", "count": 6}], "agent_count": 60, "llm_backed": 0}, "lifecycle": {"days": 14, "day_axis": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], "paid_daily": [37991.2, 25466.27, 17070.55, 11442.73, 7670.29, 5141.55, 3446.48, 2310.25, 1548.61, 1038.06, 695.83, 466.43, 312.66, 209.58], "organic_daily": [4618.24, 12514.82, 14193.6, 13091.46, 10979.97, 8718.65, 6681.51, 4994.71, 3666.02, 2653.35, 1899.35, 1347.59, 949.18, 664.52], "total_daily": [42609.44, 37981.09, 31264.14, 24534.19, 18650.26, 13860.2, 10128.0, 7304.95, 5214.62, 3691.41, 2595.19, 1814.02, 1261.84, 874.1], "branching_ratio": 0.35, "peak_day": 2.0, "organic_share": 0.431}, "dag": {"n_nodes": 64, "n_edges": 117, "nodes": [{"name": "macro_env", "label_zh": "宏观环境", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8b93a7"}, {"name": "weather", "label_zh": "天气", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": true, "computed_by": "macro.py", "color": "#8b93a7"}, {"name": "season", "label_zh": "季节", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "macro.py", "color": "#8b93a7"}, {"name": "holiday_calendar", "label_zh": "节假日", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "macro.py", "color": "#8b93a7"}, {"name": "dow", "label_zh": "星期", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "macro.py", "color": "#8b93a7"}, {"name": "public_sentiment", "label_zh": "全民舆情", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": true, "computed_by": "world_events.py", "color": "#8b93a7"}, {"name": "competitor_action", "label_zh": "竞品动作", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": true, "computed_by": "", "color": "#8b93a7"}, {"name": "regulatory_state", "label_zh": "监管状态", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8b93a7"}, {"name": "supply_state", "label_zh": "供应链状态", "layer": "L1", "layer_label": "宏观/外生", "category": "exogenous", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8b93a7"}, {"name": "brand_awareness", "label_zh": "品牌认知度", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "", "color": "#ffc857"}, {"name": "brand_recall", "label_zh": "品牌回忆", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "brand_memory.py", "color": "#ffc857"}, {"name": "brand_favor", "label_zh": "品牌好感", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "brand_memory.py", "color": "#ffc857"}, {"name": "brand_aversion", "label_zh": "品牌反感", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "brand_memory.py", "color": "#ffc857"}, {"name": "prior_purchase", "label_zh": "历史购买", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ffc857"}, {"name": "brand_equity", "label_zh": "品牌资产", "layer": "L2", "layer_label": "品牌存量", "category": "state", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ffc857"}, {"name": "total_budget", "label_zh": "总预算", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "platform_alloc", "label_zh": "平台分配", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "audience_pkg", "label_zh": "人群包", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "kol_choice", "label_zh": "达人选择", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "creative_caption", "label_zh": "文案", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "creative_visual", "label_zh": "视觉", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "creative_audio", "label_zh": "音频", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "bid_strategy", "label_zh": "出价策略", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "frequency_cap", "label_zh": "频次上限", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "pacing", "label_zh": "投放节奏", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "daypart_alloc", "label_zh": "时段分配", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "ab_variants", "label_zh": "AB 变体", "layer": "L3", "layer_label": "投放决策", "category": "decision", "intervenable": true, "time_varying": false, "computed_by": "", "color": "#6ea8fe"}, {"name": "ecpm_bid", "label_zh": "ECPM 竞价", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "platforms.py", "color": "#bd93f9"}, {"name": "impression_dist", "label_zh": "曝光分发", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "world_model.py", "color": "#bd93f9"}, {"name": "recsys_amplification", "label_zh": "算法放大", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "recsys_rl.py", "color": "#bd93f9"}, {"name": "exposure_count", "label_zh": "曝光次数", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": true, "computed_by": "", "color": "#bd93f9"}, {"name": "unique_reach", "label_zh": "唯一覆盖", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "cross_platform.py", "color": "#bd93f9"}, {"name": "frequency", "label_zh": "曝光频次", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "cross_platform.py", "color": "#bd93f9"}, {"name": "audience_match", "label_zh": "人群匹配度", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "world_model.py", "color": "#bd93f9"}, {"name": "organic_amplification", "label_zh": "自然扩散", "layer": "L4", "layer_label": "算法分发", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "hawkes.py", "color": "#bd93f9"}, {"name": "attention", "label_zh": "注意力", "layer": "L5", "layer_label": "用户状态", "category": "state", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8be9fd"}, {"name": "user_fatigue", "label_zh": "用户疲劳", "layer": "L5", "layer_label": "用户状态", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "cross_platform.py", "color": "#8be9fd"}, {"name": "user_mood", "label_zh": "用户情绪", "layer": "L5", "layer_label": "用户状态", "category": "state", "intervenable": false, "time_varying": true, "computed_by": "", "color": "#8be9fd"}, {"name": "comprehension", "label_zh": "信息理解度", "layer": "L5", "layer_label": "用户状态", "category": "state", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8be9fd"}, {"name": "prior_belief", "label_zh": "先验态度", "layer": "L5", "layer_label": "用户状态", "category": "state", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#8be9fd"}, {"name": "comment_sentiment", "label_zh": "评论情绪", "layer": "L6", "layer_label": "群体话语", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "discourse.py", "color": "#ff79c6"}, {"name": "group_consensus", "label_zh": "群聊共识", "layer": "L6", "layer_label": "群体话语", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "group_chat.py", "color": "#ff79c6"}, {"name": "group_polarization", "label_zh": "群体极化", "layer": "L6", "layer_label": "群体话语", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "group_chat.py", "color": "#ff79c6"}, {"name": "peer_influence", "label_zh": "同伴影响", "layer": "L6", "layer_label": "群体话语", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff79c6"}, {"name": "viral_score", "label_zh": "病毒系数", "layer": "L6", "layer_label": "群体话语", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "hawkes.py", "color": "#ff79c6"}, {"name": "ad_recall", "label_zh": "广告回忆", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "click", "label_zh": "点击", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "statistical.py", "color": "#5ed39b"}, {"name": "engagement", "label_zh": "互动", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "brand_search_lift", "label_zh": "品牌搜索增量", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "site_visit", "label_zh": "落地页/小程序访问", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "product_view", "label_zh": "商品页浏览", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "add_to_cart", "label_zh": "加购", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#5ed39b"}, {"name": "conversion", "label_zh": "下单转化", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": false, "computed_by": "statistical.py", "color": "#5ed39b"}, {"name": "repurchase", "label_zh": "复购", "layer": "L7", "layer_label": "漏斗", "category": "mediator", "intervenable": false, "time_varying": true, "computed_by": "", "color": "#5ed39b"}, {"name": "direct_revenue", "label_zh": "直接 GMV", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "attributed_revenue", "label_zh": "归因 GMV", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "brand_lift_aware", "label_zh": "品牌认知 lift", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "brand_lift_favor", "label_zh": "品牌好感 lift", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "brand_lift_intent", "label_zh": "购意 lift", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "ltv_increment", "label_zh": "LTV 增量", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "roas", "label_zh": "ROAS", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "roi", "label_zh": "ROI", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "organic_search_uplift", "label_zh": "自然搜索增量", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}, {"name": "nps_delta", "label_zh": "NPS 变化", "layer": "L8", "layer_label": "产出", "category": "outcome", "intervenable": false, "time_varying": false, "computed_by": "", "color": "#ff7a85"}], "edges": [["audience_match", "click"], ["competitor_action", "ecpm_bid"], ["ad_recall", "brand_recall"], ["kol_choice", "comment_sentiment"], ["exposure_count", "user_fatigue"], ["brand_search_lift", "site_visit"], ["brand_recall", "click"], ["peer_influence", "engagement"], ["user_mood", "click"], ["engagement", "conversion"], ["comprehension", "click"], ["dow", "user_mood"], ["comment_sentiment", "viral_score"], ["click", "brand_search_lift"], ["weather", "site_visit"], ["audience_pkg", "impression_dist"], ["holiday_calendar", "ecpm_bid"], ["attributed_revenue", "roas"], ["creative_caption", "click"], ["repurchase", "brand_equity"], ["group_consensus", "comment_sentiment"], ["attributed_revenue", "roi"], ["frequency", "user_fatigue"], ["comment_sentiment", "nps_delta"], ["ab_variants", "click"], ["product_view", "add_to_cart"], ["supply_state", "conversion"], ["brand_favor", "click"], ["creative_caption", "comprehension"], ["attention", "click"], ["creative_audio", "attention"], ["daypart_alloc", "audience_match"], ["organic_search_uplift", "attributed_revenue"], ["brand_favor", "conversion"], ["bid_strategy", "ecpm_bid"], ["total_budget", "ecpm_bid"], ["impression_dist", "exposure_count"], ["group_polarization", "viral_score"], ["engagement", "viral_score"], ["season", "ecpm_bid"], ["conversion", "direct_revenue"], ["brand_equity", "ecpm_bid"], ["brand_search_lift", "organic_search_uplift"], ["brand_lift_aware", "brand_awareness"], ["macro_env", "user_mood"], ["brand_awareness", "ad_recall"], ["brand_lift_favor", "brand_favor"], ["exposure_count", "ad_recall"], ["macro_env", "brand_equity"], ["ltv_increment", "roi"], ["peer_influence", "click"], ["site_visit", "product_view"], ["brand_lift_intent", "conversion"], ["user_fatigue", "engagement"], ["regulatory_state", "creative_caption"], ["public_sentiment", "comment_sentiment"], ["organic_amplification", "viral_score"], ["click", "site_visit"], ["holiday_calendar", "conversion"], ["engagement", "brand_favor"], ["conversion", "attributed_revenue"], ["weather", "user_mood"], ["regulatory_state", "impression_dist"], ["frequency", "ad_recall"], ["dow", "frequency"], ["creative_visual", "attention"], ["total_budget", "roi"], ["frequency_cap", "frequency"], ["recsys_amplification", "viral_score"], ["competitor_action", "audience_match"], ["viral_score", "brand_search_lift"], ["season", "click"], ["impression_dist", "unique_reach"], ["pacing", "organic_amplification"], ["prior_belief", "conversion"], ["bid_strategy", "impression_dist"], ["brand_recall", "ad_recall"], ["kol_choice", "click"], ["brand_aversion", "click"], ["direct_revenue", "roas"], ["unique_reach", "brand_lift_aware"], ["group_polarization", "comment_sentiment"], ["holiday_calendar", "click"], ["impression_dist", "recsys_amplification"], ["direct_revenue", "roi"], ["pacing", "exposure_count"], ["kol_choice", "impression_dist"], ["user_fatigue", "click"], ["add_to_cart", "conversion"], ["prior_purchase", "click"], ["prior_purchase", "repurchase"], ["ecpm_bid", "impression_dist"], ["exposure_count", "frequency"], ["daypart_alloc", "user_mood"], ["organic_amplification", "exposure_count"], ["brand_awareness", "click"], ["impression_dist", "audience_match"], ["creative_visual", "click"], ["platform_alloc", "audience_match"], ["ad_recall", "click"], ["platform_alloc", "impression_dist"], ["attention", "ad_recall"], ["engagement", "peer_influence"], ["prior_belief", "click"], ["comment_sentiment", "click"], ["user_mood", "conversion"], ["repurchase", "ltv_increment"], ["comprehension", "conversion"], ["audience_pkg", "audience_match"], ["frequency_cap", "user_fatigue"], ["recsys_amplification", "exposure_count"], ["public_sentiment", "user_mood"], ["comment_sentiment", "conversion"], ["total_budget", "impression_dist"], ["conversion", "repurchase"], ["viral_score", "organic_amplification"], ["click", "engagement"]], "intervenable": ["pacing", "ab_variants", "kol_choice", "total_budget", "creative_audio", "frequency_cap", "daypart_alloc", "bid_strategy", "audience_pkg", "platform_alloc", "creative_visual", "creative_caption"], "layers": [{"id": "L1", "label": "宏观/外生", "color": "#8b93a7", "nodes": ["macro_env", "weather", "season", "holiday_calendar", "dow", "public_sentiment", "competitor_action", "regulatory_state", "supply_state"]}, {"id": "L2", "label": "品牌存量", "color": "#ffc857", "nodes": ["brand_awareness", "brand_recall", "brand_favor", "brand_aversion", "prior_purchase", "brand_equity"]}, {"id": "L3", "label": "投放决策", "color": "#6ea8fe", "nodes": ["total_budget", "platform_alloc", "audience_pkg", "kol_choice", "creative_caption", "creative_visual", "creative_audio", "bid_strategy", "frequency_cap", "pacing", "daypart_alloc", "ab_variants"]}, {"id": "L4", "label": "算法分发", "color": "#bd93f9", "nodes": ["ecpm_bid", "impression_dist", "recsys_amplification", "exposure_count", "unique_reach", "frequency", "audience_match", "organic_amplification"]}, {"id": "L5", "label": "用户状态", "color": "#8be9fd", "nodes": ["attention", "user_fatigue", "user_mood", "comprehension", "prior_belief"]}, {"id": "L6", "label": "群体话语", "color": "#ff79c6", "nodes": ["comment_sentiment", "group_consensus", "group_polarization", "peer_influence", "viral_score"]}, {"id": "L7", "label": "漏斗", "color": "#5ed39b", "nodes": ["ad_recall", "click", "engagement", "brand_search_lift", "site_visit", "product_view", "add_to_cart", "conversion", "repurchase"]}, {"id": "L8", "label": "产出", "color": "#ff7a85", "nodes": ["direct_revenue", "attributed_revenue", "brand_lift_aware", "brand_lift_favor", "brand_lift_intent", "ltv_increment", "roas", "roi", "organic_search_uplift", "nps_delta"]}], "stats": {"by_layer": {"L1": 9, "L2": 6, "L3": 12, "L4": 8, "L5": 5, "L6": 5, "L7": 9, "L8": 10}, "by_category": {"decision": 12, "mediator": 22, "outcome": 10, "state": 11, "exogenous": 9}, "intervenable_count": 12, "time_varying_count": 11, "computed_count": 22}}, "extras": {"cross_platform": {"total_impressions": 200000, "unique_reach": 100000, "cannibalization": 100000, "cannibalization_pct": 0.5, "avg_frequency": 2.0, "max_frequency": 2, "per_platform_incremental": {"douyin": 100000, "xhs": 0}, "per_platform_duplicate": {"douyin": 0, "xhs": 100000}}}, "schema_outputs": {"T1_A1_funnel_beta_fit": [{"fit_id": "beta_A1_to_A2_a2fd5b", "funnel_transition": "A1_to_A2", "alpha_param": 8.761, "beta_param": 357.929, "mean_rate": 0.0239, "variance": 6.3e-05, "ks_statistic": null, "ks_pvalue": null, "run_timestamp": "2026-06-08T18:02:35"}, {"fit_id": "beta_A2_to_A3_d87cbe", "funnel_transition": "A2_to_A3", "alpha_param": 3.444, "beta_param": 2.756, "mean_rate": 0.5556, "variance": 0.034294, "ks_statistic": null, "ks_pvalue": null, "run_timestamp": "2026-06-08T18:02:35"}, {"fit_id": "beta_A3_to_A4_16975b", "funnel_transition": "A3_to_A4", "alpha_param": 7.011, "beta_param": 28.223, "mean_rate": 0.199, "variance": 0.004399, "ks_statistic": null, "ks_pvalue": null, "run_timestamp": "2026-06-08T18:02:35"}, {"fit_id": "beta_A4_to_A5_ae8110", "funnel_transition": "A4_to_A5", "alpha_param": 7.2, "beta_param": 32.801, "mean_rate": 0.18, "variance": 0.0036, "ks_statistic": null, "ks_pvalue": null, "run_timestamp": "2026-06-08T18:02:35"}], "T1_A2_mc_funnel_prediction": {"prediction_id": "mc_pred_a69c0dc8", "A1_awareness": {"p25": 1579523.8, "p50": 2038095.2, "p75": 2496666.7}, "A2_interest": {"p25": 37738.7, "p50": 48695.0, "p75": 59651.4}, "A3_engagement": {"p25": 20965.9, "p50": 27052.8, "p75": 33139.7}, "A4_conversion": {"p25": 4171.7, "p50": 5382.8, "p75": 6593.9}, "A5_loyalty": {"p25": 750.9, "p50": 968.9, "p75": 1186.9}, "simulation_count": 10, "confidence_interval": "50%", "spread_pct": 45.0, "run_timestamp": "2026-06-08T18:02:35"}, "T1_A3_competitor_audience_roi": null, "T2_A1_kol_mix_optimization": {"plan_id": "plan_af11a7d7", "budget": 80000.0, "kol_count": 1, "koc_count": 19, "total_selected": 20, "kol_koc_ratio": "1:19", "candidate_pool_size": 20, "selected_kol_ids": ["KOL_000000", "KOL_000120", "KOL_000190", "KOL_000130", "KOL_000080", "KOL_000100", "KOL_000030", "KOL_000160", "KOL_000050", "KOL_000040", "KOL_000180", "KOL_000170", "KOL_000060", "KOL_000010", "KOL_000150", "KOL_000020", "KOL_000110", "KOL_000070", "KOL_000090", "KOL_000140"], "selected_kols": [{"kol_id": "KOL_000000", "name": "JadeJournal", "niche": "美妆", "tier": "KOC", "fans": 19781, "cost": 168.1, "reach": 6923, "roi": 5.526}, {"kol_id": "KOL_000120", "name": "CoralPress", "niche": "美妆", "tier": "KOC", "fans": 531, "cost": 1.3, "reach": 185, "roi": 2.745}, {"kol_id": "KOL_000190", "name": "EmberArchive", "niche": "美妆", "tier": "KOC", "fans": 5262, "cost": 75.0, "reach": 1841, "roi": 4.658}, {"kol_id": "KOL_000130", "name": "EmberDiary", "niche": "美妆", "tier": "KOC", "fans": 7603, "cost": 33.5, "reach": 2661, "roi": 4.972}, {"kol_id": "KOL_000080", "name": "JadePress", "niche": "美妆", "tier": "KOC", "fans": 2411, "cost": 32.8, "reach": 843, "roi": 3.927}, {"kol_id": "KOL_000100", "name": "VelvetDiary", "niche": "美妆", "tier": "KOC", "fans": 12131, "cost": 372.4, "reach": 4245, "roi": 5.301}, {"kol_id": "KOL_000030", "name": "PrairieDiary", "niche": "美妆", "tier": "KOC", "fans": 3914, "cost": 90.8, "reach": 1369, "roi": 4.385}, {"kol_id": "KOL_000160", "name": "JadeGallery", "niche": "美妆", "tier": "KOC", "fans": 7079, "cost": 64.4, "reach": 2477, "roi": 4.914}, {"kol_id": "KOL_000050", "name": "OakMonthly", "niche": "美妆", "tier": "KOC", "fans": 4627, "cost": 87.2, "reach": 1619, "roi": 4.541}, {"kol_id": "KOL_000040", "name": "SilverMuse", "niche": "美妆", "tier": "尾部", "fans": 207947, "cost": 8783.7, "reach": 72781, "roi": 4.576}, {"kol_id": "KOL_000180", "name": "IvoryMuse", "niche": "美妆", "tier": "KOC", "fans": 19988, "cost": 100.9, "reach": 6995, "roi": 5.529}, {"kol_id": "KOL_000170", "name": "IndigoDiary", "niche": "美妆", "tier": "尾部", "fans": 72724, "cost": 1474.8, "reach": 25453, "roi": 5.372}, {"kol_id": "KOL_000060", "name": "OakMonthly", "niche": "美妆", "tier": "KOC", "fans": 11413, "cost": 123.8, "reach": 3994, "roi": 5.264}, {"kol_id": "KOL_000010", "name": "SolarMuse", "niche": "美妆", "tier": "KOC", "fans": 21911, "cost": 149.0, "reach": 7668, "roi": 5.555}, {"kol_id": "KOL_000150", "name": "SilverMonthly", "niche": "美妆", "tier": "KOC", "fans": 3952, "cost": 23.5, "reach": 1383, "roi": 4.394}, {"kol_id": "KOL_000020", "name": "CrystalClub", "niche": "美妆", "tier": "尾部", "fans": 107613, "cost": 684.4, "reach": 37664, "roi": 5.125}, {"kol_id": "KOL_000110", "name": "HarborRecord", "niche": "美妆", "tier": "KOC", "fans": 22064, "cost": 182.0, "reach": 7722, "roi": 5.556}, {"kol_id": "KOL_000070", "name": "VelvetRecord", "niche": "美妆", "tier": "KOC", "fans": 14666, "cost": 141.5, "reach": 5133, "roi": 5.405}, {"kol_id": "KOL_000090", "name": "IndigoArchive", "niche": "美妆", "tier": "腰部", "fans": 481395, "cost": 66721.3, "reach": 168488, "roi": 3.789}, {"kol_id": "KOL_000140", "name": "SolarJournal", "niche": "美妆", "tier": "KOC", "fans": 1824, "cost": 28.8, "reach": 638, "roi": 3.671}], "estimated_total_reach": 360082, "estimated_total_engagement": 45819, "estimated_roi": 4.76, "estimated_cost": 79339.2, "budget_utilization": 0.992, "optimization_objective": "max_roi", "solver_status": "milp_optimal", "target_niches": ["美妆"], "data_source": "synthetic_kols (200 KOLs)", "note": "Synthetic pool — Enterprise Edition swaps in a real-panel KOL index.", "run_timestamp": "2026-06-08T18:02:35"}, "T2_A2_kol_content_match": {"run_id": "kcm_4b44fb8f", "brief": {"own_brand": "本品牌", "category": "通用", "target_niches": ["美妆"], "target_niches_source": "caller", "caption_preview": "夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆"}, "agent_model": "heuristic_match_v1", "total_cost_cny": 0, "candidate_pool_size": 200, "top_k": 10, "rows": [{"kol_id": "KOL_000090", "name": "IndigoArchive", "niche": "美妆", "tier": "腰部", "fans": 481395, "match_score": 0.7, "niche_match": 0.45, "tier_fit": 0.25, "text_overlap": 0.0, "explanation": "垂类匹配（美妆）；腰部 层级，粉丝 481,395"}, {"kol_id": "KOL_000040", "name": "SilverMuse", "niche": "美妆", "tier": "尾部", "fans": 207947, "match_score": 0.67, "niche_match": 0.45, "tier_fit": 0.22, "text_overlap": 0.0, "explanation": "垂类匹配（美妆）；尾部 层级，粉丝 207,947"}, {"kol_id": "KOL_000170", "name": "IndigoDiary", "niche": "美妆", "tier": "尾部", "fans": 72724, "match_score": 0.67, "niche_match": 0.45, "tier_fit": 0.22, "text_overlap": 0.0, "explanation": "垂类匹配（美妆）；尾部 层级，粉丝 72,724"}, {"kol_id": "KOL_000020", "name": "CrystalClub", "niche": "美妆", "tier": "尾部", "fans": 107613, "match_score": 0.67, "niche_match": 0.45, "tier_fit": 0.22, "text_overlap": 0.0}, {"kol_id": "KOL_000000", "name": "JadeJournal", "niche": "美妆", "tier": "KOC", "fans": 19781, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}, {"kol_id": "KOL_000120", "name": "CoralPress", "niche": "美妆", "tier": "KOC", "fans": 531, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}, {"kol_id": "KOL_000190", "name": "EmberArchive", "niche": "美妆", "tier": "KOC", "fans": 5262, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}, {"kol_id": "KOL_000130", "name": "EmberDiary", "niche": "美妆", "tier": "KOC", "fans": 7603, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}, {"kol_id": "KOL_000080", "name": "JadePress", "niche": "美妆", "tier": "KOC", "fans": 2411, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}, {"kol_id": "KOL_000100", "name": "VelvetDiary", "niche": "美妆", "tier": "KOC", "fans": 12131, "match_score": 0.63, "niche_match": 0.45, "tier_fit": 0.18, "text_overlap": 0.0}], "data_source": "synthetic_kols (200 KOLs)", "note": "Heuristic on synthetic pool — Enterprise Edition uses a learned encoder.", "run_timestamp": "2026-06-08T18:02:35"}, "T2_A3_tag_lift_ranking": {"run_id": "tl_23a1f55e", "target_niche": "beauty", "platform": "xhs", "min_support": 8, "top_k": 20, "n_notes_global": 500, "n_notes_in_niche": 53, "n_unique_tags": 29, "rows": [{"tag": "柔和", "lift": 1.846, "count_in_niche": 9, "count_global": 46, "p_niche": 0.1698, "p_global": 0.092, "support": 9, "confidence": 0.1698}, {"tag": "三件", "lift": 1.551, "count_in_niche": 12, "count_global": 73, "p_niche": 0.2264, "p_global": 0.146, "support": 12, "confidence": 0.2264}, {"tag": "效果", "lift": 1.436, "count_in_niche": 14, "count_global": 92, "p_niche": 0.2642, "p_global": 0.184, "support": 14, "confidence": 0.2642}, {"tag": "有效", "lift": 1.436, "count_in_niche": 14, "count_global": 92, "p_niche": 0.2642, "p_global": 0.184, "support": 14, "confidence": 0.2642}, {"tag": "组合", "lift": 1.422, "count_in_niche": 11, "count_global": 73, "p_niche": 0.2075, "p_global": 0.146, "support": 11, "confidence": 0.2075}, {"tag": "醇厚", "lift": 1.348, "count_in_niche": 8, "count_global": 56, "p_niche": 0.1509, "p_global": 0.112, "support": 8, "confidence": 0.1509}, {"tag": "方案", "lift": 1.117, "count_in_niche": 9, "count_global": 76, "p_niche": 0.1698, "p_global": 0.152, "support": 9, "confidence": 0.1698}, {"tag": "搭配", "lift": 1.02, "count_in_niche": 8, "count_global": 74, "p_niche": 0.1509, "p_global": 0.148, "support": 8, "confidence": 0.1509}, {"tag": "对比", "lift": 0.891, "count_in_niche": 12, "count_global": 127, "p_niche": 0.2264, "p_global": 0.254, "support": 12, "confidence": 0.2264}, {"tag": "真实", "lift": 0.738, "count_in_niche": 9, "count_global": 115, "p_niche": 0.1698, "p_global": 0.23, "support": 9, "confidence": 0.1698}], "data_source": "synthetic notes_v3 (500 notes, 10 niches)", "note": "Synthetic corpus — Enterprise Edition swaps in a real-panel index.", "run_timestamp": "2026-06-08T18:02:35"}, "T2_A4_ugc_diffusion_simulation": {"diffusion_id": "diff_e16491ae", "diffusion_curve": [42609.4, 37981.1, 31264.1, 24534.2, 18650.3, 13860.2, 10128.0, 7304.9, 5214.6, 3691.4, 2595.2, 1814.0, 1261.8, 874.1], "peak_day": 0, "peak_ugc_count": 42609, "half_life_days": 4.0, "total_ugc_predicted": 201783, "backtest_mape": null, "run_timestamp": "2026-06-08T18:02:35"}, "T2_A5_kol_reinvest_ranking": [{"kol_id": "KOL_000180", "name": "IvoryMuse", "reinvest_score": 4.604, "historical_roi_avg": 5.529, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 1}, {"kol_id": "KOL_000130", "name": "EmberDiary", "reinvest_score": 4.431, "historical_roi_avg": 4.972, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 2}, {"kol_id": "KOL_000010", "name": "SolarMuse", "reinvest_score": 3.985, "historical_roi_avg": 5.555, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 3}, {"kol_id": "KOL_000020", "name": "CrystalClub", "reinvest_score": 3.802, "historical_roi_avg": 5.125, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 4}, {"kol_id": "KOL_000110", "name": "HarborRecord", "reinvest_score": 3.619, "historical_roi_avg": 5.556, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 5}, {"kol_id": "KOL_000000", "name": "JadeJournal", "reinvest_score": 3.546, "historical_roi_avg": 5.526, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 6}, {"kol_id": "KOL_000150", "name": "SilverMonthly", "reinvest_score": 3.371, "historical_roi_avg": 4.394, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 7}, {"kol_id": "KOL_000120", "name": "CoralPress", "reinvest_score": 3.275, "historical_roi_avg": 2.745, "audience_match_score": 0.915, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 8}, {"kol_id": "KOL_000070", "name": "VelvetRecord", "reinvest_score": 3.255, "historical_roi_avg": 5.405, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 9}, {"kol_id": "KOL_000160", "name": "JadeGallery", "reinvest_score": 3.048, "historical_roi_avg": 4.914, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 10}, {"kol_id": "KOL_000060", "name": "OakMonthly", "reinvest_score": 2.99, "historical_roi_avg": 5.264, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 11}, {"kol_id": "KOL_000190", "name": "EmberArchive", "reinvest_score": 2.308, "historical_roi_avg": 4.658, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 12}, {"kol_id": "KOL_000170", "name": "IndigoDiary", "reinvest_score": 2.232, "historical_roi_avg": 5.372, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 13}, {"kol_id": "KOL_000080", "name": "JadePress", "reinvest_score": 1.991, "historical_roi_avg": 3.927, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 14}, {"kol_id": "KOL_000050", "name": "OakMonthly", "reinvest_score": 1.957, "historical_roi_avg": 4.541, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 15}, {"kol_id": "KOL_000100", "name": "VelvetDiary", "reinvest_score": 1.79, "historical_roi_avg": 5.301, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 16}, {"kol_id": "KOL_000140", "name": "SolarJournal", "reinvest_score": 1.728, "historical_roi_avg": 3.671, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 17}, {"kol_id": "KOL_000030", "name": "PrairieDiary", "reinvest_score": 1.703, "historical_roi_avg": 4.385, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 18}, {"kol_id": "KOL_000040", "name": "SilverMuse", "reinvest_score": 1.317, "historical_roi_avg": 4.576, "audience_match_score": 1.0, "cost_trend": "rising", "recommendation": "优先复投", "reinvest_rank": 19}, {"kol_id": "KOL_000090", "name": "IndigoArchive", "reinvest_score": 0.602, "historical_roi_avg": 3.789, "audience_match_score": 1.0, "cost_trend": "stable", "recommendation": "观望", "reinvest_rank": 20}], "T3_A1_agent_persona": [{"persona_id": "persona_72078", "persona_name": "玉林·学生·15-24", "age_range": "15-24", "gender": "F", "city_tier": null, "city_name": "玉林", "occupation": "学生", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_49936", "persona_name": "保定·退休·65+", "age_range": "65+", "gender": "F", "city_tier": null, "city_name": "保定", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_99290", "persona_name": "济南·蓝领·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "济南", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_44453", "persona_name": "长沙·蓝领·55-64", "age_range": "55-64", "gender": "F", "city_tier": null, "city_name": "长沙", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_36944", "persona_name": "杭州·白领·45-54", "age_range": "45-54", "gender": "F", "city_tier": null, "city_name": "杭州", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_30279", "persona_name": "保定·蓝领·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "保定", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_13133", "persona_name": "上海·个体·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "上海", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_58214", "persona_name": "保定·退休·65+", "age_range": "65+", "gender": "F", "city_tier": null, "city_name": "保定", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_85697", "persona_name": "苏州·蓝领·45-54", "age_range": "45-54", "gender": "F", "city_tier": null, "city_name": "苏州", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_14148", "persona_name": "济南·无业·45-54", "age_range": "45-54", "gender": "F", "city_tier": null, "city_name": "济南", "occupation": "无业", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_62179", "persona_name": "九江·学生·15-24", "age_range": "15-24", "gender": "F", "city_tier": null, "city_name": "九江", "occupation": "学生", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_83287", "persona_name": "达州·个体·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "达州", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "价格看着能接受", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_87133", "persona_name": "广州·退休·65+", "age_range": "65+", "gender": "M", "city_tier": null, "city_name": "广州", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "有真人试色 / 实拍", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_50776", "persona_name": "绵阳·白领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "绵阳", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "价格看着能接受", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_63965", "persona_name": "烟台·白领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "烟台", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "这个达人以前翻过车 不太信", "comment": "又是恰饭"}, "source": "mock"}, {"persona_id": "persona_44475", "persona_name": "保定·退休·65+", "age_range": "65+", "gender": "M", "city_tier": null, "city_name": "保定", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_24447", "persona_name": "九江·退休·65+", "age_range": "65+", "gender": "M", "city_tier": null, "city_name": "九江", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_48889", "persona_name": "长沙·白领·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "长沙", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_61220", "persona_name": "成都·白领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "成都", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_80713", "persona_name": "九江·公务员/教师·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "九江", "occupation": "公务员/教师", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "价格看着能接受", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_55312", "persona_name": "烟台·退休·65+", "age_range": "65+", "gender": "F", "city_tier": null, "city_name": "烟台", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_88019", "persona_name": "北京·蓝领·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "北京", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_81582", "persona_name": "达州·个体·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "达州", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_87278", "persona_name": "玉林·白领·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "玉林", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "价格看着能接受", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_49668", "persona_name": "绵阳·自由职业·55-64", "age_range": "55-64", "gender": "M", "city_tier": null, "city_name": "绵阳", "occupation": "自由职业", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_11898", "persona_name": "苏州·白领·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "苏州", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_50971", "persona_name": "达州·学生·15-24", "age_range": "15-24", "gender": "M", "city_tier": null, "city_name": "达州", "occupation": "学生", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_24742", "persona_name": "绵阳·白领·55-64", "age_range": "55-64", "gender": "M", "city_tier": null, "city_name": "绵阳", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_28481", "persona_name": "淮安·白领·55-64", "age_range": "55-64", "gender": "F", "city_tier": null, "city_name": "淮安", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_50419", "persona_name": "保定·白领·15-24", "age_range": "15-24", "gender": "M", "city_tier": null, "city_name": "保定", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "又是美颜滤镜 真货肯定没这效果", "comment": ""}, "source": "mock"}, {"persona_id": "persona_9716", "persona_name": "烟台·个体·25-34", "age_range": "25-34", "gender": "F", "city_tier": null, "city_name": "烟台", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_82310", "persona_name": "合肥·白领·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "合肥", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_47780", "persona_name": "宿迁·白领·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "宿迁", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_44121", "persona_name": "杭州·个体·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "杭州", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_62896", "persona_name": "保定·白领·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "保定", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_21518", "persona_name": "深圳·白领·25-34", "age_range": "25-34", "gender": "F", "city_tier": null, "city_name": "深圳", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "老年感重 不是我的风格", "comment": "广子+1"}, "source": "mock"}, {"persona_id": "persona_34134", "persona_name": "驻马店·个体·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "驻马店", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_5548", "persona_name": "厦门·无业·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "厦门", "occupation": "无业", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_15443", "persona_name": "济南·白领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "济南", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_61739", "persona_name": "西安·蓝领·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "西安", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_4391", "persona_name": "广州·白领·55-64", "age_range": "55-64", "gender": "F", "city_tier": null, "city_name": "广州", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "价格看着能接受", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_46595", "persona_name": "九江·蓝领·25-34", "age_range": "25-34", "gender": "F", "city_tier": null, "city_name": "九江", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_89635", "persona_name": "绵阳·退休·65+", "age_range": "65+", "gender": "M", "city_tier": null, "city_name": "绵阳", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "剧情拉胯", "comment": ""}, "source": "mock"}, {"persona_id": "persona_82986", "persona_name": "周口·个体·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "周口", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_46599", "persona_name": "重庆·蓝领·15-24", "age_range": "15-24", "gender": "F", "city_tier": null, "city_name": "重庆", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "BGM 很抓耳", "comment": "求链接姐妹"}, "source": "mock"}, {"persona_id": "persona_69983", "persona_name": "九江·白领·25-34", "age_range": "25-34", "gender": "F", "city_tier": null, "city_name": "九江", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_66354", "persona_name": "广州·白领·45-54", "age_range": "45-54", "gender": "F", "city_tier": null, "city_name": "广州", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "有真人试色 / 实拍", "comment": "这个色我真的爱"}, "source": "mock"}, {"persona_id": "persona_98836", "persona_name": "重庆·个体·35-44", "age_range": "35-44", "gender": "F", "city_tier": null, "city_name": "重庆", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "已下单"}, "source": "mock"}, {"persona_id": "persona_26616", "persona_name": "保定·公务员/教师·45-54", "age_range": "45-54", "gender": "M", "city_tier": null, "city_name": "保定", "occupation": "公务员/教师", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_51464", "persona_name": "重庆·蓝领·25-34", "age_range": "25-34", "gender": "F", "city_tier": null, "city_name": "重庆", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "Z世代味太重 看不懂", "comment": ""}, "source": "mock"}, {"persona_id": "persona_20055", "persona_name": "淮安·白领·15-24", "age_range": "15-24", "gender": "M", "city_tier": null, "city_name": "淮安", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_79641", "persona_name": "成都·蓝领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "成都", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_9149", "persona_name": "淮安·无业·15-24", "age_range": "15-24", "gender": "M", "city_tier": null, "city_name": "淮安", "occupation": "无业", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "达人之前买过 她推的不踩雷", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_69182", "persona_name": "绵阳·学生·15-24", "age_range": "15-24", "gender": "F", "city_tier": null, "city_name": "绵阳", "occupation": "学生", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "购买冲动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "文案挺真诚 不像硬广", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_54112", "persona_name": "福州·退休·65+", "age_range": "65+", "gender": "M", "city_tier": null, "city_name": "福州", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_91182", "persona_name": "驻马店·退休·65+", "age_range": "65+", "gender": "F", "city_tier": null, "city_name": "驻马店", "occupation": "退休", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_70784", "persona_name": "南京·个体·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "南京", "occupation": "个体", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "封面颜色挺清爽", "comment": "种草了"}, "source": "mock"}, {"persona_id": "persona_46756", "persona_name": "淮安·蓝领·15-24", "age_range": "15-24", "gender": "F", "city_tier": null, "city_name": "淮安", "occupation": "蓝领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "心动", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "正好最近在看这个", "comment": "跟我家娃挺配"}, "source": "mock"}, {"persona_id": "persona_99484", "persona_name": "绵阳·自由职业·35-44", "age_range": "35-44", "gender": "M", "city_tier": null, "city_name": "绵阳", "occupation": "自由职业", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.95, "feel": "好奇", "will_click": true}, "crowd_segment": "A4_conversion", "verdict": {"reason": "剧情有点意思 想看完", "comment": "看起来不错等降价"}, "source": "mock"}, {"persona_id": "persona_96473", "persona_name": "广州·白领·25-34", "age_range": "25-34", "gender": "M", "city_tier": null, "city_name": "广州", "occupation": "白领", "interest_tags": [], "consumption_traits": {"purchase_intent_7d": 0.02, "feel": "无感", "will_click": false}, "crowd_segment": "A1_awareness", "verdict": {"reason": "又是美颜滤镜 真货肯定没这效果", "comment": ""}, "source": "mock"}], "T3_A2_platform_simulation_ts": [{"simulation_id": "sim_d62c90", "day": 0, "platform": "douyin", "post_count": 28, "comment_count": 182, "share_count": 50, "emotion_positive": 0.9, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_2d6202", "day": 0, "platform": "xhs", "post_count": 13, "comment_count": 84, "share_count": 23, "emotion_positive": 0.9, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_fac0a8", "day": 1, "platform": "douyin", "post_count": 25, "comment_count": 162, "share_count": 45, "emotion_positive": 0.828, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_ea92cf", "day": 1, "platform": "xhs", "post_count": 12, "comment_count": 78, "share_count": 21, "emotion_positive": 0.828, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_54fddb", "day": 2, "platform": "douyin", "post_count": 21, "comment_count": 136, "share_count": 37, "emotion_positive": 0.762, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_a8b6da", "day": 2, "platform": "xhs", "post_count": 10, "comment_count": 65, "share_count": 18, "emotion_positive": 0.762, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_4ec013", "day": 3, "platform": "douyin", "post_count": 16, "comment_count": 104, "share_count": 28, "emotion_positive": 0.701, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_b9f92e", "day": 3, "platform": "xhs", "post_count": 8, "comment_count": 52, "share_count": 14, "emotion_positive": 0.701, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_d91611", "day": 4, "platform": "douyin", "post_count": 12, "comment_count": 78, "share_count": 21, "emotion_positive": 0.645, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_ffe780", "day": 4, "platform": "xhs", "post_count": 6, "comment_count": 39, "share_count": 10, "emotion_positive": 0.645, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_20bdf7", "day": 5, "platform": "douyin", "post_count": 9, "comment_count": 58, "share_count": 16, "emotion_positive": 0.593, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_3b9c2f", "day": 5, "platform": "xhs", "post_count": 4, "comment_count": 26, "share_count": 7, "emotion_positive": 0.593, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_99a856", "day": 6, "platform": "douyin", "post_count": 6, "comment_count": 39, "share_count": 10, "emotion_positive": 0.546, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_2c9a64", "day": 6, "platform": "xhs", "post_count": 3, "comment_count": 19, "share_count": 5, "emotion_positive": 0.546, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_7dab48", "day": 7, "platform": "douyin", "post_count": 4, "comment_count": 26, "share_count": 7, "emotion_positive": 0.502, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_11eb5b", "day": 7, "platform": "xhs", "post_count": 2, "comment_count": 13, "share_count": 3, "emotion_positive": 0.502, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_8a8267", "day": 8, "platform": "douyin", "post_count": 3, "comment_count": 19, "share_count": 5, "emotion_positive": 0.462, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_e61dc4", "day": 8, "platform": "xhs", "post_count": 1, "comment_count": 6, "share_count": 1, "emotion_positive": 0.462, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_f7141a", "day": 9, "platform": "douyin", "post_count": 2, "comment_count": 13, "share_count": 3, "emotion_positive": 0.425, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_9f9422", "day": 9, "platform": "xhs", "post_count": 1, "comment_count": 6, "share_count": 1, "emotion_positive": 0.425, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_50fad8", "day": 10, "platform": "douyin", "post_count": 1, "comment_count": 6, "share_count": 1, "emotion_positive": 0.391, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_84d9b1", "day": 10, "platform": "xhs", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.391, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_1e2471", "day": 11, "platform": "douyin", "post_count": 1, "comment_count": 6, "share_count": 1, "emotion_positive": 0.36, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_ad0c80", "day": 11, "platform": "xhs", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.36, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_603da0", "day": 12, "platform": "douyin", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.331, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_abb5e2", "day": 12, "platform": "xhs", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.331, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_4f44e4", "day": 13, "platform": "douyin", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.304, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}, {"simulation_id": "sim_f301d9", "day": 13, "platform": "xhs", "post_count": 0, "comment_count": 0, "share_count": 0, "emotion_positive": 0.304, "emotion_negative": 0.0, "propagation_pattern": "hawkes_ogata"}], "T3_A3_emergent_metrics": [{"metric_id": "em_b6f3b4", "metric_name": "views_predicted", "metric_value": 2038095.24, "chain_formula_value": 2038095.24, "deviation_rate": 0.0, "extraction_method": "aggregation", "confidence": 0.85, "run_timestamp": "2026-06-08T18:02:35"}, {"metric_id": "em_318a4f", "metric_name": "engagement_predicted", "metric_value": 27052.81, "chain_formula_value": 27052.81, "deviation_rate": 0.0, "extraction_method": "aggregation", "confidence": 0.85, "run_timestamp": "2026-06-08T18:02:35"}, {"metric_id": "em_16f2dd", "metric_name": "conversion_predicted", "metric_value": 5382.81, "chain_formula_value": 5382.81, "deviation_rate": 0.0, "extraction_method": "aggregation", "confidence": 0.85, "run_timestamp": "2026-06-08T18:02:35"}, {"metric_id": "em_00f338", "metric_name": "roi_predicted", "metric_value": 2.03, "chain_formula_value": 2.03, "deviation_rate": 0.0, "extraction_method": "aggregation", "confidence": 0.85, "run_timestamp": "2026-06-08T18:02:35"}, {"metric_id": "em_3ecc5e", "metric_name": "gmv_predicted", "metric_value": 242226.63, "chain_formula_value": 242226.63, "deviation_rate": 0.0, "extraction_method": "aggregation", "confidence": 0.85, "run_timestamp": "2026-06-08T18:02:35"}], "T3_A4_scenario_comparison": {"comparison_id": "comp_a479bde2", "scenario_a_desc": "baseline", "scenario_b_desc": "intervention_avg", "n_samples": 8, "kpi_comparison": [{"kpi": "roi", "scenario_a_mean": 2.0278, "scenario_a_std": 0.0, "scenario_b_mean": 2.0126, "scenario_b_std": 0.1359, "delta_absolute": -0.0152, "delta_pct": -0.75, "wilcoxon_statistic": 16.0, "p_value": 0.8438, "is_significant_05": false, "is_significant_01": false, "test_method": "wilcoxon_signed_rank", "n_samples": 8}], "recommended_scenario": "tie", "recommendation_reason": "无显著差异，建议看长期/品牌指标", "test_family": "Wilcoxon signed-rank (non-parametric, paired)", "run_timestamp": "2026-06-08T18:02:35"}, "T3_A5_sensitivity_analysis": {"sensitivity_id": "sens_87163786", "base_roi": 2.028, "base_gmv": 242226.6, "total_params_covered": 8, "parameters": [{"parameter_name": "audit_risk", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 213159.4, "perturbed_gmv_down": 271293.8, "gmv_change_amplitude": 58134.4, "elasticity": -0.6, "sensitivity_rank": 1}, {"parameter_name": "aigc_score", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 220426.2, "perturbed_gmv_down": 264027.0, "gmv_change_amplitude": 43600.8, "elasticity": -0.45, "sensitivity_rank": 2}, {"parameter_name": "visual_quality", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 259182.5, "perturbed_gmv_down": 225270.8, "gmv_change_amplitude": 33911.7, "elasticity": 0.35, "sensitivity_rank": 3}, {"parameter_name": "budget", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 227693.0, "perturbed_gmv_down": 256760.2, "gmv_change_amplitude": 29067.2, "elasticity": -0.3, "sensitivity_rank": 4}, {"parameter_name": "kol_tier", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 254338.0, "perturbed_gmv_down": 230115.3, "gmv_change_amplitude": 24222.7, "elasticity": 0.25, "sensitivity_rank": 5}, {"parameter_name": "world_sentiment", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 251915.7, "perturbed_gmv_down": 232537.6, "gmv_change_amplitude": 19378.1, "elasticity": 0.2, "sensitivity_rank": 6}, {"parameter_name": "platform_mix", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 249493.4, "perturbed_gmv_down": 234959.8, "gmv_change_amplitude": 14533.6, "elasticity": 0.15, "sensitivity_rank": 7}, {"parameter_name": "creative_duration", "perturbation_pct": 0.2, "base_gmv": 242226.6, "perturbed_gmv_up": 247071.2, "perturbed_gmv_down": 237382.1, "gmv_change_amplitude": 9689.1, "elasticity": 0.1, "sensitivity_rank": 8}], "run_timestamp": "2026-06-08T18:02:35"}, "T3_A6_search_elasticity": {"elasticity_id": "elast_d30392a9", "brand_id": "brand_mvp", "platform": "xhs", "keyword": null, "data_source": "synthesized_from_hawkes", "elasticity_coeff": 0.3202, "intercept": 5.5608, "r_squared": 0.9385, "confidence_lower": 0.2738, "confidence_upper": 0.3665, "dw_statistic": 2.084, "residual_normality": "pass", "sample_size": 14, "std_error": 0.0237, "series_days": ["day_0", "day_1", "day_2", "day_3", "day_4", "day_5", "day_6", "day_7", "day_8", "day_9", "day_10", "day_11", "day_12", "day_13"], "series_engage": [42609.44, 37981.09, 31264.14, 24534.19, 18650.26, 13860.2, 10128.0, 7304.95, 5214.62, 3691.41, 2595.19, 1814.02, 1261.84, 874.1], "series_search": [8654.41, 7074.23, 8192.31, 7699.6, 4944.14, 4817.1, 5124.2, 4333.26, 3991.92, 3199.56, 3481.92, 3034.52, 2453.71, 2450.89], "synthesized_true_elasticity": 0.35, "interpretation": "互动→搜索中等正向传导 (ε=0.3202)，每 10% 互动带动 3.2% 搜索", "run_timestamp": "2026-06-08T18:02:35"}, "T3_A7_content_type_coefficient": {"run_id": "ctc_75140609", "target_niche": "美妆", "baseline_engagement_rate": 0.0349, "n_notes_total": 53, "n_formats": 3, "rows": [{"content_type": "教程", "coefficient": 1.76, "mean_engagement_rate": 0.0614, "baseline_rate": 0.0349, "n_samples": 4, "recommendation": "优先投放"}, {"content_type": "其他", "coefficient": 1.055, "mean_engagement_rate": 0.0368, "baseline_rate": 0.0349, "n_samples": 35, "recommendation": "可选"}, {"content_type": "测评", "coefficient": 0.646, "mean_engagement_rate": 0.0225, "baseline_rate": 0.0349, "n_samples": 14, "recommendation": "不推荐"}], "data_source": "synthetic notes (53 notes)", "note": "Synthetic corpus — coefficients calibrated against generative priors.", "run_timestamp": "2026-06-08T18:02:35"}, "report_market_insight": {"report_id": "rpt_insight_1d3d6dd3", "report_type": "MARKET_INSIGHT", "report_content": "# 市场洞察报告 · 夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆\n\n## 投放方案\n- 素材：夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆\n- 总预算：¥80,000\n- 平台分配：douyin=60%, xhs=40%\n\n## 核心 KPI\n- 曝光：**2,038,095** · 点击：**27,053** · 转化：**5,383**\n- CTR **1.33%** · CVR **19.90%** · ROI **2.03x**\n\n## 漏斗预测 (A1-A5, 50% 置信区间)\n- **曝光人群** (A1_awareness): P25=1,579,524 · P50=2,038,095 · P75=2,496,667\n- **兴趣人群** (A2_interest): P25=37,739 · P50=48,695 · P75=59,651\n- **互动人群** (A3_engagement): P25=20,966 · P50=27,053 · P75=33,140\n- **转化人群** (A4_conversion): P25=4,172 · P50=5,383 · P75=6,594\n- **复购人群** (A5_loyalty): P25=751 · P50=969 · P75=1,187\n\n## 舆情预演 (基于 60 AI 用户投票)\n- 净情感分数：**0.65** （正 90% / 中 10% / 负 0%）\n- 高购意占比：**90.0%**\n- 高频关注：文案挺真诚 不像硬广, BGM 很抓耳, 达人之前买过 她推的不踩雷, 剧情有点意思 想看完, 正好最近在看这个\n\n## 扩散曲线\n- 峰值日：Day **0** · 峰值 UGC：**42,609**\n- 半衰期：**4.0** 天 · 14 天总量：**201,783**\n\n## 敏感性 Top 3 风险参数\n- **audit_risk** ±20% → GMV 波动 ¥58,134 (弹性 -0.60)\n- **aigc_score** ±20% → GMV 波动 ¥43,601 (弹性 -0.45)\n- **visual_quality** ±20% → GMV 波动 ¥33,912 (弹性 +0.35)\n\n_报告生成时间：2026-06-08T18:02:35_\n", "output_formats": ["MD"], "generated_at": "2026-06-08T18:02:35"}, "report_strategy_case": {"report_id": "rpt_strategy_cba6d880", "report_type": "STRATEGY_CASE", "report_content": "# 投放预测报告 · 夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆\n\n**TL;DR**：✅ 建议投放 · 整体投放 ROI **2.03x**（revenue/cost，见 §2 · 与 §5 KOL 层 ROI 不是同一口径） · 情感净值 **0.65**（正面占比 90.0%）\n\n## 1. 投放方案\n- 素材：夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆\n- 总预算：¥80,000\n- 平台分配：douyin=60%, xhs=40%\n\n## 2. 核心预测（蒙特卡洛 10 次均值）\n| 指标 | 值 |\n|---|---|\n| 预估曝光 | 2,038,095 |\n| 预估点击 | 27,053 (CTR 1.33%) |\n| 预估转化 | 5,383 (CVR 19.90%) |\n| 整体投放 ROI | **2.03x** &nbsp;<sub>(revenue/cost)</sub> |\n| 预估 GMV | ¥242,227 |\n\n### 五阶漏斗 (P25 悲观 / P50 / P75 乐观)\n- **曝光** (A1_awareness): P25=1,579,524 · P50=**2,038,095** · P75=2,496,667\n- **兴趣** (A2_interest): P25=37,739 · P50=**48,695** · P75=59,651\n- **互动** (A3_engagement): P25=20,966 · P50=**27,053** · P75=33,140\n- **转化** (A4_conversion): P25=4,172 · P50=**5,383** · P75=6,594\n- **复购** (A5_loyalty): P25=751 · P50=**969** · P75=1,187\n\n## 3. 人群与舆情 (基于 60 AI 用户投票)\n- 情感分布：正面 90.0% / 中性 10.0% / 负面 0.0%\n- 净情感分数：0.65\n- 高购意用户占比：90.0%\n- 高频关注主题：文案挺真诚 不像硬广, BGM 很抓耳, 达人之前买过 她推的不踩雷, 剧情有点意思 想看完\n\n\n## 5. KOL 组合策略\n- 入选达人：**20** 位（KOL:KOC = 1:19）\n- 预估总触达：360,082\n- **KOL 池加权 ROI（ILP 估算）**：**4.76x** &nbsp;<sub>ILP optimizer 基于预算 × 单 KOL 历史 ROI 的加权平均 · **与 §2 整体投放 ROI 不是同一口径**</sub>\n- 预算利用率：99.2%\n\n### 优先复投 Top3\n- **IvoryMuse**（score 4.604, 优先复投）\n- **EmberDiary**（score 4.431, 优先复投）\n- **SolarMuse**（score 3.985, 优先复投）\n\n## 6. 扩散预期 (14 天)\n- 峰值日：Day **0**\n- 半衰期：**4.0** 天\n- 总 UGC 预估：201,783\n- 搜索弹性 ε：**0.3202**（R²=0.9385）—— 互动→搜索中等正向传导 (ε=0.3202)，每 10% 互动带动 3.2% 搜索\n\n## 7. 风险点（敏感性 Top 3）\n- **audit_risk** ±20% → GMV 波动 ¥58,134（负向弹性 -0.60）\n- **aigc_score** ±20% → GMV 波动 ¥43,601（负向弹性 -0.45）\n- **visual_quality** ±20% → GMV 波动 ¥33,912（正向弹性 +0.35）\n\n## 8. 行动建议\n1. 加大投放预算 20-30%\n2. 重心放在 KOC 矩阵起量\n3. 保持素材节奏，14 天内二次触达\n\n---\n\n_报告生成：2026-06-08 18:02:35 · 基于 60 AI 用户 + Oransim 六层因果仿真_\n", "output_formats": ["MD"], "source": "template", "generation_ms": 0, "tokens_in": 0, "tokens_out": 0, "cost_cny": 0.0, "generated_at": "2026-06-08T18:02:35"}}}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('oransim-data').textContent);
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// ---- formatting ----
+const nf = n => n>=1e8?(n/1e8).toFixed(2)+'亿':n>=1e4?(n/1e4).toFixed(1)+'万':Math.round(n).toLocaleString();
+const pct = n => (n*100).toFixed(2)+'%';
+const x2 = n => n.toFixed(2);
+const FEEL_COLOR = {'购买冲动':'#FFD479','心动':'#F4B740','好奇':'#5FB0C9','无感':'#8A94A6','厌恶':'#FF5C5C'};
+const AV_COLORS = ['#F4B740','#FFD479','#5FB0C9','#b9831f','#7cc6dd'];
+
+// ---- seeded PRNG (no bare Math.random anywhere; same input → same pixels) ----
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ---- v4 deterministic environment lookups (date / daypart / audience) ----
+// baseline sample was run at evening daypart (ctr_mult 1.3 / cvr_mult 1.2) on a plain weekday → relative multipliers
+const DAYPART_MULT={'evening':{ctr:1.3,cvr:1.2,label:'18-22 黄金档'},'上午':{ctr:0.95,cvr:0.95,label:'上午'},
+  '午间':{ctr:1.05,cvr:1.0,label:'午间'},'下午':{ctr:1.0,cvr:0.95,label:'下午'},'深夜':{ctr:1.15,cvr:0.85,label:'深夜'}};
+const HOLIDAYS={'06-18':{label:'618 大促',lift:1.25},'06-01':{label:'儿童节',lift:1.10},'11-11':{label:'双11',lift:1.30},
+  '12-12':{label:'双12',lift:1.15},'02-14':{label:'情人节',lift:1.12},'01-01':{label:'元旦',lift:1.08}};
+function envFromForm(){
+  const dstr=$('#today').value||DATA.macro.today, d=new Date(dstr+'T12:00:00');
+  const mmdd=dstr.slice(5);
+  const holiday=HOLIDAYS[mmdd]||{label:'平日',lift:1.0};
+  const wd=d.getDay(), weekend=(wd===0||wd===6);
+  const dow={label:'周'+'日一二三四五六'[wd]+(weekend?' 周末':' 工作日'),mult:weekend?1.15:1.0};
+  const day=DAYPART_MULT[$('#daypart').value]||DAYPART_MULT['evening'];
+  const nT=$$('#tiers .chip.on').length, nA=$$('#ages .chip.on').length;
+  const missing=(4-nT)+(4-nA);
+  return {date:dstr,holiday,dow,day,missing,
+    impFactor:holiday.lift*dow.mult*Math.pow(0.92,missing),   // 人群收窄 → 曝光降
+    ctrFactor:day.ctr/1.3,                                    // 相对基线时段
+    cvrFactor:(day.cvr/1.2)*Math.pow(1.02,missing)};          // 人群收窄 → CVR 微升
+}
+
+// ---- live recompute: scale embedded baseline by budget + platform alloc + env multipliers (确定性演算) ----
+// 基线档（¥80,000 / 60:40 / 全环境因子 ×1.0）逐项直读样本原值：
+//   · 分平台行 = per_platform 原值（含 ROI 3.58 / 0.91）
+//   · 总 KPI = kpis 原值（曝光 203.8万 / 转化 5,383 / CVR 19.90% / ROI 2.03）
+// 注意：源样本 per_platform 合计与 kpis 不完全自洽（conversions 合计 6,241 vs kpis 5,383）——
+// 故总 KPI 不做分平台链式重算，而是 kpis × 分平台加权变化率（基线档变化率恒为 1）。
+function compute(){
+  const budget = +$('#budget').value;
+  const dyShare = +$('#alloc').value/100;
+  const env = envFromForm();
+  const base = DATA.per_platform, K = DATA.kpis;
+  const mk = (p, spend) => { const b=base[p]; const sr=spend/b.cost;          // 花费比（基线=1）
+    const kImp=sr*env.impFactor, kClk=kImp*env.ctrFactor, kConv=kClk*env.cvrFactor;
+    const rev=b.revenue*kConv;
+    return {impressions:b.impressions*kImp, clicks:b.clicks*kClk, conversions:b.conversions*kConv,
+      revenue:rev, cost:spend, ctr:b.ctr*env.ctrFactor, cvr:b.cvr*env.cvrFactor,
+      roi:spend>0?(rev-spend)/spend:0}; };
+  const dy=mk('douyin',budget*dyShare), xh=mk('xhs',budget*(1-dyShare));
+  const r=k=>(dy[k]+xh[k])/(base.douyin[k]+base.xhs[k]);                       // 分平台加权变化率
+  const tot={impressions:K.impressions*r('impressions'), clicks:K.clicks*r('clicks'),
+    conversions:K.conversions*r('conversions'), revenue:K.revenue*r('revenue'), cost:budget};
+  tot.ctr=tot.impressions>0?tot.clicks/tot.impressions:0;
+  tot.cvr=tot.clicks>0?tot.conversions/tot.clicks:0;
+  tot.roi=(tot.revenue-tot.cost)/tot.cost;
+  return {budget,dyShare,tot,dy,xh,env};
+}
+
+// baseline snapshot (for delta) captured at first run
+let BASELINE=null;
+
+// ---- KPI render with count-up + CI settle ----
+// ± 区间 = 样本两平台 *_std 直加（基线档即样本原值），随当前值/基线值等比缩放——无虚构系数
+const KBASE=(()=>{const b=DATA.per_platform,K=DATA.kpis,s=k=>b.douyin[k]+b.xhs[k];
+  return {impressions:{v:K.impressions,s:s('impressions_std')}, clicks:{v:K.clicks,s:s('clicks_std')},
+    conversions:{v:K.conversions,s:s('conversions_std')}, ctr:{v:K.ctr,s:s('ctr_std')},
+    cvr:{v:K.cvr,s:s('cvr_std')}, roi:{v:K.roi,s:s('roi_std')}};})();
+const kstd=(k,v)=>KBASE[k].s*Math.abs(v/KBASE[k].v);
+const KCONF={
+  impressions:{get:t=>t.tot.impressions,fmt:nf},
+  clicks:{get:t=>t.tot.clicks,fmt:nf},
+  conversions:{get:t=>t.tot.conversions,fmt:nf},
+  ctr:{get:t=>t.tot.ctr,fmt:pct},
+  cvr:{get:t=>t.tot.cvr,fmt:pct},
+  roi:{get:t=>t.tot.roi,fmt:x2},
+};
+function animVal(el,to,fmt,dur=900){
+  const from=0,t0=performance.now();
+  function tick(now){let p=Math.min(1,(now-t0)/dur);p=1-Math.pow(1-p,3);
+    el.textContent=fmt(from+(to-from)*p);if(p<1)requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+}
+function renderKPIs(state,animate){
+  $$('#kpis .kpi').forEach((el,i)=>{
+    const k=el.dataset.k,c=KCONF[k],v=c.get(state),std=kstd(k,v);
+    const valEl=el.querySelector('[data-v]');
+    if(animate){ el.classList.remove('lit'); setTimeout(()=>{ animVal(valEl,v,c.fmt); el.classList.add('lit'); },i*110); }
+    else valEl.textContent=c.fmt(v);
+    // CI bracket: overshoot then settle（v≤0 取绝对值，避免负宽被 CSS 静默忽略）
+    const pm=el.querySelector('.pm'), bar=el.querySelector('.ci i');
+    const rel=v!==0?std/Math.abs(v):0; pm.textContent='±'+(c.fmt===pct?pct(std):c.fmt===x2?std.toFixed(3):nf(std));
+    const w=Math.max(6,Math.min(46,rel*900+6));
+    bar.style.transition='none'; bar.style.width=(w*1.7)+'%';
+    setTimeout(()=>{bar.style.transition='width .7s cubic-bezier(.3,1.3,.5,1)';bar.style.width=w+'%';}, animate?i*110+400:30);
+    // delta vs baseline
+    let d=el.querySelector('.delta'); if(!d){d=document.createElement('span');d.className='delta';el.querySelector('.lab').appendChild(d);}
+    if(BASELINE&&BASELINE!==state){const bv=c.get(BASELINE);const dd=(v-bv)/bv;
+      d.textContent=(dd>=0?'+':'')+(dd*100).toFixed(1)+'%';d.className='delta '+(dd>=0?'up':'down');}
+    else d.textContent='';
+  });
+}
+
+function renderPlatforms(state){
+  const rows=[['douyin','抖音','var(--amber)',state.dy],['xhs','小红书','var(--teal)',state.xh]];
+  $('#ptbody').innerHTML=rows.map(([id,name,col,p])=>{const live=p.cost>0;return `<tr>
+    <td><span class="pf"><i style="background:${col}"></i>${name}</span></td>
+    <td>${nf(p.impressions)}</td><td>${live?pct(p.ctr):'—'}</td><td>${live?pct(p.cvr):'—'}</td>
+    <td style="color:${live?(p.roi>=1?'var(--pos)':'var(--neg)'):'var(--ink-faint)'}">${live?x2(p.roi):'—'}</td></tr>`;}).join('');
+}
+
+function renderMacro(state){
+  const m=DATA.macro, e=state.env, cp=DATA.extras&&DATA.extras.cross_platform;
+  const sentZh={neutral:'中性',positive:'偏正',negative:'偏负'};
+  const items=[
+    ['节假日',e.holiday.label+(e.holiday.lift>1?' ×'+e.holiday.lift.toFixed(2):''),e.holiday.lift>1],
+    ['星期',e.dow.label+(e.dow.mult>1?' ×'+e.dow.mult.toFixed(2):''),e.dow.mult>1],
+    ['时段',e.day.label,false],
+    ['CTR 增益','×'+e.day.ctr.toFixed(2),true],['CVR 增益','×'+e.day.cvr.toFixed(2),true],
+    ['季节乘子','×'+m.season_mult.toFixed(2),false],['天气乘子','×'+m.weather_mult.toFixed(2),false],
+    ['舆情乘子','×'+m.sentiment_mult.toFixed(2),false],
+    ['世界事件',(m.world.n_events||0)+' 条 · '+(sentZh[m.world.sentiment]||m.world.sentiment),false],
+    ['人群收窄',e.missing?('×'+Math.pow(0.92,e.missing).toFixed(2)+' 曝光'):'全选 ×1.00',e.missing>0],
+    ['审核风险',(m.creative_audit_risk*100).toFixed(0)+'%',false],['AIGC 度',(m.creative_aigc_score*100).toFixed(0)+'%',false]];
+  if(cp)items.push(['去重蚕食',(cp.cannibalization_pct*100).toFixed(0)+'% · 频次'+cp.avg_frequency.toFixed(1),false]);
+  $('#macro').innerHTML=items.map(([t,v,hot])=>`<div class="mfac"><span class="t">${t}</span><span class="v ${hot?'':'mut'}">${v}</span></div>`).join('');
+}
+
+// ---- v4 P1: funnel A1-A5 confidence bands (基线带宽不变，绝对值随演算缩放) ----
+const FUNNEL_STAGES=[['A1_awareness','曝光人群','AWARENESS','imp'],['A2_interest','兴趣人群','INTEREST','clk'],
+  ['A3_engagement','互动人群','ENGAGEMENT','clk'],['A4_conversion','转化人群','CONVERSION','conv'],['A5_loyalty','复购人群','LOYALTY','conv']];
+function renderFunnel(state){
+  const F=DATA.schema_outputs.T1_A2_mc_funnel_prediction, K=DATA.kpis;
+  const k={imp:state.tot.impressions/K.impressions, clk:state.tot.clicks/K.clicks, conv:state.tot.conversions/K.conversions};
+  const sc=FUNNEL_STAGES.map(([key,zh,en,kk])=>{const b=F[key];const s=k[kk];
+    return {zh,en,p25:b.p25*s,p50:b.p50*s,p75:b.p75*s};});
+  const lo=Math.log10(Math.max(1,sc[4].p25*0.7)), hi=Math.max(lo+1e-6,Math.log10(Math.max(1,sc[0].p75*1.15)));
+  const X=v=>Math.max(0,Math.min(100,(Math.log10(Math.max(1,v))-lo)/(hi-lo)*100));
+  $('#funnel').innerHTML=sc.map(s=>`<div class="fstage">
+    <span class="fn">${s.zh}<small>${s.en}</small></span>
+    <span class="ftrack"><i class="fband" style="left:${X(s.p25)}%;width:${Math.max(1.2,X(s.p75)-X(s.p25))}%"></i><i class="fp50" style="left:${X(s.p50)}%"></i></span>
+    <span class="fv"><b>${nf(s.p50)}</b> · ${nf(s.p25)}–${nf(s.p75)}</span></div>`).join('')
+    +`<div style="font-family:var(--mono);font-size:9px;color:var(--ink-faint);margin-top:4px">对数刻度 · spread ${F.spread_pct}% · CI ${F.confidence_interval}</div>`;
+}
+
+// ---- v4 P5: sensitivity tornado (弹性来自基线样本，条长随当前 GMV 缩放) ----
+const PARAM_ZH={audit_risk:'审核风险',aigc_score:'AIGC 痕迹',visual_quality:'视觉质量',budget:'预算',
+  kol_tier:'KOL 层级',world_sentiment:'世界舆情',platform_mix:'平台混比',creative_duration:'素材时长'};
+function renderTornado(state){
+  const S=DATA.schema_outputs.T3_A5_sensitivity_analysis;
+  const ps=[...S.parameters].sort((a,b)=>a.sensitivity_rank-b.sensitivity_rank);
+  const gmv=state.tot.revenue;
+  const amps=ps.map(p=>Math.abs(p.elasticity)*0.2*gmv);
+  const mx=Math.max(...amps)||1;
+  $('#tornado').innerHTML=ps.map((p,i)=>{const w=amps[i]/mx*48;
+    return `<div class="trow"><span>${PARAM_ZH[p.parameter_name]||p.parameter_name}</span>
+      <span class="tt"><i class="tneg" style="width:${w}%"></i><i class="tpos" style="width:${w}%"></i></span>
+      <span class="te" style="color:${p.elasticity<0?'var(--neg)':'var(--pos)'}">${p.elasticity>0?'+':''}${p.elasticity.toFixed(2)}ε</span></div>`;}).join('')
+    +`<div style="font-family:var(--mono);font-size:9px;color:var(--ink-faint);margin-top:6px">条长 = |弹性|×20% 扰动 × 当前 GMV ¥${nf(gmv)}</div>`;
+}
+
+// ---- v4 P2: KOL plan (整卡为基线 MILP 优化解，含预算/领域标签——不随表单重算) ----
+function renderKOL(){
+  const K=DATA.schema_outputs.T2_A1_kol_mix_optimization;
+  $('#kol-niche').textContent=(K.target_niches&&K.target_niches[0])||'美妆';
+  $('#kolsum').innerHTML=[
+    `配比 <b>${K.kol_koc_ratio}</b>`,`解算预算 <b>¥${(+K.budget).toLocaleString()}</b>`,
+    `预估触达 <b>${nf(K.estimated_total_reach)}</b>`,`组合 ROI <b>${x2(K.estimated_roi)}</b>`,
+    `求解 <b>${K.solver_status}</b>`].map(s=>`<span class="ks">${s}</span>`).join('');
+  const rows=[...K.selected_kols].sort((a,b)=>b.cost-a.cost).slice(0,10);
+  $('#kolbody').innerHTML=rows.map(r=>`<tr><td>${r.name}<span class="tier">${r.tier}</span></td>
+    <td>${nf(r.fans)}</td><td>${r.cost.toLocaleString()}</td><td>${nf(r.reach)}</td>
+    <td style="color:${r.roi>=1?'var(--pos)':'var(--neg)'}">${x2(r.roi)}</td></tr>`).join('');
+}
+
+// ---- v4 P3: report card (摘要数字绑定当前演算；全文为原始样本) ----
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function renderReport(state){
+  const t=state.tot, F=DATA.schema_outputs.T1_A2_mc_funnel_prediction;
+  const kImp=t.impressions/DATA.kpis.impressions, kConv=t.conversions/DATA.kpis.conversions;
+  const a=+$('#alloc').value, ns=DATA.predicted_sentiment.net_sentiment_score;
+  const secs=[
+    ['投放方案',`素材：${esc($('#caption').value)}<br>总预算：<b>¥${state.budget.toLocaleString()}</b> · 平台分配：抖音 <b>${a}%</b> / 小红书 <b>${100-a}%</b> · 投放日：<b>${state.env.date}</b>（${state.env.holiday.label}·${state.env.dow.label}）`],
+    ['核心 KPI',`曝光 <b>${nf(t.impressions)}</b> · 点击 <b>${nf(t.clicks)}</b> · 转化 <b>${nf(t.conversions)}</b><br>CTR <b>${pct(t.ctr)}</b> · CVR <b>${pct(t.cvr)}</b> · ROI <b>${x2(t.roi)}x</b> · GMV <b>¥${nf(t.revenue)}</b>`],
+    ['漏斗与舆情',`A1 曝光人群 P50 <b>${nf(F.A1_awareness.p50*kImp)}</b> → A4 转化人群 P50 <b>${nf(F.A4_conversion.p50*kConv)}</b>（50% 置信区间见上方漏斗带）<br>净情感分 <b>${(ns>=0?'+':'')+ns.toFixed(2)}</b> · 高意向占比 <b>${pct(DATA.predicted_sentiment.high_intent_pct)}</b> · 基于 ${DATA.predicted_sentiment.agent_count} AI 用户投票`]];
+  $('#rsecs').innerHTML=secs.map(([h,p])=>`<div class="rsec"><h4>${h}</h4><p>${p}</p></div>`).join('');
+  $('#rstamp').textContent='生成于 '+new Date().toLocaleString('zh-CN',{hour12:false});
+  $('#rfull').textContent=DATA.schema_outputs.report_market_insight.report_content;
+}
+
+// ---- Hawkes SVG stacked area ----
+function renderHawkes(){
+  const L=DATA.lifecycle,W=720,H=220,pad={l:8,r:8,t:14,b:22};
+  const days=L.day_axis, paid=L.paid_daily, org=L.organic_daily, tot=L.total_daily;
+  const maxV=Math.max(...tot)*1.08;
+  const X=i=>pad.l+(W-pad.l-pad.r)*(i/(days.length-1));
+  const Y=v=>H-pad.b-(H-pad.t-pad.b)*(v/maxV);
+  const areaPath=(arr,base)=>{
+    let d='M'+X(0)+' '+Y(base?base[0]:0);
+    arr.forEach((v,i)=>d+=' L'+X(i)+' '+Y((base?base[i]:0)+v));
+    for(let i=arr.length-1;i>=0;i--)d+=' L'+X(i)+' '+Y(base?base[i]:0);
+    return d+'Z';
+  };
+  const line=arr=>arr.map((v,i)=>(i?'L':'M')+X(i)+' '+Y(v)).join(' ');
+  const peak=L.peak_day|0;
+  let grid='';for(let g=0;g<=4;g++){const y=pad.t+(H-pad.t-pad.b)*g/4;grid+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#1a2230" stroke-width="1"/>`;}
+  let ticks='';days.forEach((d,i)=>{if(i%2===0)ticks+=`<text x="${X(i)}" y="${H-6}" fill="#5b6478" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">D${d}</text>`;});
+  $('#hawkes').innerHTML=`
+    <defs>
+      <linearGradient id="gPaid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4B740" stop-opacity=".45"/><stop offset="1" stop-color="#F4B740" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="gOrg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FB0C9" stop-opacity=".4"/><stop offset="1" stop-color="#5FB0C9" stop-opacity=".04"/></linearGradient>
+    </defs>
+    ${grid}
+    <path d="${areaPath(paid,null)}" fill="url(#gPaid)"/>
+    <path d="${areaPath(org,paid)}" fill="url(#gOrg)"/>
+    <path d="${line(tot)}" fill="none" stroke="#FFD479" stroke-width="1.6" class="hline"/>
+    <line x1="${X(peak)}" y1="${pad.t}" x2="${X(peak)}" y2="${H-pad.b}" stroke="#F4B740" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
+    <circle cx="${X(peak)}" cy="${Y(tot[peak])}" r="3.5" fill="#FFD479"/>
+    <text x="${X(peak)}" y="${pad.t-3}" fill="#F4B740" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">峰值 D${peak}</text>
+    ${ticks}`;
+  const ln=$('#hawkes .hline'); if(ln){const len=ln.getTotalLength();ln.style.strokeDasharray=len;ln.style.strokeDashoffset=len;
+    ln.animate([{strokeDashoffset:len},{strokeDashoffset:0}],{duration:1100,easing:'ease-out',fill:'forwards'});}
+  const ugc=DATA.schema_outputs&&DATA.schema_outputs.T2_A4_ugc_diffusion_simulation;
+  if(ugc)$('#halflife').textContent='· UGC 半衰期 '+ugc.half_life_days+' 天';
+}
+
+// ---- sentiment ----
+function renderSentiment(animate){
+  const s=DATA.predicted_sentiment;
+  $('#netscore').childNodes[0].nodeValue=s.net_sentiment_score>=0?'+'+s.net_sentiment_score.toFixed(2):s.net_sentiment_score.toFixed(2);
+  $('#hi-pct').textContent=pct(s.high_intent_pct);
+  const d=s.sentiment_distribution, bars=$$('#sentbar i');
+  bars[0].style.width=d.positive*100+'%';bars[1].style.width=d.neutral*100+'%';bars[2].style.width=d.negative*100+'%';
+  $('#sl-pos').textContent='正 '+pct(d.positive);$('#sl-neu').textContent='中 '+pct(d.neutral);$('#sl-neg').textContent='负 '+pct(d.negative);
+  const fb=s.feel_breakdown;
+  $('#feels').innerHTML=Object.entries(fb).map(([k,v])=>`<div class="feel"><span class="n">${k}</span><span class="c" style="color:${FEEL_COLOR[k]||'var(--amber)'}">${v}</span></div>`).join('');
+  const themes=s.key_opinion_themes,maxC=Math.max(...themes.map(t=>t.count));
+  $('#themes').innerHTML=themes.map(t=>`<div class="theme"><span style="width:128px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.theme}</span><span class="tb"><i style="width:${t.count/maxC*100}%"></i></span><span class="tc">${t.count}</span></div>`).join('');
+}
+
+// ---- soul cards (staggered, paged 12/批 over all 60) ----
+const SOUL_PAGE=12; let soulPage=0;
+function renderSouls(animate){
+  const all=DATA.soul_quotes, pages=Math.ceil(all.length/SOUL_PAGE);
+  const souls=all.slice(soulPage*SOUL_PAGE,(soulPage+1)*SOUL_PAGE);
+  $('#soul-n').textContent=(soulPage*SOUL_PAGE+1)+'–'+(soulPage*SOUL_PAGE+souls.length)+' / '+all.length;
+  $('#soulpager').style.display='block';
+  $('#soulpage').textContent='第 '+(soulPage+1)+'/'+pages+' 批';
+  $('#souls').innerHTML=souls.map((q,i)=>{
+    const av=AV_COLORS[i%AV_COLORS.length];
+    const age=(q.persona_oneliner.match(/^\d+/)||['?'])[0];
+    return `<div class="soul" style="animation-delay:${i*70}ms" title="${q.persona_card.replace(/"/g,'&quot;')}">
+      <div class="sh1"><span class="av" style="background:${av}">${age}</span>
+        <span class="who">${q.persona_oneliner}</span>
+        <span class="verdict ${q.will_click?'click':'skip'}">${q.will_click?'会点':'划走'}</span></div>
+      <div class="reason">${q.reason}</div>
+      <div class="foot"><span class="feeltag" style="color:${FEEL_COLOR[q.feel]||'var(--amber-hi)'}">${q.feel}</span>· ${q.comment}
+        <span class="intent">7日购买意向 <b>${(q.purchase_intent_7d*100).toFixed(0)}%</b></span></div>
+    </div>`;}).join('');
+  if(animate) requestAnimationFrame(()=>$$('#souls .soul').forEach(el=>el.classList.add('in')));
+  else $$('#souls .soul').forEach(el=>{el.style.opacity=1;el.style.transform='none';});
+}
+
+// ---- form interactions (live, no reveal) ----
+function syncForm(){
+  const b=+$('#budget').value,a=+$('#alloc').value;
+  $('#budget-v').textContent='¥'+b.toLocaleString();
+  $('#alloc-v').textContent=a+' / '+(100-a);
+  $('#budget').style.setProperty('--p',((b-5000)/(500000-5000)*100)+'%');
+  $('#alloc').style.setProperty('--p',a+'%');
+  $('#seg-dy').style.width=a+'%';$('#seg-xh').style.width=(100-a)+'%';
+  $('#seg-dy').style.opacity=a<12?0:1;$('#seg-xh').style.opacity=a>88?0:1;
+  $('#sc-cap').textContent=$('#caption').value;
+  $('#sc-budget').textContent='¥'+b.toLocaleString()+' · 抖音'+a+'/小红书'+(100-a);
+  $('#st-date').textContent=$('#today').value||DATA.macro.today;
+}
+let started=false;
+function liveUpdate(){ syncForm(); if(started){const st=compute();
+  renderKPIs(st,false);renderPlatforms(st);renderMacro(st);
+  renderFunnel(st);renderTornado(st);renderReport(st);} } // renderKOL 为基线冻结解，不参与联动
+['#budget','#alloc','#caption','#visual','#music','#niche','#today','#daypart'].forEach(s=>{
+  $(s).addEventListener('input',liveUpdate);
+});
+// chip multiselect（至少保留一枚，避免人群为空）
+$$('#tiers .chip, #ages .chip').forEach(c=>c.addEventListener('click',()=>{
+  const group=c.parentElement;
+  if(c.classList.contains('on')&&group.querySelectorAll('.chip.on').length<=1)return;
+  c.classList.toggle('on'); liveUpdate();
+}));
+// souls pager
+$('#soulpager').addEventListener('click',()=>{
+  soulPage=(soulPage+1)%Math.ceil(DATA.soul_quotes.length/SOUL_PAGE);
+  renderSouls(true);
+});
+
+// presets（无 cap 的预设恢复默认文案，避免危机文案残留）
+const DEFAULT_CAP='夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆';
+const PRESETS={light:{budget:20000,alloc:50,llm:false},hit:{budget:200000,alloc:75,llm:false},
+  crisis:{budget:60000,alloc:40,llm:false,cap:'紧急公关 · 控评维稳 召回说明'},full:{budget:120000,alloc:60,llm:true}};
+$$('.preset').forEach(p=>p.addEventListener('click',()=>{
+  const c=PRESETS[p.dataset.preset];$('#budget').value=c.budget;$('#alloc').value=c.alloc;$('#usellm').checked=c.llm;
+  $('#caption').value=c.cap||DEFAULT_CAP; liveUpdate();
+  p.animate([{transform:'scale(.94)'},{transform:'scale(1)'}],{duration:200});
+}));
+
+// ---- the reveal moment (~3s orchestrated) ----
+function runReveal(){
+  const ov=$('#overlay'),btn=$('#runbtn');
+  btn.classList.add('busy');btn.disabled=true;
+  ov.classList.add('on');
+  // seed star field（带种子 PRNG：同一输入两次打开渲染一致）
+  const field=$('#ovfield');field.innerHTML='';
+  const rnd=mulberry(42);
+  const stars=[];for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';
+    s.style.left=rnd()*340+'px';s.style.top=rnd()*120+'px';field.appendChild(s);stars.push(s);}
+  // counter ticks to 100,000
+  const target=100000,t0=performance.now(),dur=2100;
+  const ovc=$('#ovc'),ovbar=$('#ovbar'),ovl=$('#ovl');
+  const labels=['正在唤醒虚拟消费者…','正在分配曝光…','灵魂逐个表态…','聚合民意与扩散…'];
+  function tick(now){let p=Math.min(1,(now-t0)/dur);const e=1-Math.pow(1-p,2);
+    ovc.textContent=Math.round(target*e).toLocaleString();
+    ovbar.style.width=(p*100)+'%';
+    ovl.textContent=labels[Math.min(labels.length-1,Math.floor(p*labels.length))];
+    stars.forEach((s,i)=>{if(p*60>i)s.style.opacity=Math.min(1,(p*60-i)*.4)*.9;});
+    if(p<1)requestAnimationFrame(tick);else finish();}
+  requestAnimationFrame(tick);
+
+  function finish(){
+    setTimeout(()=>{
+      ov.classList.remove('on');btn.classList.remove('busy');btn.disabled=false;
+      btn.innerHTML='<span class="sweep"></span>▶ 重新预演'; // 保留 .sweep 子节点，复跑扫光不失效
+      $('#idle').style.display='none';$('#idle2').style.display='none';
+      const st=compute(); if(!BASELINE)BASELINE=st;
+      started=true; soulPage=0; // 复跑回到第 1 批灵魂语录
+      renderKPIs(st,true);renderPlatforms(st);renderMacro(st);renderHawkes();
+      renderFunnel(st);renderTornado(st);renderKOL(st);renderReport(st);
+      renderSentiment(true);renderSouls(true);
+      // 诚实层标签 + 回放入口仅在有结果后出现
+      $('#synthnote').style.display='block';
+      $$('[data-synth]').forEach(el=>el.style.display='inline-block');
+      $('#replaybtn').style.display='inline-block';
+    },260);
+  }
+}
+$('#runbtn').addEventListener('click',runReveal);
+
+// ---- v4: 战况回放（v3 磷光影院）— iframe 懒加载，关闭即释放 WebGL ----
+const replayOv=$('#replayOv'), replayFrame=$('#replayFrame');
+$('#replaybtn').addEventListener('click',()=>{
+  replayOv.classList.add('on');
+  replayFrame.src='v3-final.html?demo=1'; // 同目录相对路径；点击时才付 WebGL 成本
+});
+function closeReplay(){
+  replayOv.classList.remove('on');
+  replayFrame.src='about:blank'; // 卸载 v3 文档 → 释放 Three.js / WebGL 上下文
+}
+$('#replayClose').addEventListener('click',closeReplay);
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(replayOv.classList.contains('on'))closeReplay(); // 焦点落入 iframe 时父页收不到 ESC——点 ✕ 即可，可接受
+  else $('#aboutPanel').classList.remove('on');
+});
+
+// ---- v4: 关于本演示 ----
+$('#aboutBadge').addEventListener('click',()=>$('#aboutPanel').classList.toggle('on'));
+
+// init
+$('#st-soul').textContent=DATA.predicted_sentiment.agent_count;
+$('#st-llm').textContent=DATA.predicted_sentiment.llm_backed?'LLM 灵魂':'MiniMax-Text-01 · mock';
+syncForm();
+</script>
+</body>
+</html>

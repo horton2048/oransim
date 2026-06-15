@@ -220,7 +220,7 @@
   </section>
 
   <!-- Center: KPIs + DAG + CATE -->
-  <section class="panel" style="display:flex; flex-direction:column;">
+  <section id="results-section" class="panel" style="display:flex; flex-direction:column;">
     <h3>③ 预测 & 反事实对比</h3>
     <div class="tab-row" style="position:relative;">
       <div class="tab active" data-tab="kpi" onclick="setTab('kpi')">KPI</div>
@@ -234,6 +234,7 @@
         <div class="tab" data-tab="cate" onclick="setTab('cate'); toggleTabMore()" style="display:block; border:0; padding:8px 14px;">📊 CATE 异质效应</div>
         <div class="tab" data-tab="v1" onclick="setTab('v1'); toggleTabMore()" style="display:block; border:0; padding:8px 14px;">∞ V1 CCG 架构</div>
         <div class="tab" data-tab="schema" onclick="setTab('schema'); toggleTabMore()" style="display:block; border:0; padding:8px 14px;">📋 结构化输出</div>
+        <div class="tab" data-tab="replay" onclick="setTab('replay'); toggleTabMore()" style="display:block; border:0; padding:8px 14px;">🎬 战况回放</div>
       </div>
     </div>
 
@@ -358,6 +359,18 @@
         <b style="color:#a855f7">📋 结构化输出</b>：从当前预测状态派生的各维度表格（漏斗 β 拟合 / 扩散模拟 / persona / 涌现指标 / 敏感性分析 / 策略报告），零额外 LLM 调用。
       </div>
       <div id="schema-content" style="font-size:11px;"></div>
+    </div>
+
+    <div id="tab-replay" style="display:none;">
+      <div class="hint" style="padding:8px; background:#0f141c; border-radius:4px; border-left:3px solid #2dd4bf;">
+        <b style="color:#2dd4bf">🎬 战况回放</b>：把一个上市想法变成电影式五幕回放（地球→微缩景观→判决）。下面输入想法 → 真后端推演本次回放；不输入则看内置样本。
+      </div>
+      <div style="display:flex; gap:8px; margin:8px 0; align-items:center;">
+        <input id="replay-idea" placeholder="例：一款主打熬夜修护的护肤精华，定价 199 元，主投小红书" style="flex:1; padding:8px; background:#0f141c; border:1px solid var(--border); border-radius:6px; color:inherit; font-size:13px;" onkeydown="if(event.key==='Enter')replayFromIdea()">
+        <button onclick="replayFromIdea()" style="padding:8px 16px; background:#2dd4bf; color:#04201c; border:0; border-radius:6px; cursor:pointer; font-weight:600; white-space:nowrap;">▶ 推演回放</button>
+      </div>
+      <div id="replay-status" class="hint" style="min-height:16px; color:#2dd4bf; margin-bottom:6px;"></div>
+      <iframe id="replay-frame" title="战况回放" style="width:100%; height:78vh; border:0; border-radius:8px; background:#05070b;" loading="lazy"></iframe>
     </div>
 
   </section>

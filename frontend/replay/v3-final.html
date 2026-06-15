@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORANSIM · 战况回放 · 终态</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@300;400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#06080f; --ink2:#0a0e18;
+  --phos:#35e0c0; --phos-dim:#1b4a4d;
+  --gold:#ffc14d; --coral:#ff5d5d;
+  --paper:#dfe8e6; --mute:#5d6e74;
+  /* Google Fonts 为渐进增强；挂了/离线则回退优秀系统 CJK 字体（不再依赖外网、不变通用 sans）。字体自托管见 DECISIONS（CJK 全量自托管过重，取扎实降级栈）。 */
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,Menlo,monospace;
+  --serif:'Noto Serif SC','Source Han Serif SC','Songti SC',STSong,SimSun,serif;
+  --sans:'Noto Sans SC','PingFang SC','Microsoft YaHei','Source Han Sans SC',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans);font-weight:300}
+canvas#gl{position:absolute;inset:0;display:block}
+#fade{position:fixed;inset:0;background:var(--ink);opacity:0;pointer-events:none;transition:opacity .6s;z-index:30}
+
+.grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;opacity:.05;z-index:90;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  animation:grain 7s steps(10) infinite}
+@keyframes grain{0%,100%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-2%)}80%{transform:translate(3%,3%)}}
+
+.bar{position:fixed;left:0;right:0;height:54px;background:linear-gradient(var(--ink) 70%,transparent);z-index:40;display:flex;align-items:center;padding:0 28px;gap:18px}
+.bar.bottom{bottom:0;top:auto;background:linear-gradient(transparent,var(--ink) 30%);height:120px;align-items:flex-end;padding-bottom:14px}
+.brand{font-family:var(--serif);font-weight:900;font-size:17px;letter-spacing:.18em}
+.brand em{color:var(--phos);font-style:normal}
+.meta{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.08em}
+.meta b{color:var(--paper);font-weight:600}
+.livedot{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.2}}
+.stateSel{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--mute)}
+.stateSel select{background:var(--ink2);color:var(--paper);border:1px solid #1d2735;font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;cursor:pointer}
+
+.counters{position:fixed;top:64px;right:28px;z-index:40;text-align:right;display:flex;flex-direction:column;gap:14px;opacity:0;transition:opacity 1s}
+.counter .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.25em;color:var(--mute)}
+.counter .val{font-family:var(--mono);font-weight:600;font-size:30px;color:var(--phos);line-height:1.1;font-variant-numeric:tabular-nums}
+.counter.gold .val{color:var(--gold)}
+.counter .sub{font-family:var(--mono);font-size:10px;color:var(--mute)}
+
+.actcard{position:fixed;left:64px;top:32%;z-index:45;pointer-events:none;opacity:0;transform:translateY(12px);transition:opacity .8s,transform .8s}
+.actcard.show{opacity:1;transform:none}
+.actcard .en{font-family:var(--mono);font-size:11px;letter-spacing:.5em;color:var(--phos)}
+.actcard .zh{font-family:var(--serif);font-weight:900;font-size:60px;letter-spacing:.12em;line-height:1.15;text-shadow:0 0 40px #000}
+.actcard .note{font-size:13px;color:var(--mute);margin-top:10px;max-width:340px;line-height:1.8}
+
+.danmaku{position:fixed;left:0;right:0;top:120px;height:230px;z-index:35;pointer-events:none;overflow:hidden}
+.dm{position:absolute;right:-40%;white-space:nowrap;font-size:13px;display:flex;gap:8px;align-items:center;animation:dmove linear forwards;opacity:.92}
+.dm .who{font-family:var(--mono);font-size:10px;color:var(--ink);background:var(--phos);padding:2px 7px;border-radius:2px;font-weight:600}
+.dm.neg .who{background:var(--coral)}
+.dm.gold .who{background:var(--gold)}
+.dm.fail{color:var(--coral);font-family:var(--mono);font-size:11px}
+.dm.fail .who{background:#3a1820;color:var(--coral)}
+@keyframes dmove{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 100%))}}
+
+.timeline{flex:1;max-width:760px;margin:0 auto;position:relative;cursor:pointer;user-select:none}
+.timeline svg{display:block;width:100%;height:58px}
+.tl-days{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--mute);margin-top:3px}
+.playhead{position:absolute;top:0;bottom:16px;width:1px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.playhead::after{content:'';position:absolute;top:-4px;left:-3.5px;border:4px solid transparent;border-top-color:var(--gold)}
+.controls{display:flex;align-items:center;gap:10px}
+.btn{background:transparent;border:1px solid #2a3a4a;color:var(--paper);font-family:var(--mono);font-size:12px;padding:8px 16px;cursor:pointer;letter-spacing:.1em;transition:.2s}
+.btn:hover{border-color:var(--phos);color:var(--phos)}
+.btn.primary{border-color:var(--phos);color:var(--ink);background:var(--phos);font-weight:600}
+.btn.primary:hover{filter:brightness(1.15)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.dayBadge{font-family:var(--mono);font-size:13px;color:var(--gold);min-width:46px}
+
+.stamp{position:fixed;left:24px;bottom:136px;z-index:40;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--coral);border:1px dashed var(--coral);padding:6px 10px;transform:rotate(-3deg);opacity:.75}
+.legend{position:fixed;left:28px;bottom:172px;z-index:40;font-family:var(--mono);font-size:10px;color:var(--mute);line-height:2;opacity:0;transition:opacity 1s}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.hint{position:fixed;right:28px;bottom:136px;z-index:40;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;opacity:0;transition:opacity 1s}
+
+/* 证词卡（点击 agent） */
+.agentCard{position:fixed;left:28px;top:118px;z-index:50;width:330px;background:#0a0e18f2;border:1px solid #1d2735;padding:20px 22px;display:none}
+.agentCard.show{display:block}
+.agentCard .k{font-family:var(--mono);font-size:9px;letter-spacing:.3em;color:var(--phos)}
+.agentCard h3{font-family:var(--serif);font-weight:900;font-size:21px;margin:4px 0 2px}
+.agentCard .sub{font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:12px}
+.agentCard .quote{font-size:13px;line-height:1.9;border-left:2px solid var(--phos);padding-left:12px;margin:10px 0}
+.agentCard .quote.neg{border-color:var(--coral)}
+.agentCard .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;padding:5px 0;border-top:1px solid #131c28}
+.agentCard .row b{color:var(--gold);font-weight:600}
+.agentCard .nosoul{font-size:12px;color:var(--mute);line-height:1.9;border:1px dashed #2a3a4a;padding:10px 12px;margin-top:8px}
+.agentCard .close{position:absolute;top:8px;right:12px;cursor:pointer;color:var(--mute);font-family:var(--mono)}
+.agentCard .close:hover{color:var(--paper)}
+
+.overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#0a1320cc,var(--ink) 75%)}
+.brief{max-width:520px;border:1px solid #1d2735;background:#0a0e18ee;padding:42px 46px;position:relative}
+.brief::before{content:'';position:absolute;inset:6px;border:1px solid #14202e;pointer-events:none}
+.brief .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--phos);margin-bottom:8px}
+.brief h1{font-family:var(--serif);font-weight:900;font-size:34px;letter-spacing:.06em;margin-bottom:24px}
+.brief table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:30px}
+.brief td{padding:7px 0;border-bottom:1px solid #131c28}
+.brief td:first-child{color:var(--mute);font-family:var(--mono);font-size:11px;letter-spacing:.1em;width:110px}
+.brief td:last-child{text-align:right}
+.hidden{display:none!important}
+.loadlog{font-family:var(--mono);font-size:12px;line-height:2.2;color:var(--mute)}
+.loadlog .ok{color:var(--phos)}
+.loadlog .run{color:var(--gold)}
+.pbar{height:3px;background:#15202c;margin:18px 0 8px}
+.pbar i{display:block;height:100%;width:73%;background:var(--gold);animation:pb 3s ease-in-out infinite alternate}
+@keyframes pb{to{width:76%}}
+.emptyTitle{font-family:var(--serif);font-weight:900;font-size:46px;letter-spacing:.15em;color:#2c3a44;margin-bottom:18px}
+
+.degbanner{position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:50;background:#2a1116;border:1px solid var(--coral);color:var(--coral);font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:8px 18px;display:none}
+
+.verdict{position:fixed;top:0;right:0;bottom:0;width:480px;z-index:55;background:linear-gradient(270deg,#0a0e18f8 80%,transparent);padding:84px 36px 36px;transform:translateX(105%);transition:transform .9s cubic-bezier(.2,.8,.2,1);overflow-y:auto}
+.verdict.show{transform:none}
+.verdict .k{font-family:var(--mono);font-size:10px;letter-spacing:.4em;color:var(--phos)}
+.verdict h2{font-family:var(--serif);font-weight:900;font-size:40px;margin:6px 0 4px}
+.vbadge{display:inline-block;font-family:var(--mono);font-size:12px;border:1px solid var(--gold);color:var(--gold);padding:4px 12px;letter-spacing:.2em;margin:8px 0 26px}
+.kpi{margin-bottom:20px}
+.kpi .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono)}
+.kpi .name{font-size:11px;color:var(--mute);letter-spacing:.2em}
+.kpi .p50{font-size:24px;font-weight:600}
+.kpi .band{position:relative;height:6px;background:#13202b;margin-top:7px}
+.kpi .band i{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#35e0c022,#35e0c077,#35e0c022)}
+.kpi .band b{position:absolute;top:-2px;width:2px;height:10px;background:var(--gold)}
+.kpi .pp{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--mute);margin-top:4px}
+.sect{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--mute);margin:26px 0 12px;border-top:1px solid #15202c;padding-top:18px}
+.hbar{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+.hbar .n{width:64px;color:var(--mute);font-family:var(--mono);font-size:10px}
+.hbar .t{flex:1;height:10px;background:#101a24}
+.hbar .t i{display:block;height:100%;background:var(--phos)}
+.hbar .v{font-family:var(--mono);font-size:11px;width:48px;text-align:right}
+.foot{margin-top:26px;border:1px dashed #3a2a2a;padding:12px 14px;font-size:11px;line-height:1.9;color:#b08585}
+.vbtns{display:flex;gap:10px;margin-top:24px}
+
+/* 终态：诚实层 */
+.demoWm{position:fixed;left:28px;top:62px;z-index:80;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gold);border:1px dashed var(--gold);padding:4px 10px;opacity:.8;pointer-events:none;display:none}
+.aboutBadge{position:fixed;right:28px;bottom:172px;z-index:66;/* 高于 verdict(55) 与 aboutPanel(65)：判决态下角标仍可点、面板可关 */font-family:var(--mono);font-size:10px;color:var(--mute);border:1px solid #1d2735;padding:4px 10px;cursor:pointer;background:#0a0e18cc;letter-spacing:.1em}
+.aboutBadge:hover{color:var(--phos);border-color:var(--phos)}
+.aboutPanel{position:fixed;right:28px;bottom:204px;z-index:65;width:380px;background:#0a0e18f5;border:1px solid #1d2735;padding:16px 18px;font-size:11px;line-height:1.9;color:var(--paper)}
+.aboutPanel .abK{font-family:var(--mono);font-size:9px;letter-spacing:.25em;color:var(--phos);margin-top:10px}
+.aboutPanel .abI{color:var(--mute)}
+.synthTag{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--gold);border:1px dashed var(--gold);padding:0 5px;margin-left:6px;opacity:.8;font-weight:400}
+.unmappedNote{position:fixed;left:24px;bottom:110px;z-index:46;font-family:var(--mono);font-size:10px;color:var(--coral);border:1px dashed var(--coral);padding:4px 10px;display:none}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="fade"></div>
+<div class="grain"></div>
+
+<div class="bar">
+  <span class="brand">ORAN<em>SIM</em> · 战况回放 <span style="font-family:var(--mono);font-size:10px;color:var(--gold)">终态</span></span>
+  <span class="meta" id="runMeta">RUN <b>—</b></span>
+  <span class="livedot"></span><span class="meta">REPLAY</span>
+  <div class="stateSel">状态演示
+    <select id="stateSel">
+      <option value="normal">正常推演</option>
+      <option value="degraded">部分灵魂失败（降级）</option>
+      <option value="loading">推演进行中</option>
+      <option value="empty">空状态</option>
+    </select>
+  </div>
+</div>
+
+<div class="degbanner" id="degbanner">⚠ —/— 灵魂 LLM 调用失败 · 口碑面证据不足 · 置信带已加宽 ×1.8</div>
+
+<div class="counters" id="counters">
+  <div class="counter"><div class="lbl">曝光 IMPRESSIONS</div><div class="val" id="cImp">0</div></div>
+  <div class="counter"><div class="lbl">点击 CLICKS</div><div class="val" id="cClk">0</div></div>
+  <div class="counter gold"><div class="lbl">转化 CONVERSIONS</div><div class="val" id="cCvr">0</div></div>
+  <div class="counter gold"><div class="lbl">GMV</div><div class="val" id="cGmv">¥0</div><div class="sub" id="cRoi"></div></div>
+</div>
+
+<div class="actcard" id="actcard">
+  <div class="en" id="actEn"></div>
+  <div class="zh" id="actZh"></div>
+  <div class="note" id="actNote"></div>
+</div>
+
+<div class="danmaku" id="danmaku"></div>
+
+<div class="legend" id="legend">
+  <i style="background:#1b4a4d"></i>未触达<br>
+  <i style="background:#35e0c0"></i>已触达<br>
+  <i style="background:#ffc14d"></i>已转化<br>
+  <i style="background:#fff;box-shadow:0 0 6px #fff"></i>灵魂 agent（共 <span id="legendSouls">—</span> · 可点击问证词）<br>
+  <span style="opacity:.7"><span id="legendDots">—</span> 采样点 · 撒点数 ∝ 城市 weight（种子 PRNG 确定性）<br>城市亮度 = 实时触达率 · 弧线为扩散强度的舞台化呈现</span>
+</div>
+<div class="stamp">SIMULATED · 推演数据 · 非实测</div>
+<div class="hint" id="hint">拖动旋转 · 滚轮缩放 · 点击光点查身份证词</div>
+
+<div class="demoWm" id="demoWm">演示数据 · 内嵌样本（非 replay.json 实时件）</div>
+<div class="unmappedNote" id="unmappedNote"></div>
+<div class="aboutBadge" id="aboutBadge">ⓘ 关于本回放</div>
+<div class="aboutPanel hidden" id="aboutPanel"><div class="abK" style="margin-top:0">ABOUT THIS REPLAY · 数据来源声明</div><div id="aboutBody"></div></div>
+
+<div class="agentCard" id="agentCard">
+  <span class="close" id="acClose">✕</span>
+  <div class="k" id="acKind">AGENT</div>
+  <h3 id="acName">—</h3>
+  <div class="sub" id="acSub">—</div>
+  <div id="acBody"></div>
+</div>
+
+<div class="bar bottom">
+  <div class="controls">
+    <button class="btn primary" id="playBtn">▶ 播放</button>
+    <button class="btn" id="speedBtn">×1</button>
+    <span class="dayBadge" id="dayBadge">D+0</span>
+  </div>
+  <div class="timeline" id="timeline">
+    <svg id="tlsvg" viewBox="0 0 760 58" preserveAspectRatio="none"></svg>
+    <div class="playhead" id="playhead" style="left:0"></div>
+    <div class="tl-days" id="tldays"></div>
+  </div>
+  <div class="controls"><button class="btn" id="replayBtn">↺ 重放</button></div>
+</div>
+
+<div class="verdict" id="verdict">
+  <div class="k" id="vK">VERDICT · 收束</div>
+  <h2>建议执行</h2>
+  <div class="vbadge" id="vbadge">—</div>
+  <div id="kpis"></div>
+  <div class="sect">平台分配 PER PLATFORM</div>
+  <div id="platforms"></div>
+  <div class="sect">城市层级渗透 PENETRATION</div>
+  <div id="tiers"></div>
+  <div class="sect">口碑面 SENTIMENT</div>
+  <div style="font-size:13px;line-height:1.9" id="wom">—</div>
+  <div class="foot">⚠ 诚实声明：本判决基于闭环评测（评估器与生成器同源），外部效度未验证。弧线与人群走位是扩散强度的舞台化呈现，非个体级传播路径——Hawkes 输出的是段级强度，不含"谁传给谁"。置信带由 LightGBM 分位回归给出，不是贝叶斯后验。</div>
+  <div class="vbtns">
+    <button class="btn" id="vReplay">↺ 重放推演</button>
+    <button class="btn" disabled title="v1 不做">导出报告 PDF</button>
+  </div>
+</div>
+
+<div class="overlay" id="briefOverlay">
+  <div class="brief">
+    <div class="k" id="briefK">CAMPAIGN BRIEF</div>
+    <h1 id="briefTitle" style="font-size:26px">—</h1>
+    <table>
+      <tr><td>BUDGET</td><td id="bBudget">—</td></tr>
+      <tr><td>AOV 客单价</td><td id="bAov">—</td></tr>
+      <tr><td>PLATFORMS</td><td id="bPlat">—</td></tr>
+      <tr><td>KOL</td><td id="bKol">—</td></tr>
+      <tr><td>POPULATION</td><td id="bPop">—</td></tr>
+      <tr><td>HORIZON</td><td id="bHor">—</td></tr>
+    </table>
+    <button class="btn primary" id="startBtn" style="width:100%;padding:13px">▶ 开始回放推演</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="loadingOverlay">
+  <div class="brief">
+    <div class="k">PIPELINE · 推演进行中</div>
+    <h1 style="font-size:26px">Hawkes 扩散推演中</h1>
+    <div class="loadlog">
+      <div class="ok">✓ IPF 人口校准 · 统计人群就绪</div>
+      <div class="ok">✓ LightGBM 世界模型 · p25/p50/p75</div>
+      <div class="ok">✓ 灵魂池采样 · top-<span id="ldSouls1">—</span></div>
+      <div class="run">▸ 参数化 Hawkes · <span id="ldSouls2">—</span> 段影响矩阵 · <span id="ldDays">—</span> 天 rollout…</div>
+      <div class="run">▸ 灵魂 LLM 评论生成 · <span id="ldProg">—</span>/<span id="ldSouls3">—</span>…</div>
+    </div>
+    <div class="pbar"><i></i></div>
+    <div class="meta">已运行 — · 预计还需 — · CPU 推演慢不是挂了 <span class="synthTag">状态演示 · 进度/耗时为占位非实测</span></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="emptyOverlay">
+  <div style="text-align:center">
+    <div class="emptyTitle">尚无推演记录</div>
+    <div class="meta" style="line-height:2.2">还没有跑过任何 campaign 模拟。<br>
+    <b>POST /api/predict</b> 提交投放 brief，或本机执行 <b>run-oransim.ps1</b></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="cdnOverlay">
+  <div class="brief">
+    <div class="k" style="color:var(--coral)">RENDERER UNAVAILABLE</div>
+    <h1 style="font-size:24px">三维引擎加载失败</h1>
+    <div style="font-size:13px;color:var(--mute);line-height:2">Three.js CDN（unpkg.com）不可达——离线或代理拦截。<br>本回放依赖 WebGL，无 2D 降级（v2 边界，见终态说明）。请检查网络后刷新。</div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"./vendor/three/three.module.js",
+  "three/addons/":"./vendor/three/addons/"
+}}
+</script>
+<script>
+window.__errs=[];
+window.addEventListener('error',e=>window.__errs.push((e.message||'')+' @'+(e.lineno||'?')));
+window.addEventListener('unhandledrejection',e=>window.__errs.push('promise: '+(e.reason&&e.reason.message||e.reason)));
+// CDN 兜底：模块 4s 内没标记加载成功 → 诚实报错卡；之后持续探测，引擎迟到（慢网非断网）则撤销误判
+setTimeout(()=>{ if(!window.__engineUp){
+  document.getElementById('cdnOverlay').classList.remove('hidden'); document.getElementById('briefOverlay').classList.add('hidden');
+  const iv=setInterval(()=>{ if(window.__engineUp){ clearInterval(iv);
+    document.getElementById('cdnOverlay').classList.add('hidden'); document.getElementById('briefOverlay').classList.remove('hidden'); } },500);
+} },4000);
+</script>
+<script>
+/* 内嵌兜底数据：replay.json v1 实物原样内嵌——file:// 双击 / 断网 / ?demo=1 时的主路径（N1.2） */
+window.__REPLAY_EMBED={
+ "version": 1,
+ "meta": {
+  "creative_id": "cr_49540",
+  "caption": "夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆",
+  "run_timestamp": "2026-06-08T18:02:35",
+  "generated_by": "replay_export.py v1",
+  "synthetic_fields": [
+   "souls[].t (后端无 timestamp，按扩散曲线合成)",
+   "kols[].platform / fire_day / city (T2_A1 无此字段，确定性合成)"
+  ]
+ },
+ "budget": 80000.0,
+ "platform_alloc": {
+  "douyin": 0.6,
+  "xhs": 0.4
+ },
+ "kpis": {
+  "impressions": 2038095.2381,
+  "clicks": 27052.8051,
+  "conversions": 5382.8141,
+  "cost": 80000.0,
+  "revenue": 242226.6333,
+  "ctr": 0.0133,
+  "cvr": 0.199,
+  "roi": 2.0278,
+  "aov": 45.0
+ },
+ "funnel_percentiles": {
+  "A1_awareness": {
+   "p25": 1579523.8,
+   "p50": 2038095.2,
+   "p75": 2496666.7
+  },
+  "A2_interest": {
+   "p25": 37738.7,
+   "p50": 48695.0,
+   "p75": 59651.4
+  },
+  "A3_engagement": {
+   "p25": 20965.9,
+   "p50": 27052.8,
+   "p75": 33139.7
+  },
+  "A4_conversion": {
+   "p25": 4171.7,
+   "p50": 5382.8,
+   "p75": 6593.9
+  },
+  "A5_loyalty": {
+   "p25": 750.9,
+   "p50": 968.9,
+   "p75": 1186.9
+  }
+ },
+ "per_platform": {
+  "douyin": {
+   "impressions": 1371428.5714,
+   "impressions_std": 0.0,
+   "clicks": 21167.8801,
+   "clicks_std": 4.6805,
+   "conversions": 4886.2156,
+   "conversions_std": 4.2239,
+   "ctr": 0.0154,
+   "ctr_std": 0.0,
+   "cvr": 0.2308,
+   "cvr_std": 0.0002,
+   "roi": 3.5808,
+   "roi_std": 0.004,
+   "revenue": 219879.7004,
+   "revenue_std": 190.0771,
+   "cost": 48000.0,
+   "cost_std": 0.0
+  },
+  "xhs": {
+   "impressions": 666666.6667,
+   "impressions_std": 0.0,
+   "clicks": 5884.925,
+   "clicks_std": 3.6756,
+   "conversions": 1354.7283,
+   "conversions_std": 2.8984,
+   "ctr": 0.0088,
+   "ctr_std": 0.0,
+   "cvr": 0.2302,
+   "cvr_std": 0.0004,
+   "roi": 0.9051,
+   "roi_std": 0.0041,
+   "revenue": 60962.773,
+   "revenue_std": 130.4264,
+   "cost": 32000.0,
+   "cost_std": 0.0
+  }
+ },
+ "days": 14,
+ "daily_total": [
+  42609.44,
+  37981.09,
+  31264.14,
+  24534.19,
+  18650.26,
+  13860.2,
+  10128.0,
+  7304.95,
+  5214.62,
+  3691.41,
+  2595.19,
+  1814.02,
+  1261.84,
+  874.1
+ ],
+ "daily_paid": [
+  37991.2,
+  25466.27,
+  17070.55,
+  11442.73,
+  7670.29,
+  5141.55,
+  3446.48,
+  2310.25,
+  1548.61,
+  1038.06,
+  695.83,
+  466.43,
+  312.66,
+  209.58
+ ],
+ "daily_organic": [
+  4618.24,
+  12514.82,
+  14193.6,
+  13091.46,
+  10979.97,
+  8718.65,
+  6681.51,
+  4994.71,
+  3666.02,
+  2653.35,
+  1899.35,
+  1347.59,
+  949.18,
+  664.52
+ ],
+ "peak_day": 2.0,
+ "organic_share": 0.431,
+ "branching_ratio": 0.35,
+ "sentiment": {
+  "sentiment_distribution": {
+   "positive": 0.9,
+   "neutral": 0.1,
+   "negative": 0.0
+  },
+  "net_sentiment_score": 0.6517,
+  "high_intent_pct": 0.9,
+  "avg_purchase_intent_7d": 0.857,
+  "feel_breakdown": {
+   "心动": 17,
+   "购买冲动": 23,
+   "好奇": 14,
+   "无感": 6
+  },
+  "key_opinion_themes": [
+   {
+    "theme": "文案挺真诚 不像硬广",
+    "count": 10
+   },
+   {
+    "theme": "BGM 很抓耳",
+    "count": 10
+   },
+   {
+    "theme": "达人之前买过 她推的不踩雷",
+    "count": 8
+   },
+   {
+    "theme": "剧情有点意思 想看完",
+    "count": 7
+   },
+   {
+    "theme": "正好最近在看这个",
+    "count": 6
+   },
+   {
+    "theme": "封面颜色挺清爽",
+    "count": 6
+   }
+  ],
+  "agent_count": 60,
+  "llm_backed": 0
+ },
+ "cities": [
+  {
+   "name": "保定",
+   "lat": 38.87,
+   "lng": 115.46,
+   "tier": 3,
+   "weight": 7
+  },
+  {
+   "name": "绵阳",
+   "lat": 31.47,
+   "lng": 104.68,
+   "tier": 4,
+   "weight": 6
+  },
+  {
+   "name": "九江",
+   "lat": 29.71,
+   "lng": 116.0,
+   "tier": 4,
+   "weight": 5
+  },
+  {
+   "name": "广州",
+   "lat": 23.13,
+   "lng": 113.26,
+   "tier": 1,
+   "weight": 4
+  },
+  {
+   "name": "淮安",
+   "lat": 33.61,
+   "lng": 119.02,
+   "tier": 4,
+   "weight": 4
+  },
+  {
+   "name": "济南",
+   "lat": 36.65,
+   "lng": 117.12,
+   "tier": 3,
+   "weight": 3
+  },
+  {
+   "name": "烟台",
+   "lat": 37.46,
+   "lng": 121.44,
+   "tier": 3,
+   "weight": 3
+  },
+  {
+   "name": "达州",
+   "lat": 31.21,
+   "lng": 107.47,
+   "tier": 4,
+   "weight": 3
+  },
+  {
+   "name": "重庆",
+   "lat": 29.56,
+   "lng": 106.55,
+   "tier": 2,
+   "weight": 3
+  },
+  {
+   "name": "成都",
+   "lat": 30.66,
+   "lng": 104.07,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "杭州",
+   "lat": 30.27,
+   "lng": 120.16,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "玉林",
+   "lat": 22.63,
+   "lng": 110.17,
+   "tier": 4,
+   "weight": 2
+  },
+  {
+   "name": "苏州",
+   "lat": 31.3,
+   "lng": 120.58,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "长沙",
+   "lat": 28.23,
+   "lng": 112.94,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "驻马店",
+   "lat": 33.01,
+   "lng": 114.02,
+   "tier": 5,
+   "weight": 2
+  },
+  {
+   "name": "上海",
+   "lat": 31.23,
+   "lng": 121.47,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "北京",
+   "lat": 39.9,
+   "lng": 116.41,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "南京",
+   "lat": 32.06,
+   "lng": 118.8,
+   "tier": 2,
+   "weight": 1
+  },
+  {
+   "name": "厦门",
+   "lat": 24.48,
+   "lng": 118.09,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "合肥",
+   "lat": 31.86,
+   "lng": 117.28,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "周口",
+   "lat": 33.62,
+   "lng": 114.65,
+   "tier": 5,
+   "weight": 1
+  },
+  {
+   "name": "宿迁",
+   "lat": 33.96,
+   "lng": 118.28,
+   "tier": 4,
+   "weight": 1
+  },
+  {
+   "name": "深圳",
+   "lat": 22.54,
+   "lng": 114.06,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "福州",
+   "lat": 26.08,
+   "lng": 119.3,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "西安",
+   "lat": 34.34,
+   "lng": 108.94,
+   "tier": 2,
+   "weight": 1
+  }
+ ],
+ "unmapped_cities": [],
+ "kols": [
+  {
+   "name": "IndigoArchive",
+   "kol_id": "KOL_000090",
+   "tier": "腰部",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "保定",
+   "fire_day": 0.0,
+   "fans": 481395,
+   "reach": 168488,
+   "cost": 66721.3,
+   "roi": 3.789
+  },
+  {
+   "name": "SilverMuse",
+   "kol_id": "KOL_000040",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "绵阳",
+   "fire_day": 0.21,
+   "fans": 207947,
+   "reach": 72781,
+   "cost": 8783.7,
+   "roi": 4.576
+  },
+  {
+   "name": "CrystalClub",
+   "kol_id": "KOL_000020",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "九江",
+   "fire_day": 0.42,
+   "fans": 107613,
+   "reach": 37664,
+   "cost": 684.4,
+   "roi": 5.125
+  },
+  {
+   "name": "IndigoDiary",
+   "kol_id": "KOL_000170",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "广州",
+   "fire_day": 0.63,
+   "fans": 72724,
+   "reach": 25453,
+   "cost": 1474.8,
+   "roi": 5.372
+  },
+  {
+   "name": "HarborRecord",
+   "kol_id": "KOL_000110",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "淮安",
+   "fire_day": 0.84,
+   "fans": 22064,
+   "reach": 7722,
+   "cost": 182.0,
+   "roi": 5.556
+  },
+  {
+   "name": "SolarMuse",
+   "kol_id": "KOL_000010",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "济南",
+   "fire_day": 1.05,
+   "fans": 21911,
+   "reach": 7668,
+   "cost": 149.0,
+   "roi": 5.555
+  },
+  {
+   "name": "IvoryMuse",
+   "kol_id": "KOL_000180",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "烟台",
+   "fire_day": 1.26,
+   "fans": 19988,
+   "reach": 6995,
+   "cost": 100.9,
+   "roi": 5.529
+  },
+  {
+   "name": "JadeJournal",
+   "kol_id": "KOL_000000",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "达州",
+   "fire_day": 1.47,
+   "fans": 19781,
+   "reach": 6923,
+   "cost": 168.1,
+   "roi": 5.526
+  },
+  {
+   "name": "VelvetRecord",
+   "kol_id": "KOL_000070",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "重庆",
+   "fire_day": 1.68,
+   "fans": 14666,
+   "reach": 5133,
+   "cost": 141.5,
+   "roi": 5.405
+  },
+  {
+   "name": "VelvetDiary",
+   "kol_id": "KOL_000100",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "成都",
+   "fire_day": 1.89,
+   "fans": 12131,
+   "reach": 4245,
+   "cost": 372.4,
+   "roi": 5.301
+  },
+  {
+   "name": "OakMonthly",
+   "kol_id": "KOL_000060",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "杭州",
+   "fire_day": 2.11,
+   "fans": 11413,
+   "reach": 3994,
+   "cost": 123.8,
+   "roi": 5.264
+  },
+  {
+   "name": "EmberDiary",
+   "kol_id": "KOL_000130",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "玉林",
+   "fire_day": 2.32,
+   "fans": 7603,
+   "reach": 2661,
+   "cost": 33.5,
+   "roi": 4.972
+  },
+  {
+   "name": "JadeGallery",
+   "kol_id": "KOL_000160",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "苏州",
+   "fire_day": 2.53,
+   "fans": 7079,
+   "reach": 2477,
+   "cost": 64.4,
+   "roi": 4.914
+  },
+  {
+   "name": "EmberArchive",
+   "kol_id": "KOL_000190",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "长沙",
+   "fire_day": 2.74,
+   "fans": 5262,
+   "reach": 1841,
+   "cost": 75.0,
+   "roi": 4.658
+  },
+  {
+   "name": "OakMonthly",
+   "kol_id": "KOL_000050",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "驻马店",
+   "fire_day": 2.95,
+   "fans": 4627,
+   "reach": 1619,
+   "cost": 87.2,
+   "roi": 4.541
+  },
+  {
+   "name": "SilverMonthly",
+   "kol_id": "KOL_000150",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "上海",
+   "fire_day": 3.16,
+   "fans": 3952,
+   "reach": 1383,
+   "cost": 23.5,
+   "roi": 4.394
+  },
+  {
+   "name": "PrairieDiary",
+   "kol_id": "KOL_000030",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "北京",
+   "fire_day": 3.37,
+   "fans": 3914,
+   "reach": 1369,
+   "cost": 90.8,
+   "roi": 4.385
+  },
+  {
+   "name": "JadePress",
+   "kol_id": "KOL_000080",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "南京",
+   "fire_day": 3.58,
+   "fans": 2411,
+   "reach": 843,
+   "cost": 32.8,
+   "roi": 3.927
+  },
+  {
+   "name": "SolarJournal",
+   "kol_id": "KOL_000140",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "厦门",
+   "fire_day": 3.79,
+   "fans": 1824,
+   "reach": 638,
+   "cost": 28.8,
+   "roi": 3.671
+  },
+  {
+   "name": "CoralPress",
+   "kol_id": "KOL_000120",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "合肥",
+   "fire_day": 4.0,
+   "fans": 531,
+   "reach": 185,
+   "cost": 1.3,
+   "roi": 2.745
+  }
+ ],
+ "souls": [
+  {
+   "t": 0.11,
+   "t_synthetic": true,
+   "persona": "17岁男·淮安·白领·月入分位8/10",
+   "city": "淮安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "看起来不错等降价",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.16,
+   "t_synthetic": true,
+   "persona": "54岁男·济南·蓝领·月入分位1/10",
+   "city": "济南",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.2,
+   "t_synthetic": true,
+   "persona": "27岁男·达州·个体·月入分位8/10",
+   "city": "达州",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.29,
+   "t_synthetic": true,
+   "persona": "41岁女·长沙·白领·月入分位9/10",
+   "city": "长沙",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "跟我家娃挺配",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.42,
+   "t_synthetic": true,
+   "persona": "21岁女·九江·学生·月入分位6/10",
+   "city": "九江",
+   "text": "BGM 很抓耳",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.53,
+   "t_synthetic": true,
+   "persona": "70岁男·九江·退休·月入分位4/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.53,
+   "t_synthetic": true,
+   "persona": "51岁男·杭州·个体·月入分位8/10",
+   "city": "杭州",
+   "text": "BGM 很抓耳",
+   "comment": "已下单",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.65,
+   "t_synthetic": true,
+   "persona": "38岁男·保定·蓝领·月入分位5/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.76,
+   "t_synthetic": true,
+   "persona": "48岁女·杭州·白领·月入分位3/10",
+   "city": "杭州",
+   "text": "剧情有点意思 想看完",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.76,
+   "t_synthetic": true,
+   "persona": "46岁男·达州·个体·月入分位9/10",
+   "city": "达州",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.8,
+   "t_synthetic": true,
+   "persona": "66岁男·广州·退休·月入分位6/10",
+   "city": "广州",
+   "text": "有真人试色 / 实拍",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.01,
+   "t_synthetic": true,
+   "persona": "42岁男·北京·蓝领·月入分位8/10",
+   "city": "北京",
+   "text": "BGM 很抓耳",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.15,
+   "t_synthetic": true,
+   "persona": "46岁女·济南·无业·月入分位7/10",
+   "city": "济南",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.24,
+   "t_synthetic": true,
+   "persona": "56岁女·广州·白领·月入分位6/10",
+   "city": "广州",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.4,
+   "t_synthetic": true,
+   "persona": "23岁男·达州·学生·月入分位2/10",
+   "city": "达州",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.48,
+   "t_synthetic": true,
+   "persona": "38岁男·苏州·白领·月入分位6/10",
+   "city": "苏州",
+   "text": "剧情有点意思 想看完",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.55,
+   "t_synthetic": true,
+   "persona": "29岁女·九江·蓝领·月入分位9/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "这个色我真的爱",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.65,
+   "t_synthetic": true,
+   "persona": "44岁女·宿迁·白领·月入分位0/10",
+   "city": "宿迁",
+   "text": "正好最近在看这个",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.66,
+   "t_synthetic": true,
+   "persona": "55岁男·绵阳·自由职业·月入分位5/10",
+   "city": "绵阳",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.75,
+   "t_synthetic": true,
+   "persona": "24岁女·重庆·蓝领·月入分位6/10",
+   "city": "重庆",
+   "text": "BGM 很抓耳",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.79,
+   "t_synthetic": true,
+   "persona": "33岁女·烟台·个体·月入分位9/10",
+   "city": "烟台",
+   "text": "正好最近在看这个",
+   "comment": "看起来不错等降价",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.84,
+   "t_synthetic": true,
+   "persona": "63岁女·长沙·蓝领·月入分位9/10",
+   "city": "长沙",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.85,
+   "t_synthetic": true,
+   "persona": "35岁男·绵阳·自由职业·月入分位8/10",
+   "city": "绵阳",
+   "text": "剧情有点意思 想看完",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.92,
+   "t_synthetic": true,
+   "persona": "22岁女·玉林·学生·月入分位2/10",
+   "city": "玉林",
+   "text": "剧情有点意思 想看完",
+   "comment": "已下单",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.1,
+   "t_synthetic": true,
+   "persona": "50岁男·驻马店·个体·月入分位1/10",
+   "city": "驻马店",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.33,
+   "t_synthetic": true,
+   "persona": "66岁男·福州·退休·月入分位9/10",
+   "city": "福州",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.42,
+   "t_synthetic": true,
+   "persona": "55岁男·绵阳·白领·月入分位7/10",
+   "city": "绵阳",
+   "text": "BGM 很抓耳",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.55,
+   "t_synthetic": true,
+   "persona": "32岁男·烟台·白领·月入分位3/10",
+   "city": "烟台",
+   "text": "这个达人以前翻过车 不太信",
+   "comment": "又是恰饭",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 2.57,
+   "t_synthetic": true,
+   "persona": "41岁男·上海·个体·月入分位4/10",
+   "city": "上海",
+   "text": "剧情有点意思 想看完",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.77,
+   "t_synthetic": true,
+   "persona": "19岁女·淮安·蓝领·月入分位8/10",
+   "city": "淮安",
+   "text": "正好最近在看这个",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.8,
+   "t_synthetic": true,
+   "persona": "30岁女·九江·白领·月入分位9/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.9,
+   "t_synthetic": true,
+   "persona": "30岁男·绵阳·白领·月入分位4/10",
+   "city": "绵阳",
+   "text": "价格看着能接受",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.91,
+   "t_synthetic": true,
+   "persona": "54岁女·苏州·蓝领·月入分位3/10",
+   "city": "苏州",
+   "text": "剧情有点意思 想看完",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.94,
+   "t_synthetic": true,
+   "persona": "18岁男·保定·白领·月入分位3/10",
+   "city": "保定",
+   "text": "又是美颜滤镜 真货肯定没这效果",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.09,
+   "t_synthetic": true,
+   "persona": "29岁女·重庆·蓝领·月入分位9/10",
+   "city": "重庆",
+   "text": "Z世代味太重 看不懂",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.24,
+   "t_synthetic": true,
+   "persona": "72岁女·保定·退休·月入分位2/10",
+   "city": "保定",
+   "text": "封面颜色挺清爽",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.35,
+   "t_synthetic": true,
+   "persona": "33岁男·广州·白领·月入分位9/10",
+   "city": "广州",
+   "text": "又是美颜滤镜 真货肯定没这效果",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.44,
+   "t_synthetic": true,
+   "persona": "72岁女·烟台·退休·月入分位2/10",
+   "city": "烟台",
+   "text": "正好最近在看这个",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.53,
+   "t_synthetic": true,
+   "persona": "70岁男·保定·退休·月入分位2/10",
+   "city": "保定",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.56,
+   "t_synthetic": true,
+   "persona": "72岁女·驻马店·退休·月入分位4/10",
+   "city": "驻马店",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.9,
+   "t_synthetic": true,
+   "persona": "52岁女·广州·白领·月入分位9/10",
+   "city": "广州",
+   "text": "有真人试色 / 实拍",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.99,
+   "t_synthetic": true,
+   "persona": "43岁男·合肥·白领·月入分位2/10",
+   "city": "合肥",
+   "text": "正好最近在看这个",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.03,
+   "t_synthetic": true,
+   "persona": "36岁女·保定·白领·月入分位5/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.21,
+   "t_synthetic": true,
+   "persona": "28岁男·成都·白领·月入分位9/10",
+   "city": "成都",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.26,
+   "t_synthetic": true,
+   "persona": "39岁女·周口·个体·月入分位7/10",
+   "city": "周口",
+   "text": "剧情有点意思 想看完",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.91,
+   "t_synthetic": true,
+   "persona": "20岁男·淮安·无业·月入分位4/10",
+   "city": "淮安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.22,
+   "t_synthetic": true,
+   "persona": "34岁男·成都·蓝领·月入分位9/10",
+   "city": "成都",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.47,
+   "t_synthetic": true,
+   "persona": "33岁男·济南·白领·月入分位9/10",
+   "city": "济南",
+   "text": "封面颜色挺清爽",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.69,
+   "t_synthetic": true,
+   "persona": "25岁女·深圳·白领·月入分位3/10",
+   "city": "深圳",
+   "text": "老年感重 不是我的风格",
+   "comment": "广子+1",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 5.7,
+   "t_synthetic": true,
+   "persona": "54岁男·厦门·无业·月入分位3/10",
+   "city": "厦门",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.93,
+   "t_synthetic": true,
+   "persona": "25岁男·南京·个体·月入分位7/10",
+   "city": "南京",
+   "text": "封面颜色挺清爽",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.2,
+   "t_synthetic": true,
+   "persona": "23岁女·绵阳·学生·月入分位6/10",
+   "city": "绵阳",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.27,
+   "t_synthetic": true,
+   "persona": "49岁男·西安·蓝领·月入分位6/10",
+   "city": "西安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.43,
+   "t_synthetic": true,
+   "persona": "69岁男·绵阳·退休·月入分位5/10",
+   "city": "绵阳",
+   "text": "剧情拉胯",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 6.77,
+   "t_synthetic": true,
+   "persona": "54岁男·保定·公务员/教师·月入分位3/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.2,
+   "t_synthetic": true,
+   "persona": "41岁女·玉林·白领·月入分位6/10",
+   "city": "玉林",
+   "text": "价格看着能接受",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.46,
+   "t_synthetic": true,
+   "persona": "34岁男·九江·公务员/教师·月入分位8/10",
+   "city": "九江",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.72,
+   "t_synthetic": true,
+   "persona": "68岁女·保定·退休·月入分位5/10",
+   "city": "保定",
+   "text": "正好最近在看这个",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 8.5,
+   "t_synthetic": true,
+   "persona": "56岁女·淮安·白领·月入分位5/10",
+   "city": "淮安",
+   "text": "BGM 很抓耳",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 10.29,
+   "t_synthetic": true,
+   "persona": "38岁女·重庆·个体·月入分位9/10",
+   "city": "重庆",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  }
+ ]
+};
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+window.__engineUp = true;
+
+/* ============ 数据层：replay.json v1 契约（第2刀：fetch → 内嵌兜底，覆写三级序为二级序） ============ */
+function validReplay(j){ // 形状校验：消费端裸用的字段全部到位才采信，否则回退内嵌（防"version=1 但残缺"→顶层 TypeError 变砖）
+  const arr=k=>Array.isArray(j[k])&&j[k].length>0;
+  const fp=j&&j.funnel_percentiles;
+  return !!(j&&j.version===1&&j.kpis&&typeof j.budget==="number"
+    &&arr('cities')&&arr('daily_total')&&Array.isArray(j.kols)&&Array.isArray(j.souls)
+    &&fp&&fp.A1_awareness&&fp.A3_engagement&&fp.A4_conversion&&j.per_platform);
+}
+async function loadReplayData(){
+  const qs=new URLSearchParams(location.search);
+  const qd=qs.get('demo');
+  const demo=qd!==null&&qd!=='0'&&qd!=='false'; // ?demo / ?demo=1 → 强制内嵌；?demo=0 / ?demo=false → 仍走 fetch
+  const session=qs.get('session'); // ?session=<spec_id> → 后端实时回放 (AT-FE-4-02)
+  const apiPort=qs.get('api')||(window.localStorage&&localStorage.getItem('osim_api_port'))||'8001';
+  const dataUrl=session
+    ? `http://localhost:${apiPort}/api/launch/replay/${encodeURIComponent(session)}`
+    : (qs.get('data')||'./replay.json'); // 否则 ?data=<file> 静态 / 默认 campaign
+  if(!demo){
+    const ctl=new AbortController(), tid=setTimeout(()=>ctl.abort(),4000); // 挂起兜底：4s 无响应 → abort → 内嵌（否则顶层 await 永不返回、整页假死）
+    try{
+      const r=await fetch(dataUrl,{cache:'no-store',signal:ctl.signal});
+      if(r.ok){
+        const j=await r.json();
+        if(validReplay(j)) return {data:j,isDemo:false,reason:null};
+        if(j&&j.version===1) return {data:window.__REPLAY_EMBED,isDemo:true,reason:"replay.json 字段不全（形状校验未过），已回退内嵌"};
+      }
+    }catch(e){/* file:// / 断网 / 超时 → 无感回退内嵌 */}
+    finally{clearTimeout(tid);}
+  }
+  return {data:window.__REPLAY_EMBED,isDemo:true,reason:null};
+}
+const {data:DATA,isDemo:IS_DEMO,reason:FALLBACK_REASON}=await loadReplayData(); // 模块顶层 await：数据未就位不初始化场景（N1.5）
+const META=DATA.meta||{};
+
+/* 派生常量：保持 v2 消费端的元组形状，把改动面压到最小 */
+const CITIES=DATA.cities.map(c=>[c.name,c.lat,c.lng,c.tier]); // [name,lat,lng,tier]
+const NC=CITIES.length;
+const PLAT_ZH={douyin:"抖音",xhs:"小红书"};
+const KOL_UNMAPPED=DATA.kols.filter(k=>!CITIES.some(c=>c[0]===k.city)).map(k=>k.name); // 城市未上图的 KOL：跳过并披露（角标+关于面板），不再静默钳到 cities[0]
+const KOLS=DATA.kols.filter(k=>CITIES.some(c=>c[0]===k.city))
+  .map(k=>[k.name,CITIES.findIndex(c=>c[0]===k.city),PLAT_ZH[k.platform]||k.platform,k.fire_day]); // [name,cityIdx,平台,fire_day]
+const DAILY=DATA.daily_total.slice(); // 原始日活跃量（非百万、非曝光）——只借曲线形状，红线①
+const DAYS=DAILY.length;
+const BUDGET=DATA.budget;
+const SOULS=DATA.souls.map(s=>[s.t,s.persona,s.text,s.sentiment,s.will_click]); // 弹幕用元组镜像；证词卡走 DATA.souls 全字段
+/* ARCHETYPES 已删除：原把 feel_breakdown 的 4 个观感词（心动/购买冲动/好奇/无感）当"人群原型"随机贴给统计 agent，
+   属字段挪用（"无感"既非原型也会与"已转化"自相矛盾）。统计 agent 卡只展示 schema 真字段：城市/层级/状态。 */
+
+const CUM=DAILY.reduce((a,v,i)=>(a.push((a[i-1]||0)+v),a),[]);
+const TOT_DAILY=CUM[DAYS-1];
+const FINAL={imp:DATA.kpis.impressions,clk:DATA.kpis.clicks,cvr:DATA.kpis.conversions,gmv:DATA.kpis.revenue}; // 直读 kpis，不再 imp×CTR 现算
+const DOT_PER_W=117; // 撒点数 ∝ city.weight（样本 Σweight=60 → ~7000 点，与 v2 同量级）
+const TIER_H={1:30,2:22,3:15,4:9,5:6};
+const TIER_BLOCKS={1:5,2:4,3:3,4:2,5:1};
+const TIER_R={1:7,2:6,3:5,4:4,5:3.2};
+const DEG_FAIL=Math.round(DATA.souls.length*0.37); // 降级演示态：沿用 v2 的 37% 失败口径，按真实灵魂数换算
+const STAGE_REACH=0.64, STAGE_CONV=0.063; // 舞台演出常量（非 kpis 推导）：撒点触达总量比例 / 金点转化比例。真实漏斗口径以判决面板为准；已在「关于本回放」声明
+
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry(42);
+
+/* 城市投影：经纬度 → 微缩景观平面（保中国轮廓的地理真相） */
+const P=c=>({x:(c[2]-110)*4.0, z:(33-c[1])*4.6});
+
+/* ============ 人群数据（含触达/转化日 + 个性抖动） ============ */
+const agents=[]; // {ci,tier,x,z,reach,conv,soul,bobPh}
+const DOTN=DATA.cities.map(c=>Math.max(8,Math.round(c.weight*DOT_PER_W))); // 撒点数 ∝ weight（废除 TIER_DOTS），随机只管位置
+CITIES.forEach((c,ci)=>{
+  const p=P(c), n=DOTN[ci], R=TIER_R[c[3]]*2.3;
+  for(let i=0;i<n;i++){
+    const a=rnd()*6.283, r=R*(0.35+Math.sqrt(rnd())*0.9); // 高斯感：密核疏边
+    agents.push({ci,tier:c[3],x:p.x+Math.cos(a)*r,z:p.z+Math.sin(a)*r,
+      reach:99,conv:99,soul:-1,bobPh:rnd()*6.283,
+      jit:rnd() /* 日内时刻抖动：没人整点行动 */});
+  }
+});
+const N=agents.length;
+// 触达日分配（曲线驱动，KOL 城市与高线偏早）
+{
+  const kolC=new Set(KOLS.map(k=>k[1]));
+  const order=agents.map((d,i)=>({i,key:rnd()-(kolC.has(d.ci)?0.22:0)-(6-d.tier)*0.03})).sort((a,b)=>a.key-b.key);
+  const reachTotal=Math.floor(N*STAGE_REACH); let p=0;
+  for(let day=1;day<=DAYS;day++){
+    const cnt=Math.round(reachTotal*DAILY[day-1]/TOT_DAILY);
+    for(let k=0;k<cnt&&p<reachTotal;k++,p++){
+      const d=agents[order[p].i]; d.reach=day-1+d.jit; // 抖动进日内
+      if(rnd()<STAGE_CONV) d.conv=d.reach+0.8+rnd()*2.5;
+    }
+  }
+}
+// 灵魂：每条 soul 落在其真实 city 的已触达点上（数据驱动，确定性挑选）
+// 城市解析失败时不再静默落到任意城（避免光环/证词卡城市与层级自相矛盾）：跳过落点并披露计数
+const soulIdx=[], SOUL_UNPLACED=[];
+{
+  const byCity=new Map();
+  agents.forEach((a,i)=>{ if(a.reach<90){ if(!byCity.has(a.ci))byCity.set(a.ci,[]); byCity.get(a.ci).push(i); } });
+  const used=new Set();
+  DATA.souls.forEach((s,si)=>{
+    const ci=CITIES.findIndex(c=>c[0]===s.city);
+    if(ci<0){ SOUL_UNPLACED.push(s.city||("#"+(si+1))); return; } // 城市未上图 → 不落点（弹幕仍播，仅无白点可点）
+    let cand=(byCity.get(ci)||[]).filter(i=>!used.has(i));
+    if(!cand.length) cand=agents.map((a,i)=>i).filter(i=>agents[i].ci===ci&&!used.has(i)); // 本城无已触达点 → 退本城任意点，绝不跨城
+    if(!cand.length){ SOUL_UNPLACED.push(s.city); return; }
+    const pick=cand[(si*7)%cand.length];
+    used.add(pick); soulIdx.push(pick); agents[pick].soul=si;
+  });
+}
+
+/* ============ Three.js 双场景 ============ */
+const canvas=document.getElementById('gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.1,4000);
+const uTime={value:0};
+const glowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(0.35,'rgba(255,255,255,.45)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+
+/* ---- 场景 A：地球开场 ---- */
+const sceneA=new THREE.Scene();
+{
+  const starGeo=new THREE.BufferGeometry(), sp=new Float32Array(900*3);
+  for(let i=0;i<900;i++){const v=new THREE.Vector3().randomDirection().multiplyScalar(900+rnd()*600);sp.set([v.x,v.y,v.z],i*3);}
+  starGeo.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  sceneA.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xcfd8ea,size:2.2,transparent:true,opacity:.8})));
+}
+const globeGrp=new THREE.Group(); sceneA.add(globeGrp);
+const GR=80;
+const globeMat=new THREE.MeshBasicMaterial({color:0x0d1626});
+new THREE.TextureLoader().load('./vendor/earth-night.jpg',
+  t=>{t.colorSpace=THREE.SRGBColorSpace;globeMat.map=t;globeMat.color.set(0x9aa8bb);globeMat.needsUpdate=true;},undefined,()=>{/* 贴图挂了→保留素球+经纬线（诚实降级；自托管 vendor/，消除 unpkg 抖动黑球） */});
+globeGrp.add(new THREE.Mesh(new THREE.SphereGeometry(GR,64,48),globeMat));
+globeGrp.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(GR*1.001,24,16)),
+  new THREE.LineBasicMaterial({color:0x1c2f44,transparent:true,opacity:.5})));
+const atm=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0x35e0c0,transparent:true,opacity:.32,blending:THREE.AdditiveBlending}));
+atm.scale.setScalar(GR*3.1); sceneA.add(atm);
+const ll2v=(lat,lng,r)=>{const la=lat*Math.PI/180,lo=lng*Math.PI/180;
+  return new THREE.Vector3(r*Math.cos(la)*Math.sin(lo),r*Math.sin(la),r*Math.cos(la)*Math.cos(lo));};
+{ // 中国城市光点（呼吸由 uTime 驱动的整体脉动近似）
+  const g=new THREE.BufferGeometry(), arr=[];
+  CITIES.forEach(c=>{const k=c[3]<=2?14:6;for(let i=0;i<k;i++){const v=ll2v(c[1]+(rnd()-.5)*1.5,c[2]+(rnd()-.5)*1.5,GR*1.005);arr.push(v.x,v.y,v.z);}});
+  g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));
+  const m=new THREE.PointsMaterial({color:0x35e0c0,size:2.4,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});
+  const pts=new THREE.Points(g,m); globeGrp.add(pts);
+  pts.onAfterRender=()=>{m.size=2.1+Math.sin(uTime.value*2.2)*0.7;};
+}
+sceneA.add(new THREE.AmbientLight(0xffffff,1));
+
+/* ---- 场景 B：市场微缩景观（schoolsim 式） ---- */
+const sceneB=new THREE.Scene();
+sceneB.fog=new THREE.Fog(0x0a1320,260,720);
+{
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(900,24,16),
+    new THREE.MeshBasicMaterial({color:0x0a1322,side:THREE.BackSide,fog:false}));
+  sceneB.add(sky);
+  sceneB.add(new THREE.HemisphereLight(0x9fb6e0,0x20242e,0.55));
+  const sun=new THREE.DirectionalLight(0xffe2b0,0.5); sun.position.set(120,160,60); sceneB.add(sun);
+  const rim=new THREE.DirectionalLight(0x6fd0ff,0.5); rim.position.set(-140,40,-120); sceneB.add(rim);
+  sceneB.add(new THREE.AmbientLight(0xffffff,0.18));
+  const ground=new THREE.Mesh(new THREE.CircleGeometry(420,72),
+    new THREE.MeshLambertMaterial({color:0x0b1220}));
+  ground.rotation.x=-Math.PI/2; ground.position.y=-0.2; sceneB.add(ground);
+  const grid=new THREE.GridHelper(640,64,0x16283a,0x101c2c);
+  grid.position.y=-0.1; sceneB.add(grid);
+}
+/* 城市积木：线框发光 + 暗填充；亮度 = 实时触达率（"按占用亮灯"） */
+const cityViz=[]; // {edgeMat, fillMats[], pos, name, tier}
+CITIES.forEach((c,ci)=>{
+  const p=P(c), grp=new THREE.Group(); grp.position.set(p.x,0,p.z);
+  const edgeMat=new THREE.LineBasicMaterial({color:0x35e0c0,transparent:true,opacity:0.12});
+  const fills=[];
+  const nb=TIER_BLOCKS[c[3]], R=TIER_R[c[3]];
+  for(let b=0;b<nb;b++){
+    const w=2.2+rnd()*2.6, d=2.2+rnd()*2.6, h=TIER_H[c[3]]*(0.55+rnd()*0.7);
+    const a=rnd()*6.283, r=b===0?0:R*(0.4+rnd()*0.6);
+    const x=Math.cos(a)*r, z=Math.sin(a)*r;
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const fm=new THREE.MeshLambertMaterial({color:0x0e1a2a});
+    const box=new THREE.Mesh(geo,fm); box.position.set(x,h/2,z); grp.add(box); fills.push(fm);
+    const eg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat);
+    eg.position.set(x,h/2,z); grp.add(eg);
+  }
+  sceneB.add(grp);
+  cityViz.push({edgeMat,fills,pos:new THREE.Vector3(p.x,0,p.z),name:c[0],tier:c[3],
+    total:DOTN[ci],reached:0,conv:0});
+});
+/* 主要城市名牌 */
+const LABELED=DATA.cities.slice().sort((a,b)=>b.weight-a.weight).slice(0,8).map(c=>c.name); // 权重前 8 城挂名牌
+CITIES.forEach(c=>{
+  if(!LABELED.includes(c[0]))return;
+  const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');
+  g.font='600 30px "Noto Sans SC",sans-serif';g.fillStyle='rgba(223,232,230,.85)';g.textAlign='center';g.fillText(c[0],128,42);
+  const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,opacity:.8,depthWrite:false}));
+  const p=P(c); sp.position.set(p.x,TIER_H[c[3]]+9,p.z); sp.scale.set(16,4,1); sceneB.add(sp);
+});
+/* 人群：InstancedMesh + GPU 呼吸（schoolsim 同款 shader 注入） */
+const C_UNREACHED=new THREE.Color(0x1b4a4d), C_REACHED=new THREE.Color(0x35e0c0),
+      C_CONV=new THREE.Color(0xffc14d), C_SOUL=new THREE.Color(0xffffff);
+const nodeGeo=new THREE.BoxGeometry(0.55,1.5,0.55); nodeGeo.translate(0,0.75,0);
+const phases=new Float32Array(N); agents.forEach((a,i)=>phases[i]=a.bobPh);
+nodeGeo.setAttribute('aPhase',new THREE.InstancedBufferAttribute(phases,1));
+const nodeMat=new THREE.MeshLambertMaterial({});
+nodeMat.onBeforeCompile=sh=>{
+  sh.uniforms.uTime=uTime;
+  sh.vertexShader='uniform float uTime;\nattribute float aPhase;\n'+sh.vertexShader
+    .replace('#include <begin_vertex>',
+     '#include <begin_vertex>\ntransformed.y *= 1.0 + 0.10*sin(uTime*1.8+aPhase);'); // 呼吸：身高微缩放，脚不离地
+};
+const nodes=new THREE.InstancedMesh(nodeGeo,nodeMat,N);
+{
+  const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), v=new THREE.Vector3();
+  for(let i=0;i<N;i++){
+    const a=agents[i], big=a.soul>=0?1.9:1.0;
+    s.setScalar(big); v.set(a.x,0,a.z);
+    m.compose(v,q,s); nodes.setMatrixAt(i,m);
+    nodes.setColorAt(i,a.soul>=0?C_SOUL:C_UNREACHED);
+  }
+}
+sceneB.add(nodes);
+/* 灵魂光环 */
+{
+  const hg=new THREE.BufferGeometry(), arr=[];
+  soulIdx.forEach(i=>{arr.push(agents[i].x,3.4,agents[i].z);});
+  hg.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));
+  sceneB.add(new THREE.Points(hg,new THREE.PointsMaterial({map:glowTex,color:0xffffff,size:4.5,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
+}
+/* 弧线 + 光包 + 引爆环（舞台化呈现，图例已声明） */
+const fxGrp=new THREE.Group(); sceneB.add(fxGrp);
+let arcs=[]; // {curve,line,packet,t0,dur}
+let rings=[]; // {mesh,age}
+function arcBetween(a,b,col){
+  const mid=a.clone().add(b).multiplyScalar(0.5); mid.y=a.distanceTo(b)*0.32+8;
+  const curve=new THREE.QuadraticBezierCurve3(a.clone().setY(2),mid,b.clone().setY(2));
+  const g=new THREE.BufferGeometry().setFromPoints(curve.getPoints(36));
+  const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0,blending:THREE.AdditiveBlending}));
+  const packet=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
+  packet.scale.setScalar(5); fxGrp.add(line); fxGrp.add(packet);
+  return {curve,line,packet};
+}
+function buildArcs(){
+  arcs.forEach(a=>{fxGrp.remove(a.line);fxGrp.remove(a.packet);a.line.geometry.dispose();});
+  arcs=[];
+  KOLS.forEach((k,ki)=>{
+    const src=cityViz[k[1]].pos;
+    for(let i=0;i<9;i++){
+      const dst=cityViz[(k[1]*7+i*13+ki)%NC].pos; if(dst===src)continue;
+      const o=arcBetween(src,dst,0x35e0c0);
+      o.t0=k[3]+i*0.07; o.dur=1.6; arcs.push(o);
+    }
+  });
+  for(let day=2;day<=DAYS-1;day++){ // 有机二波（金色细弧）：条数 ∝ 当日活跃量占比（曲线归一化）
+    const n=Math.max(1,Math.round(DAILY[day-1]/TOT_DAILY*60));
+    for(let i=0;i<n;i++){
+      const a=cityViz[(day*17+i*29)%NC].pos, b=cityViz[(day*31+i*11+7)%NC].pos; if(a===b)continue;
+      const o=arcBetween(a,b,0xffc14d); o.t0=day+((day*13+i*7)%10)/10; o.dur=1.2; arcs.push(o);
+    }
+  }
+}
+function igniteRing(pos){
+  const m=new THREE.Mesh(new THREE.RingGeometry(0.8,1.3,48),
+    new THREE.MeshBasicMaterial({color:0x8ff0ff,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false}));
+  m.rotation.x=-Math.PI/2; m.position.copy(pos).setY(0.3); fxGrp.add(m);
+  rings.push({mesh:m,age:0});
+}
+let firedRings=new Set();
+
+/* ---- 后处理（bloom 让线框与人群发光） ---- */
+const composer=new EffectComposer(renderer);
+const renderPassA=new RenderPass(sceneA,camera), renderPassB=new RenderPass(sceneB,camera);
+composer.addPass(renderPassA);
+const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.55,0.55,0.82);
+composer.addPass(bloom); composer.addPass(new OutputPass());
+let activeScene='A';
+function switchScene(s){
+  activeScene=s;
+  composer.passes[0]= s==='A'?renderPassA:renderPassB;
+}
+
+/* ---- 相机 & 控制 ---- */
+camera.position.set(0,40,260); camera.lookAt(0,0,0);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06; controls.enabled=false;
+controls.maxPolarAngle=Math.PI*0.47; controls.minDistance=40; controls.maxDistance=420;
+let camTween=null; // {p0,p1,t0,t1,dur,onDone}
+function flyTo(p,t,dur,onDone){
+  camTween={p0:camera.position.clone(),p1:p,t0:controls.target.clone(),t1:t,age:0,dur,onDone};
+}
+
+/* ============ 播放状态机（同 v1 骨架） ============ */
+let simT=0,playing=false,speed=1,mode="normal",started=false,verdictShown=false,diveDone=false;
+const SPEEDS=[1,2,4],DAY_SEC=5.2;
+let shownDM=new Set(),dmLane=0;
+const rndDM=mulberry(1337); // 弹幕时长抖动也走种子 PRNG（N5.1：禁止 Math.random 裸调用）
+const fmt=n=>n>=1e6?(n/1e6).toFixed(2)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":Math.round(n).toLocaleString();
+let disp={imp:0,clk:0,cvr:0,gmv:0};
+/* 曲线累计占比：daily_total 只借形状做归一化插值（红线①：绝不直接当曝光量），HUD 各值 = kpis 终值 × 占比 */
+function cumFrac(t){if(t<=0)return 0;const d=Math.min(DAYS-1,Math.floor(t)),f=Math.min(1,t-d);
+  return ((d>0?CUM[d-1]:0)+DAILY[d]*f)/TOT_DAILY;}
+
+/* 时间轴 */
+{
+  const svg=document.getElementById("tlsvg"),max=Math.max(...DAILY);
+  let pts="0,58 "; DAILY.forEach((v,i)=>{pts+=`${(i+0.5)/DAYS*760},${58-v/max*48} `;}); pts+="760,58";
+  svg.innerHTML=`<polygon points="${pts}" fill="rgba(53,224,192,.13)" stroke="rgba(53,224,192,.5)" stroke-width="1"/>`;
+  tldays.innerHTML=Array.from({length:DAYS+1},(_,i)=>`<span>${i===0?'D0':'D'+i}</span>`).join("");
+}
+
+/* 弹幕 */
+function spawnDM(html,cls){
+  const el=document.createElement("div"); el.className="dm "+cls;
+  el.style.top=(dmLane%5)*44+"px"; dmLane++;
+  el.style.animationDuration=(8.5+rndDM()*3)+"s"; el.innerHTML=html;
+  danmaku.appendChild(el); setTimeout(()=>el.remove(),13000);
+}
+function tickDM(){
+  SOULS.forEach((s,i)=>{ if(s[0]<=simT&&!shownDM.has("s"+i)){ shownDM.add("s"+i);
+    const who=s[1].split("·").slice(0,2).join("·"); // persona 长描述截前两段
+    if(mode==="degraded"&&i<DEG_FAIL){ // 失败口径与证词卡（a.soul<DEG_FAIL）/横幅（DEG_FAIL/总数）三处统一：失败灵魂无证词可播，不再泄露完整证词文本
+      spawnDM(`<span class="who">${who}</span>［LLM 调用失败 · 无证词］`,"fail");
+    }else{
+      const cls=s[3]<0?"neg":(s[4]?"gold":"");
+      spawnDM(`<span class="who">${who}</span>${s[2]}${s[4]?" · <b style='color:var(--gold)'>+1单</b>":""}`,cls);
+    }}});
+}
+
+/* 幕标题——R4：切分改为相对 peak_day 的函数。口径：peak=argmax(daily_total)（实测，本数据 D0 即峰、单调递减；
+   meta.peak_day=2 与曲线不符时以实测为准）；引爆=max(0.5,peak)；裂变=max(引爆+1.5,peak+2)；
+   衰减=累计达 85% 当天；判决=末日。回代 v2 假曲线（峰在 D1）得 [0,1,3,8,14]，与原手写切分一致，不回归。 */
+const PEAK_D=DAILY.indexOf(Math.max(...DAILY));
+const D_IG=Math.max(0.5,PEAK_D), D_CA=Math.max(D_IG+1.5,PEAK_D+2);
+const D_DE=Math.max(D_CA+1,(()=>{for(let d=1;d<DAYS;d++)if(CUM[d-1]>=0.85*TOT_DAILY)return d;return DAYS-2;})());
+const ACTS=[
+ [0,"ACT I · POPULATION","第一幕 · 人群",`统计人群按城市权重落在 ${NC} 城微缩景观上${PEAK_D===0?"。本次扩散开局即峰值——没有酝酿期，首波 KOL 自 D0 起开火":"。每个光点按权重采样"}。`],
+ [D_IG,"ACT II · IGNITION","第二幕 · 引爆",DATA.metrics?`首波在 D${Math.floor(D_CA)} 前点燃（峰值天 D${PEAK_D}）。本次无具名 KOL 明细，引爆以起势曲线呈现；城市亮度 = 实时触达率。`:`${KOLS.filter(k=>k[3]<D_CA).length} 位 KOL 已在 D${Math.floor(D_CA)} 前开火（峰值天 D${PEAK_D}）。城市亮度 = 实时触达率；触达/转化比例为舞台常量（见「关于本回放」）。`],
+ [D_CA,"ACT III · CASCADE","第三幕 · 裂变",DATA.metrics?`Hawkes 自激接管——弧线是扩散强度的舞台化呈现，金色 = 转化。`:`Hawkes 自激接管，有机占比 ${Math.round((DATA.organic_share||0)*100)}%。弧线是扩散强度的舞台化呈现，金色 = 转化。`],
+ [D_DE,"ACT IV · DECAY","第四幕 · 衰减",DATA.metrics?`饱和约 D${DATA.saturation_date}——热度按指数核衰减，长尾里藏着复购。`:`分支比 ${DATA.branching_ratio}，亚临界——累计已过 85%，热度按指数核衰减，长尾里藏着复购。`],
+ [DAYS,"ACT V · VERDICT","第五幕 · 判决",DATA.metrics?`${DAYS} 日收束（潜在盘 ${DATA.market_potential_m}）。P35/P50/P65 三条世界线，给区间不给保证。`:`${DAYS} 日收束。p25/p50/p75 三条世界线，给区间不给保证。`]];
+let curAct=-1;
+function tickAct(){
+  let a=0;ACTS.forEach((x,i)=>{if(simT>=x[0])a=i;});
+  if(a!==curAct){curAct=a;actcard.classList.remove("show");
+    setTimeout(()=>{actEn.textContent=ACTS[a][1];actZh.textContent=ACTS[a][2];actNote.textContent=ACTS[a][3];
+      actcard.classList.add("show");
+      setTimeout(()=>{if(curAct===a&&a<4)actcard.classList.remove("show");},5200);},350);}
+}
+
+/* 人群着色 + 城市亮灯（数据层：真假分界线在这里——状态是 schema 真形状，走位是戏） */
+const stateNow=new Int8Array(N); // 0 unreached 1 reached 2 conv
+const tmpC=new THREE.Color();
+function updateCrowd(){
+  cityViz.forEach(c=>{c.reached=0;c.conv=0;});
+  let dirty=false;
+  for(let i=0;i<N;i++){
+    const a=agents[i];
+    const st=a.conv<=simT?2:(a.reach<=simT?1:0);
+    const cv=cityViz[a.ci];
+    if(st>=1)cv.reached++; if(st===2)cv.conv++;
+    if(st!==stateNow[i]){
+      stateNow[i]=st; dirty=true;
+      if(a.soul>=0){ tmpC.copy(st===2?C_CONV:C_SOUL); }
+      else tmpC.copy(st===2?C_CONV:st===1?C_REACHED:C_UNREACHED);
+      nodes.setColorAt(i,tmpC);
+    }
+  }
+  if(dirty&&nodes.instanceColor)nodes.instanceColor.needsUpdate=true;
+  cityViz.forEach(c=>{
+    const rf=c.reached/c.total, cf=c.conv/Math.max(1,c.reached);
+    c.edgeMat.opacity=0.12+rf*0.85;
+    c.edgeMat.color.setHex(0x35e0c0).lerp(C_CONV,Math.min(1,cf*4));
+    const lit=0.06+rf*0.22;
+    c.fills.forEach(f=>f.color.setRGB(0.055+lit*0.3,0.10+lit*0.55,0.165+lit*0.5));
+  });
+}
+/* 特效推进 */
+function updateFx(dt){
+  arcs.forEach(o=>{
+    const u=(simT-o.t0)/o.dur;
+    if(u<0||u>1){o.line.material.opacity=0;o.packet.material.opacity=0;return;}
+    o.line.material.opacity=0.5*Math.sin(u*Math.PI);
+    o.packet.material.opacity=0.95*Math.sin(u*Math.PI);
+    o.packet.position.copy(o.curve.getPoint(u));
+  });
+  KOLS.forEach((k,ki)=>{
+    const key="r"+ki;
+    if(simT>=k[3]&&!firedRings.has(key)){firedRings.add(key);igniteRing(cityViz[k[1]].pos);bloom.strength=0.9;}
+  });
+  bloom.strength+= (0.55-bloom.strength)*0.04;
+  rings=rings.filter(r=>{
+    r.age+=dt; const s=1+r.age*26;
+    r.mesh.scale.setScalar(s); r.mesh.material.opacity=Math.max(0,0.9-r.age*0.5);
+    if(r.age>1.9){fxGrp.remove(r.mesh);r.mesh.geometry.dispose();return false;}
+    return true;
+  });
+}
+
+/* 渲染数字 */
+function renderHud(force){
+  const fr=cumFrac(simT),imp=FINAL.imp*fr,clk=FINAL.clk*fr,cvr=FINAL.cvr*fr,gmv=FINAL.gmv*fr,L=force?1:0.12;
+  disp.imp+=(imp-disp.imp)*L;disp.clk+=(clk-disp.clk)*L;disp.cvr+=(cvr-disp.cvr)*L;disp.gmv+=(gmv-disp.gmv)*L;
+  cImp.textContent=fmt(disp.imp);cClk.textContent=fmt(disp.clk);
+  cCvr.textContent=fmt(disp.cvr);cGmv.textContent="¥"+fmt(disp.gmv);
+  cRoi.textContent="ROI "+(DATA.kpis.roi*Math.min(1,FINAL.gmv?disp.gmv/FINAL.gmv:0)).toFixed(2)+"× · 预算 ¥"+fmt(BUDGET); // 直读 kpis.roi 按进度缩放，不再 gmv/预算 现算
+  playhead.style.left=(simT/DAYS*100)+"%";
+  dayBadge.textContent="D+"+Math.floor(simT);
+}
+
+/* 判决 */
+function bandHTML(name,p25,p50,p75,f,loLabel,hiLabel){
+  const lo=p25/(p75*1.15),hi=p75/(p75*1.15),mid=p50/(p75*1.15);
+  return `<div class="kpi"><div class="row"><span class="name">${name}</span><span class="p50">${f(p50)}</span></div>
+  <div class="band"><i style="left:${lo*100}%;width:${(hi-lo)*100}%"></i><b style="left:${mid*100}%"></b></div>
+  <div class="pp"><span>${loLabel||"p25"} ${f(p25)}</span><span>${hiLabel||"p75"} ${f(p75)}</span></div></div>`;
+}
+function showVerdict(){
+  verdictShown=true;playing=false;playBtn.textContent="▶ 播放";
+  const w=mode==="degraded"?1.8:1.0,fmtY=n=>"¥"+fmt(n);
+  if(DATA.metrics){ // launch（决策 B）：直读 metrics 真值带 P35/P50/P65，标签纠偏为 触达/试用/采纳/营收，不伪造五级漏斗
+    const M=DATA.metrics,B=m=>[m.p50-(m.p50-m.p35)*w,m.p50,m.p50+(m.p65-m.p50)*w];
+    const re=B(M.unique_reach),tr=B(M.trials),ad=B(M.adopters),rv=B(M.revenue);
+    kpis.innerHTML=bandHTML("触达 REACH",re[0],re[1],re[2],fmt,"P35","P65")
+      +bandHTML("试用 TRIALS",tr[0],tr[1],tr[2],fmt,"P35","P65")
+      +bandHTML("采纳 ADOPT",ad[0],ad[1],ad[2],fmt,"P35","P65")
+      +bandHTML("营收 GMV",rv[0],rv[1],rv[2],fmtY,"P35","P65");
+    // launch 无真实分平台 ROI（报告不分平台）→ 只示曝光占比，ROI 标「—」，不编造（AT-FE-3-03）
+    const totP=Object.values(DATA.per_platform).reduce((s,p)=>s+(p.impressions||0),0)||1;
+    platforms.innerHTML=Object.entries(DATA.per_platform).map(([k,p])=>{
+      const pct=(p.impressions||0)/totP*100;
+      return `<div class="hbar"><span class="n">${PLAT_ZH[k]||k}</span><div class="t"><i style="width:${pct.toFixed(1)}%"></i></div><span class="v" style="width:112px">${pct.toFixed(0)}% · ROI —</span></div>`;}).join("");
+  }else{ // campaign：原五级漏斗逻辑，保持不回归（AT-FE-3-05）
+    const FP=DATA.funnel_percentiles;
+    const B=p=>[p.p50-(p.p50-p.p25)*w,p.p50,p.p50+(p.p75-p.p50)*w]; // 真分位带；降级时围绕 p50 加宽 ×1.8
+    const a1=B(FP.A1_awareness),a3=B(FP.A3_engagement),a4=B(FP.A4_conversion);
+    const rev=DATA.kpis.revenue,r4=FP.A4_conversion;
+    const g=[rev-rev*(1-r4.p25/r4.p50)*w,rev,rev+rev*(r4.p75/r4.p50-1)*w]; // GMV 无百分位 → 按 A4 分位比例缩放 revenue
+    kpis.innerHTML=bandHTML("曝光 A1",a1[0],a1[1],a1[2],fmt)
+      +bandHTML("点击 A3",a3[0],a3[1],a3[2],fmt)
+      +bandHTML("转化 A4",a4[0],a4[1],a4[2],fmt)
+      +bandHTML("GMV",g[0],g[1],g[2],fmtY);
+    const totPImp=Object.values(DATA.per_platform).reduce((s,p)=>s+p.impressions,0);
+    platforms.innerHTML=Object.entries(DATA.per_platform).map(([k,p])=>{
+      const pct=p.impressions/totPImp*100;
+      return `<div class="hbar"><span class="n">${PLAT_ZH[k]||k}</span><div class="t"><i style="width:${pct.toFixed(1)}%"></i></div><span class="v" style="width:112px">${pct.toFixed(0)}% · ROI ${p.roi.toFixed(2)}</span></div>`;}).join("");
+  }
+  const tw={};DATA.cities.forEach(c=>tw[c.tier]=(tw[c.tier]||0)+c.weight);
+  const sw=Object.values(tw).reduce((a,b)=>a+b,0);
+  tiers.innerHTML=[1,2,3,4,5].filter(t=>tw[t]).map(t=>{const pct=tw[t]/sw*100;
+    return `<div class="hbar"><span class="n">${["","一线","二线","三线","四线","五线"][t]}</span><div class="t"><i style="width:${pct.toFixed(1)}%;background:var(--gold)"></i></div><span class="v">${pct.toFixed(0)}%</span></div>`;}).join("");
+  const S=DATA.sentiment||{};
+  /* 已知数据层不一致（不影响显示）：数据件 sentiment_distribution.negative=0.0 与 souls 实际 6/60 条 sentiment=-1（10%）矛盾。
+     本面板刻意不消费 sentiment_distribution，口碑口径以 net_sentiment_score / high_intent_pct / feel_breakdown 与 souls 实测为准。 */
+  wom.innerHTML=`净情绪 <b>${S.net_sentiment_score!=null?S.net_sentiment_score.toFixed(2):"—"}</b> · 高购买意向 <b>${Math.round((S.high_intent_pct||0)*100)}%</b> · ${S.agent_count||DATA.souls.length} 灵魂样本（LLM 实证 ${S.llm_backed!=null?S.llm_backed:"—"}）。观感：${Object.entries(S.feel_breakdown||{}).map(([k,v])=>k+" "+v).join(" / ")}。高频口碑：${(S.key_opinion_themes||[]).slice(0,2).map(t=>`「${t.theme}」×${t.count}`).join("、")}。`;
+  vbadge.textContent=mode==="degraded"?"低置信 · 口碑证据不足":(DATA.metrics?"中等置信 · p50 回本 "+(DATA.kpis.roi||0).toFixed(2)+"×":"中等置信 · p50 ROI "+DATA.kpis.roi.toFixed(2)+"×");
+  vbadge.style.borderColor=vbadge.style.color=mode==="degraded"?"var(--coral)":"var(--gold)";
+  verdict.classList.add("show");
+  flyTo(new THREE.Vector3(-130,150,180),new THREE.Vector3(-40,0,-5),2.2);
+}
+function hideVerdict(){verdictShown=false;verdict.classList.remove("show");}
+
+/* seek */
+function seek(t){
+  simT=Math.max(0,Math.min(DAYS,t));
+  danmaku.innerHTML="";shownDM=new Set();
+  SOULS.forEach((s,i)=>{if(s[0]<=simT)shownDM.add("s"+i);});
+  firedRings=new Set(); KOLS.forEach((k,ki)=>{if(simT>k[3]+0.1)firedRings.add("r"+ki);});
+  if(simT<DAYS&&verdictShown)hideVerdict();
+  updateCrowd();renderHud(true);
+}
+
+/* 点击拾取：宏观奇观 → 微观证词 */
+const ray=new THREE.Raycaster(); ray.params.Mesh={};
+let pdown=null;
+renderer.domElement.addEventListener('pointerdown',e=>{pdown={x:e.clientX,y:e.clientY};});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!pdown||Math.hypot(e.clientX-pdown.x,e.clientY-pdown.y)>5||activeScene!=='B')return;
+  const m=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);
+  ray.setFromCamera(m,camera);
+  const hit=ray.intersectObject(nodes,false)[0];
+  if(hit&&hit.instanceId!=null)showAgentCard(hit.instanceId); else agentCard.classList.remove('show');
+});
+window.showAgentCard=function(i){
+  const a=agents[i],c=CITIES[a.ci];
+  const st=stateNow[i]===2?"已转化":stateNow[i]===1?"已触达":"未触达";
+  agentCard.classList.add('show');
+  if(a.soul>=0){
+    const failed=(mode==="degraded"&&a.soul<DEG_FAIL);
+    const s=DATA.souls[a.soul];
+    acKind.textContent="SOUL AGENT · 灵魂 #"+(a.soul+1)+" / "+DATA.souls.length;
+    acName.textContent=failed?"［调用超时］":s.persona;
+    acSub.textContent=`${s.city} · ${["","一线","二线","三线","四线","五线"][a.tier]} · ${s.feel} · ${st}`;
+    acBody.innerHTML=failed
+      ?`<div class="nosoul" style="border-color:var(--coral);color:var(--coral)">该灵魂本次推演 LLM 调用失败，无证词。降级模式下共 ${DEG_FAIL}/${DATA.souls.length} 个灵魂失败——这就是判决降为低置信的原因。</div>`
+      :((s.t==null||s.t<=simT) /* 可选字段判空：t / purchase_intent_7d 缺失不抛 TypeError（浅校验放行的 live 数据兜底） */
+        ?`<div class="quote ${s.sentiment<0?'neg':''}">"${s.text}"</div>
+          ${s.comment?`<div class="sub" style="margin:0 0 8px">公开评论：「${s.comment}」</div>`:""}
+          <div class="row"><span>will_click</span><b>${s.will_click?"true":"false"}</b></div>
+          <div class="row"><span>purchase_intent_7d</span><b>${s.purchase_intent_7d!=null?s.purchase_intent_7d.toFixed(2):"—"}</b></div>
+          <div class="row"><span>证词时刻</span><b>${s.t!=null?"D+"+s.t.toFixed(1):"—"}${s.t_synthetic?'<span class="synthTag">时刻为推演合成</span>':""}</b></div>`
+        :`<div class="nosoul">证词尚未生成——该灵魂在 D+${s.t.toFixed(1)} 才接触本 campaign。拖动时间轴到那之后再来问。</div>`);
+  }else{
+    acKind.textContent="STATISTICAL AGENT · 统计 agent";
+    acName.textContent="无名氏 #"+i;
+    acSub.textContent=`${c[0]} · ${["","一线","二线","三线","四线","五线"][a.tier]} · ${st}`;
+    acBody.innerHTML=`<div class="row"><span>触达</span><b>${a.reach<90?"D+"+a.reach.toFixed(1):"—"}</b></div>
+      <div class="row"><span>转化</span><b>${a.conv<90?"D+"+a.conv.toFixed(1):"—"}</b></div>
+      <div class="nosoul">这是统计人群采样中的一员（向量化决策，无 LLM 灵魂），所以没有证词可问。灵魂池只有 top-${DATA.souls.length}——白色光环的那些点才开口说话。Enterprise 版灵魂池 10k。</div>`;
+  }
+};
+acClose.onclick=()=>agentCard.classList.remove('show');
+
+/* ============ 终态：meta 驱动的诚实层（N2：不写死文案，随数据消失/出现） ============ */
+{
+  const ts=(META.run_timestamp||"").replace("T"," ");
+  runMeta.innerHTML=`RUN <b>${META.creative_id||"—"}</b> · ${META.caption||""} · ${ts.slice(0,10)}`;
+  briefK.textContent="CAMPAIGN BRIEF · "+(META.creative_id||"—");
+  briefTitle.textContent=META.caption||"—";
+  bBudget.textContent="¥"+BUDGET.toLocaleString();
+  bAov.textContent=DATA.kpis.aov!=null?"¥"+DATA.kpis.aov.toLocaleString():"—"; // kpis.aov 落 UI（与预算/ROI 同级）；GMV 置信带隐式依赖它恒定
+  bPlat.textContent=Object.entries(DATA.platform_alloc||{}).map(([k,v])=>`${PLAT_ZH[k]||k} ${Math.round(v*100)}%`).join(" · ")||"—";
+  const fds=KOLS.map(k=>k[3]);
+  const platCnt={};KOLS.forEach(k=>platCnt[k[2]]=(platCnt[k[2]]||0)+1); // 消费元组第 3 位平台名（原死数据）
+  bKol.textContent=KOLS.length
+    ?`${KOLS.length} 人（${Object.entries(platCnt).map(([p,n])=>p+"×"+n).join(" · ")}） · fire_day ${Math.min(...fds).toFixed(1)}–${Math.max(...fds).toFixed(1)} 连续波次`
+    :"—";
+  bPop.textContent=`${N.toLocaleString()} 采样点（∝ 城市 weight）+ ${DATA.souls.length} 灵魂`;
+  bHor.textContent=`${DAYS} 天 · 参数化 Hawkes 扩散`;
+  legendSouls.textContent=DATA.souls.length; legendDots.textContent=N.toLocaleString();
+  degbanner.textContent=`⚠ ${DEG_FAIL}/${DATA.souls.length} 灵魂 LLM 调用失败 · 口碑面证据不足 · 置信带已加宽 ×1.8`;
+  vK.textContent=`VERDICT · 第 ${DAYS} 日收束`; // 收束日随数据，不写死十四
+  // loading 演示面：可由数据推导的数字全部接数据；进度/耗时无数据来源，已在面上标"占位非实测"
+  ldSouls1.textContent=ldSouls2.textContent=ldSouls3.textContent=DATA.souls.length;
+  ldDays.textContent=DAYS;
+  ldProg.textContent=Math.round(DATA.souls.length*0.43); // 演示进度常量 43%，仅状态演示用
+  if(IS_DEMO) demoWm.style.display="block"; // 演示数据水印：常驻、不可关闭（N1.4）
+  if(FALLBACK_REASON) demoWm.textContent=`演示数据 · 内嵌样本（${FALLBACK_REASON}）`; // 形状校验失败的诚实披露
+  const um=DATA.unmapped_cities||[];
+  const umExtra=[];
+  if(KOL_UNMAPPED.length) umExtra.push(`${KOL_UNMAPPED.length} KOL 城市未上图已跳过`);
+  if(SOUL_UNPLACED.length) umExtra.push(`${SOUL_UNPLACED.length} 灵魂未落点（城市未上图）`);
+  if(um.length||umExtra.length){
+    unmappedNote.textContent="⚠ "+[um.length?`${um.length} 城未上图：${um.join("、")}`:"",...umExtra].filter(Boolean).join(" · ");
+    unmappedNote.style.display="block"; } // 契约 §3.2：城市/KOL/灵魂解析失败统一可见披露，不静默错位
+  const unkPlat=[...new Set([...DATA.kols.map(k=>k.platform),...Object.keys(DATA.per_platform||{}),...Object.keys(DATA.platform_alloc||{})])].filter(p=>p&&!PLAT_ZH[p]);
+  const sf=META.synthetic_fields||[];
+  aboutBody.innerHTML=`<div class="abI">导出：${META.generated_by||"—"} · ${ts}</div>
+    <div class="abI">创意：${META.creative_id||"—"} · ${META.caption||""}</div>
+    <div class="abI">数据源：${IS_DEMO?(FALLBACK_REASON?`内嵌演示件（${FALLBACK_REASON}）`:"内嵌演示件（fetch ./replay.json 未命中或 ?demo=1）"):"./replay.json（实时导出件）"}</div>
+    ${sf.length?'<div class="abK">SYNTHETIC FIELDS · 合成字段（非后端真值）</div>'+sf.map(s=>`<div class="abI">· ${s}</div>`).join(""):""}
+    ${um.length?`<div class="abK" style="color:var(--coral)">UNMAPPED · ${um.length} 城未上图</div><div class="abI">${um.join("、")}</div>`:""}
+    ${KOL_UNMAPPED.length?`<div class="abK" style="color:var(--coral)">UNMAPPED KOL · ${KOL_UNMAPPED.length} 位已跳过</div><div class="abI">${KOL_UNMAPPED.join("、")}</div>`:""}
+    ${SOUL_UNPLACED.length?`<div class="abK" style="color:var(--coral)">UNPLACED SOULS · ${SOUL_UNPLACED.length} 条未落点</div><div class="abI">弹幕与口碑统计仍计入，仅地图无白点。</div>`:""}
+    ${unkPlat.length?`<div class="abK" style="color:var(--gold)">PLATFORM · 未识别平台键</div><div class="abI">${unkPlat.join("、")}（无中文映射，按原名显示）</div>`:""}
+    <div class="abK">STAGE LAYER · 戏剧层声明</div>
+    <div class="abI">弧线与人群走位是扩散强度的舞台化呈现，非个体传播路径；撒点位置由种子 PRNG 生成，数量 ∝ 城市 weight。撒点的触达总量 ${Math.round(STAGE_REACH*100)}% 与金点（已转化）比例 ${(STAGE_CONV*100).toFixed(1)}% 为舞台演出常量，非 kpis 推导——真实漏斗见判决面板；逐日节奏借 daily_total 曲线形状。降级演示的 37% 失败率同为演示常量。</div>`;
+  aboutBadge.onclick=()=>aboutPanel.classList.toggle("hidden");
+}
+
+/* 启动 / 俯冲 */
+function start(){
+  briefOverlay.classList.add("hidden"); started=true;
+  // 地球转到中国面向镜头 → 推进 → 黑场切微缩景观
+  const t0=performance.now();
+  const r0=globeGrp.rotation.y, r1=-110*Math.PI/180;
+  const dive=()=>{
+    const u=Math.min(1,(performance.now()-t0)/2600), e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+    globeGrp.rotation.y=r0+(r1-r0)*e;
+    camera.position.lerpVectors(new THREE.Vector3(0,40,260),new THREE.Vector3(18,30,128),e);
+    camera.lookAt(ll2v(33,110,GR).applyAxisAngle(new THREE.Vector3(0,1,0),globeGrp.rotation.y));
+    if(u<1){requestAnimationFrame(dive);}
+    else{
+      fade.style.opacity=1;
+      setTimeout(()=>{
+        switchScene('B'); diveDone=true;
+        camera.position.set(60,170,230); controls.target.set(0,0,-5); controls.enabled=true;
+        flyTo(new THREE.Vector3(95,95,160),new THREE.Vector3(0,0,-5),3.0);
+        fade.style.opacity=0;
+        counters.style.opacity=1;legend.style.opacity=1;hint.style.opacity=1;
+        buildArcs();
+        setTimeout(()=>{playing=true;playBtn.textContent="❚❚ 暂停";tickAct();},900);
+      },650);
+    }
+  };
+  dive();
+}
+
+/* 交互 */
+playBtn.onclick=()=>{if(!diveDone)return;playing=!playing;playBtn.textContent=playing?"❚❚ 暂停":"▶ 播放";};
+speedBtn.onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%3];speedBtn.textContent="×"+speed;};
+replayBtn.onclick=()=>{hideVerdict();seek(0);if(diveDone){playing=true;playBtn.textContent="❚❚ 暂停";}};
+vReplay.onclick=replayBtn.onclick;
+startBtn.onclick=start;
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"){e.preventDefault();playBtn.onclick();}
+  if(e.code==="ArrowRight")seek(simT+1);
+  if(e.code==="ArrowLeft")seek(simT-1);
+});
+{
+  let drag=false;
+  const toT=e=>{const r=timeline.getBoundingClientRect();return (e.clientX-r.left)/r.width*DAYS;};
+  timeline.addEventListener("pointerdown",e=>{drag=true;playing=false;playBtn.textContent="▶ 播放";seek(toT(e));});
+  addEventListener("pointermove",e=>{if(drag)seek(toT(e));});
+  addEventListener("pointerup",()=>drag=false);
+}
+stateSel.onchange=()=>{
+  mode=stateSel.value;
+  ["briefOverlay","loadingOverlay","emptyOverlay"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+  degbanner.style.display="none";
+  if(mode==="empty"){emptyOverlay.classList.remove("hidden");playing=false;}
+  else if(mode==="loading"){loadingOverlay.classList.remove("hidden");playing=false;}
+  else if(mode==="degraded"){degbanner.style.display="block";if(!started)briefOverlay.classList.remove("hidden");if(verdictShown)showVerdict();}
+  else{if(!started)briefOverlay.classList.remove("hidden");if(verdictShown)showVerdict();}
+};
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
+});
+
+/* 主循环 */
+let last=null;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt=last?(ts-last)/1000:0; last=ts; uTime.value+=dt;
+  if(activeScene==='A'&&!started) globeGrp.rotation.y+=dt*0.06;
+  if(camTween){
+    camTween.age+=dt; const u=Math.min(1,camTween.age/camTween.dur), e=1-Math.pow(1-u,3);
+    camera.position.lerpVectors(camTween.p0,camTween.p1,e);
+    controls.target.lerpVectors(camTween.t0,camTween.t1,e);
+    if(u>=1){camTween.onDone&&camTween.onDone();camTween=null;}
+  }
+  if(controls.enabled)controls.update();
+  if(diveDone){
+    if(playing){
+      // D9 长尾快进：launch 90 天曲线饱和后是长平尾，累计过 90% 即 6× 压缩时间（数据不变、全程仍放，只让无戏的尾巴飞过）。campaign 14 天不触发。
+      const _cum=CUM[Math.min(DAYS-1,Math.floor(simT))]||0;
+      const _warp=(DATA.metrics&&_cum>=0.9*TOT_DAILY)?6:1;
+      simT=Math.min(DAYS,simT+dt*speed/DAY_SEC*_warp);
+      tickDM();tickAct();
+      if(simT>=DAYS&&!verdictShown)showVerdict();
+    }
+    updateCrowd();updateFx(dt);renderHud(false);
+  }
+  composer.render();
+}
+updateCrowd();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

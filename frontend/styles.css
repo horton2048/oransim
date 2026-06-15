@@ -52,6 +52,9 @@
   }
 
   main { display:grid; grid-template-columns: 360px 1fr 360px; gap:18px; padding:18px; overflow:hidden; }
+  /* 战况回放全宽（D11）：replay tab 激活时单栏，隐藏左控制台 + 右灵魂栏，让影院式 diorama 铺满 */
+  main.replay-full { grid-template-columns: 1fr; }
+  main.replay-full > section:not(#results-section) { display:none !important; }
 
   .panel {
     background: var(--panel);

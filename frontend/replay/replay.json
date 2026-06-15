@@ -1,0 +1,1352 @@
+{
+ "version": 1,
+ "meta": {
+  "creative_id": "cr_49540",
+  "caption": "夏日清爽控油散粉 油皮亲妈 持妆12小时不脱妆",
+  "run_timestamp": "2026-06-08T18:02:35",
+  "generated_by": "replay_export.py v1",
+  "synthetic_fields": [
+   "souls[].t (后端无 timestamp，按扩散曲线合成)",
+   "kols[].platform / fire_day / city (T2_A1 无此字段，确定性合成)"
+  ]
+ },
+ "budget": 80000.0,
+ "platform_alloc": {
+  "douyin": 0.6,
+  "xhs": 0.4
+ },
+ "kpis": {
+  "impressions": 2038095.2381,
+  "clicks": 27052.8051,
+  "conversions": 5382.8141,
+  "cost": 80000.0,
+  "revenue": 242226.6333,
+  "ctr": 0.0133,
+  "cvr": 0.199,
+  "roi": 2.0278,
+  "aov": 45.0
+ },
+ "funnel_percentiles": {
+  "A1_awareness": {
+   "p25": 1579523.8,
+   "p50": 2038095.2,
+   "p75": 2496666.7
+  },
+  "A2_interest": {
+   "p25": 37738.7,
+   "p50": 48695.0,
+   "p75": 59651.4
+  },
+  "A3_engagement": {
+   "p25": 20965.9,
+   "p50": 27052.8,
+   "p75": 33139.7
+  },
+  "A4_conversion": {
+   "p25": 4171.7,
+   "p50": 5382.8,
+   "p75": 6593.9
+  },
+  "A5_loyalty": {
+   "p25": 750.9,
+   "p50": 968.9,
+   "p75": 1186.9
+  }
+ },
+ "per_platform": {
+  "douyin": {
+   "impressions": 1371428.5714,
+   "impressions_std": 0.0,
+   "clicks": 21167.8801,
+   "clicks_std": 4.6805,
+   "conversions": 4886.2156,
+   "conversions_std": 4.2239,
+   "ctr": 0.0154,
+   "ctr_std": 0.0,
+   "cvr": 0.2308,
+   "cvr_std": 0.0002,
+   "roi": 3.5808,
+   "roi_std": 0.004,
+   "revenue": 219879.7004,
+   "revenue_std": 190.0771,
+   "cost": 48000.0,
+   "cost_std": 0.0
+  },
+  "xhs": {
+   "impressions": 666666.6667,
+   "impressions_std": 0.0,
+   "clicks": 5884.925,
+   "clicks_std": 3.6756,
+   "conversions": 1354.7283,
+   "conversions_std": 2.8984,
+   "ctr": 0.0088,
+   "ctr_std": 0.0,
+   "cvr": 0.2302,
+   "cvr_std": 0.0004,
+   "roi": 0.9051,
+   "roi_std": 0.0041,
+   "revenue": 60962.773,
+   "revenue_std": 130.4264,
+   "cost": 32000.0,
+   "cost_std": 0.0
+  }
+ },
+ "days": 14,
+ "daily_total": [
+  42609.44,
+  37981.09,
+  31264.14,
+  24534.19,
+  18650.26,
+  13860.2,
+  10128.0,
+  7304.95,
+  5214.62,
+  3691.41,
+  2595.19,
+  1814.02,
+  1261.84,
+  874.1
+ ],
+ "daily_paid": [
+  37991.2,
+  25466.27,
+  17070.55,
+  11442.73,
+  7670.29,
+  5141.55,
+  3446.48,
+  2310.25,
+  1548.61,
+  1038.06,
+  695.83,
+  466.43,
+  312.66,
+  209.58
+ ],
+ "daily_organic": [
+  4618.24,
+  12514.82,
+  14193.6,
+  13091.46,
+  10979.97,
+  8718.65,
+  6681.51,
+  4994.71,
+  3666.02,
+  2653.35,
+  1899.35,
+  1347.59,
+  949.18,
+  664.52
+ ],
+ "peak_day": 2.0,
+ "organic_share": 0.431,
+ "branching_ratio": 0.35,
+ "sentiment": {
+  "sentiment_distribution": {
+   "positive": 0.9,
+   "neutral": 0.1,
+   "negative": 0.0
+  },
+  "net_sentiment_score": 0.6517,
+  "high_intent_pct": 0.9,
+  "avg_purchase_intent_7d": 0.857,
+  "feel_breakdown": {
+   "心动": 17,
+   "购买冲动": 23,
+   "好奇": 14,
+   "无感": 6
+  },
+  "key_opinion_themes": [
+   {
+    "theme": "文案挺真诚 不像硬广",
+    "count": 10
+   },
+   {
+    "theme": "BGM 很抓耳",
+    "count": 10
+   },
+   {
+    "theme": "达人之前买过 她推的不踩雷",
+    "count": 8
+   },
+   {
+    "theme": "剧情有点意思 想看完",
+    "count": 7
+   },
+   {
+    "theme": "正好最近在看这个",
+    "count": 6
+   },
+   {
+    "theme": "封面颜色挺清爽",
+    "count": 6
+   }
+  ],
+  "agent_count": 60,
+  "llm_backed": 0
+ },
+ "cities": [
+  {
+   "name": "保定",
+   "lat": 38.87,
+   "lng": 115.46,
+   "tier": 3,
+   "weight": 7
+  },
+  {
+   "name": "绵阳",
+   "lat": 31.47,
+   "lng": 104.68,
+   "tier": 4,
+   "weight": 6
+  },
+  {
+   "name": "九江",
+   "lat": 29.71,
+   "lng": 116.0,
+   "tier": 4,
+   "weight": 5
+  },
+  {
+   "name": "广州",
+   "lat": 23.13,
+   "lng": 113.26,
+   "tier": 1,
+   "weight": 4
+  },
+  {
+   "name": "淮安",
+   "lat": 33.61,
+   "lng": 119.02,
+   "tier": 4,
+   "weight": 4
+  },
+  {
+   "name": "济南",
+   "lat": 36.65,
+   "lng": 117.12,
+   "tier": 3,
+   "weight": 3
+  },
+  {
+   "name": "烟台",
+   "lat": 37.46,
+   "lng": 121.44,
+   "tier": 3,
+   "weight": 3
+  },
+  {
+   "name": "达州",
+   "lat": 31.21,
+   "lng": 107.47,
+   "tier": 4,
+   "weight": 3
+  },
+  {
+   "name": "重庆",
+   "lat": 29.56,
+   "lng": 106.55,
+   "tier": 2,
+   "weight": 3
+  },
+  {
+   "name": "成都",
+   "lat": 30.66,
+   "lng": 104.07,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "杭州",
+   "lat": 30.27,
+   "lng": 120.16,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "玉林",
+   "lat": 22.63,
+   "lng": 110.17,
+   "tier": 4,
+   "weight": 2
+  },
+  {
+   "name": "苏州",
+   "lat": 31.3,
+   "lng": 120.58,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "长沙",
+   "lat": 28.23,
+   "lng": 112.94,
+   "tier": 2,
+   "weight": 2
+  },
+  {
+   "name": "驻马店",
+   "lat": 33.01,
+   "lng": 114.02,
+   "tier": 5,
+   "weight": 2
+  },
+  {
+   "name": "上海",
+   "lat": 31.23,
+   "lng": 121.47,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "北京",
+   "lat": 39.9,
+   "lng": 116.41,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "南京",
+   "lat": 32.06,
+   "lng": 118.8,
+   "tier": 2,
+   "weight": 1
+  },
+  {
+   "name": "厦门",
+   "lat": 24.48,
+   "lng": 118.09,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "合肥",
+   "lat": 31.86,
+   "lng": 117.28,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "周口",
+   "lat": 33.62,
+   "lng": 114.65,
+   "tier": 5,
+   "weight": 1
+  },
+  {
+   "name": "宿迁",
+   "lat": 33.96,
+   "lng": 118.28,
+   "tier": 4,
+   "weight": 1
+  },
+  {
+   "name": "深圳",
+   "lat": 22.54,
+   "lng": 114.06,
+   "tier": 1,
+   "weight": 1
+  },
+  {
+   "name": "福州",
+   "lat": 26.08,
+   "lng": 119.3,
+   "tier": 3,
+   "weight": 1
+  },
+  {
+   "name": "西安",
+   "lat": 34.34,
+   "lng": 108.94,
+   "tier": 2,
+   "weight": 1
+  }
+ ],
+ "unmapped_cities": [],
+ "kols": [
+  {
+   "name": "IndigoArchive",
+   "kol_id": "KOL_000090",
+   "tier": "腰部",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "保定",
+   "fire_day": 0.0,
+   "fans": 481395,
+   "reach": 168488,
+   "cost": 66721.3,
+   "roi": 3.789
+  },
+  {
+   "name": "SilverMuse",
+   "kol_id": "KOL_000040",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "绵阳",
+   "fire_day": 0.21,
+   "fans": 207947,
+   "reach": 72781,
+   "cost": 8783.7,
+   "roi": 4.576
+  },
+  {
+   "name": "CrystalClub",
+   "kol_id": "KOL_000020",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "九江",
+   "fire_day": 0.42,
+   "fans": 107613,
+   "reach": 37664,
+   "cost": 684.4,
+   "roi": 5.125
+  },
+  {
+   "name": "IndigoDiary",
+   "kol_id": "KOL_000170",
+   "tier": "尾部",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "广州",
+   "fire_day": 0.63,
+   "fans": 72724,
+   "reach": 25453,
+   "cost": 1474.8,
+   "roi": 5.372
+  },
+  {
+   "name": "HarborRecord",
+   "kol_id": "KOL_000110",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "淮安",
+   "fire_day": 0.84,
+   "fans": 22064,
+   "reach": 7722,
+   "cost": 182.0,
+   "roi": 5.556
+  },
+  {
+   "name": "SolarMuse",
+   "kol_id": "KOL_000010",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "济南",
+   "fire_day": 1.05,
+   "fans": 21911,
+   "reach": 7668,
+   "cost": 149.0,
+   "roi": 5.555
+  },
+  {
+   "name": "IvoryMuse",
+   "kol_id": "KOL_000180",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "烟台",
+   "fire_day": 1.26,
+   "fans": 19988,
+   "reach": 6995,
+   "cost": 100.9,
+   "roi": 5.529
+  },
+  {
+   "name": "JadeJournal",
+   "kol_id": "KOL_000000",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "达州",
+   "fire_day": 1.47,
+   "fans": 19781,
+   "reach": 6923,
+   "cost": 168.1,
+   "roi": 5.526
+  },
+  {
+   "name": "VelvetRecord",
+   "kol_id": "KOL_000070",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "重庆",
+   "fire_day": 1.68,
+   "fans": 14666,
+   "reach": 5133,
+   "cost": 141.5,
+   "roi": 5.405
+  },
+  {
+   "name": "VelvetDiary",
+   "kol_id": "KOL_000100",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "成都",
+   "fire_day": 1.89,
+   "fans": 12131,
+   "reach": 4245,
+   "cost": 372.4,
+   "roi": 5.301
+  },
+  {
+   "name": "OakMonthly",
+   "kol_id": "KOL_000060",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "杭州",
+   "fire_day": 2.11,
+   "fans": 11413,
+   "reach": 3994,
+   "cost": 123.8,
+   "roi": 5.264
+  },
+  {
+   "name": "EmberDiary",
+   "kol_id": "KOL_000130",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "玉林",
+   "fire_day": 2.32,
+   "fans": 7603,
+   "reach": 2661,
+   "cost": 33.5,
+   "roi": 4.972
+  },
+  {
+   "name": "JadeGallery",
+   "kol_id": "KOL_000160",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "苏州",
+   "fire_day": 2.53,
+   "fans": 7079,
+   "reach": 2477,
+   "cost": 64.4,
+   "roi": 4.914
+  },
+  {
+   "name": "EmberArchive",
+   "kol_id": "KOL_000190",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "长沙",
+   "fire_day": 2.74,
+   "fans": 5262,
+   "reach": 1841,
+   "cost": 75.0,
+   "roi": 4.658
+  },
+  {
+   "name": "OakMonthly",
+   "kol_id": "KOL_000050",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "驻马店",
+   "fire_day": 2.95,
+   "fans": 4627,
+   "reach": 1619,
+   "cost": 87.2,
+   "roi": 4.541
+  },
+  {
+   "name": "SilverMonthly",
+   "kol_id": "KOL_000150",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "上海",
+   "fire_day": 3.16,
+   "fans": 3952,
+   "reach": 1383,
+   "cost": 23.5,
+   "roi": 4.394
+  },
+  {
+   "name": "PrairieDiary",
+   "kol_id": "KOL_000030",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "北京",
+   "fire_day": 3.37,
+   "fans": 3914,
+   "reach": 1369,
+   "cost": 90.8,
+   "roi": 4.385
+  },
+  {
+   "name": "JadePress",
+   "kol_id": "KOL_000080",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "南京",
+   "fire_day": 3.58,
+   "fans": 2411,
+   "reach": 843,
+   "cost": 32.8,
+   "roi": 3.927
+  },
+  {
+   "name": "SolarJournal",
+   "kol_id": "KOL_000140",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "douyin",
+   "city": "厦门",
+   "fire_day": 3.79,
+   "fans": 1824,
+   "reach": 638,
+   "cost": 28.8,
+   "roi": 3.671
+  },
+  {
+   "name": "CoralPress",
+   "kol_id": "KOL_000120",
+   "tier": "KOC",
+   "niche": "美妆",
+   "platform": "xhs",
+   "city": "合肥",
+   "fire_day": 4.0,
+   "fans": 531,
+   "reach": 185,
+   "cost": 1.3,
+   "roi": 2.745
+  }
+ ],
+ "souls": [
+  {
+   "t": 0.11,
+   "t_synthetic": true,
+   "persona": "17岁男·淮安·白领·月入分位8/10",
+   "city": "淮安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "看起来不错等降价",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.16,
+   "t_synthetic": true,
+   "persona": "54岁男·济南·蓝领·月入分位1/10",
+   "city": "济南",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.2,
+   "t_synthetic": true,
+   "persona": "27岁男·达州·个体·月入分位8/10",
+   "city": "达州",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.29,
+   "t_synthetic": true,
+   "persona": "41岁女·长沙·白领·月入分位9/10",
+   "city": "长沙",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "跟我家娃挺配",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.42,
+   "t_synthetic": true,
+   "persona": "21岁女·九江·学生·月入分位6/10",
+   "city": "九江",
+   "text": "BGM 很抓耳",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.53,
+   "t_synthetic": true,
+   "persona": "70岁男·九江·退休·月入分位4/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.53,
+   "t_synthetic": true,
+   "persona": "51岁男·杭州·个体·月入分位8/10",
+   "city": "杭州",
+   "text": "BGM 很抓耳",
+   "comment": "已下单",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.65,
+   "t_synthetic": true,
+   "persona": "38岁男·保定·蓝领·月入分位5/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.76,
+   "t_synthetic": true,
+   "persona": "48岁女·杭州·白领·月入分位3/10",
+   "city": "杭州",
+   "text": "剧情有点意思 想看完",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.76,
+   "t_synthetic": true,
+   "persona": "46岁男·达州·个体·月入分位9/10",
+   "city": "达州",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 0.8,
+   "t_synthetic": true,
+   "persona": "66岁男·广州·退休·月入分位6/10",
+   "city": "广州",
+   "text": "有真人试色 / 实拍",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.01,
+   "t_synthetic": true,
+   "persona": "42岁男·北京·蓝领·月入分位8/10",
+   "city": "北京",
+   "text": "BGM 很抓耳",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.15,
+   "t_synthetic": true,
+   "persona": "46岁女·济南·无业·月入分位7/10",
+   "city": "济南",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.24,
+   "t_synthetic": true,
+   "persona": "56岁女·广州·白领·月入分位6/10",
+   "city": "广州",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.4,
+   "t_synthetic": true,
+   "persona": "23岁男·达州·学生·月入分位2/10",
+   "city": "达州",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.48,
+   "t_synthetic": true,
+   "persona": "38岁男·苏州·白领·月入分位6/10",
+   "city": "苏州",
+   "text": "剧情有点意思 想看完",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.55,
+   "t_synthetic": true,
+   "persona": "29岁女·九江·蓝领·月入分位9/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "这个色我真的爱",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.65,
+   "t_synthetic": true,
+   "persona": "44岁女·宿迁·白领·月入分位0/10",
+   "city": "宿迁",
+   "text": "正好最近在看这个",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.66,
+   "t_synthetic": true,
+   "persona": "55岁男·绵阳·自由职业·月入分位5/10",
+   "city": "绵阳",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.75,
+   "t_synthetic": true,
+   "persona": "24岁女·重庆·蓝领·月入分位6/10",
+   "city": "重庆",
+   "text": "BGM 很抓耳",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.79,
+   "t_synthetic": true,
+   "persona": "33岁女·烟台·个体·月入分位9/10",
+   "city": "烟台",
+   "text": "正好最近在看这个",
+   "comment": "看起来不错等降价",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.84,
+   "t_synthetic": true,
+   "persona": "63岁女·长沙·蓝领·月入分位9/10",
+   "city": "长沙",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.85,
+   "t_synthetic": true,
+   "persona": "35岁男·绵阳·自由职业·月入分位8/10",
+   "city": "绵阳",
+   "text": "剧情有点意思 想看完",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 1.92,
+   "t_synthetic": true,
+   "persona": "22岁女·玉林·学生·月入分位2/10",
+   "city": "玉林",
+   "text": "剧情有点意思 想看完",
+   "comment": "已下单",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.1,
+   "t_synthetic": true,
+   "persona": "50岁男·驻马店·个体·月入分位1/10",
+   "city": "驻马店",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.33,
+   "t_synthetic": true,
+   "persona": "66岁男·福州·退休·月入分位9/10",
+   "city": "福州",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.42,
+   "t_synthetic": true,
+   "persona": "55岁男·绵阳·白领·月入分位7/10",
+   "city": "绵阳",
+   "text": "BGM 很抓耳",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.55,
+   "t_synthetic": true,
+   "persona": "32岁男·烟台·白领·月入分位3/10",
+   "city": "烟台",
+   "text": "这个达人以前翻过车 不太信",
+   "comment": "又是恰饭",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 2.57,
+   "t_synthetic": true,
+   "persona": "41岁男·上海·个体·月入分位4/10",
+   "city": "上海",
+   "text": "剧情有点意思 想看完",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.77,
+   "t_synthetic": true,
+   "persona": "19岁女·淮安·蓝领·月入分位8/10",
+   "city": "淮安",
+   "text": "正好最近在看这个",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.8,
+   "t_synthetic": true,
+   "persona": "30岁女·九江·白领·月入分位9/10",
+   "city": "九江",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.9,
+   "t_synthetic": true,
+   "persona": "30岁男·绵阳·白领·月入分位4/10",
+   "city": "绵阳",
+   "text": "价格看着能接受",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.91,
+   "t_synthetic": true,
+   "persona": "54岁女·苏州·蓝领·月入分位3/10",
+   "city": "苏州",
+   "text": "剧情有点意思 想看完",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 2.94,
+   "t_synthetic": true,
+   "persona": "18岁男·保定·白领·月入分位3/10",
+   "city": "保定",
+   "text": "又是美颜滤镜 真货肯定没这效果",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.09,
+   "t_synthetic": true,
+   "persona": "29岁女·重庆·蓝领·月入分位9/10",
+   "city": "重庆",
+   "text": "Z世代味太重 看不懂",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.24,
+   "t_synthetic": true,
+   "persona": "72岁女·保定·退休·月入分位2/10",
+   "city": "保定",
+   "text": "封面颜色挺清爽",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.35,
+   "t_synthetic": true,
+   "persona": "33岁男·广州·白领·月入分位9/10",
+   "city": "广州",
+   "text": "又是美颜滤镜 真货肯定没这效果",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 3.44,
+   "t_synthetic": true,
+   "persona": "72岁女·烟台·退休·月入分位2/10",
+   "city": "烟台",
+   "text": "正好最近在看这个",
+   "comment": "求链接姐妹",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.53,
+   "t_synthetic": true,
+   "persona": "70岁男·保定·退休·月入分位2/10",
+   "city": "保定",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.56,
+   "t_synthetic": true,
+   "persona": "72岁女·驻马店·退休·月入分位4/10",
+   "city": "驻马店",
+   "text": "封面颜色挺清爽",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.9,
+   "t_synthetic": true,
+   "persona": "52岁女·广州·白领·月入分位9/10",
+   "city": "广州",
+   "text": "有真人试色 / 实拍",
+   "comment": "这个色我真的爱",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 3.99,
+   "t_synthetic": true,
+   "persona": "43岁男·合肥·白领·月入分位2/10",
+   "city": "合肥",
+   "text": "正好最近在看这个",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.03,
+   "t_synthetic": true,
+   "persona": "36岁女·保定·白领·月入分位5/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.21,
+   "t_synthetic": true,
+   "persona": "28岁男·成都·白领·月入分位9/10",
+   "city": "成都",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.26,
+   "t_synthetic": true,
+   "persona": "39岁女·周口·个体·月入分位7/10",
+   "city": "周口",
+   "text": "剧情有点意思 想看完",
+   "comment": "跟我家娃挺配",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 4.91,
+   "t_synthetic": true,
+   "persona": "20岁男·淮安·无业·月入分位4/10",
+   "city": "淮安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.22,
+   "t_synthetic": true,
+   "persona": "34岁男·成都·蓝领·月入分位9/10",
+   "city": "成都",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "看起来不错等降价",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.47,
+   "t_synthetic": true,
+   "persona": "33岁男·济南·白领·月入分位9/10",
+   "city": "济南",
+   "text": "封面颜色挺清爽",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.69,
+   "t_synthetic": true,
+   "persona": "25岁女·深圳·白领·月入分位3/10",
+   "city": "深圳",
+   "text": "老年感重 不是我的风格",
+   "comment": "广子+1",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 5.7,
+   "t_synthetic": true,
+   "persona": "54岁男·厦门·无业·月入分位3/10",
+   "city": "厦门",
+   "text": "BGM 很抓耳",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 5.93,
+   "t_synthetic": true,
+   "persona": "25岁男·南京·个体·月入分位7/10",
+   "city": "南京",
+   "text": "封面颜色挺清爽",
+   "comment": "种草了",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.2,
+   "t_synthetic": true,
+   "persona": "23岁女·绵阳·学生·月入分位6/10",
+   "city": "绵阳",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "跟我家娃挺配",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.27,
+   "t_synthetic": true,
+   "persona": "49岁男·西安·蓝领·月入分位6/10",
+   "city": "西安",
+   "text": "达人之前买过 她推的不踩雷",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 6.43,
+   "t_synthetic": true,
+   "persona": "69岁男·绵阳·退休·月入分位5/10",
+   "city": "绵阳",
+   "text": "剧情拉胯",
+   "comment": "",
+   "feel": "无感",
+   "sentiment": -1,
+   "will_click": false,
+   "purchase_intent_7d": 0.02
+  },
+  {
+   "t": 6.77,
+   "t_synthetic": true,
+   "persona": "54岁男·保定·公务员/教师·月入分位3/10",
+   "city": "保定",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "种草了",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.2,
+   "t_synthetic": true,
+   "persona": "41岁女·玉林·白领·月入分位6/10",
+   "city": "玉林",
+   "text": "价格看着能接受",
+   "comment": "这个色我真的爱",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.46,
+   "t_synthetic": true,
+   "persona": "34岁男·九江·公务员/教师·月入分位8/10",
+   "city": "九江",
+   "text": "价格看着能接受",
+   "comment": "种草了",
+   "feel": "好奇",
+   "sentiment": 0,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 7.72,
+   "t_synthetic": true,
+   "persona": "68岁女·保定·退休·月入分位5/10",
+   "city": "保定",
+   "text": "正好最近在看这个",
+   "comment": "求链接姐妹",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 8.5,
+   "t_synthetic": true,
+   "persona": "56岁女·淮安·白领·月入分位5/10",
+   "city": "淮安",
+   "text": "BGM 很抓耳",
+   "comment": "看起来不错等降价",
+   "feel": "心动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  },
+  {
+   "t": 10.29,
+   "t_synthetic": true,
+   "persona": "38岁女·重庆·个体·月入分位9/10",
+   "city": "重庆",
+   "text": "文案挺真诚 不像硬广",
+   "comment": "已下单",
+   "feel": "购买冲动",
+   "sentiment": 1,
+   "will_click": true,
+   "purchase_intent_7d": 0.95
+  }
+ ]
+}
