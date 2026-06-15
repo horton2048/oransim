@@ -1,0 +1,8 @@
+# 测试/调试产物，不入库
+.playwright-mcp/
+*.jpeg
+*.png
+__pycache__/
+*.pyc
+frontend_vendor_tmp/
+.live_spec_id
