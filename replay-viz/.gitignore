@@ -2,6 +2,9 @@
 .playwright-mcp/
 *.jpeg
 *.png
+# 例外：验收效果存档（刻意入库）
+!design/launch/evidence/*.jpeg
+!design/launch/evidence/*.png
 __pycache__/
 *.pyc
 frontend_vendor_tmp/
