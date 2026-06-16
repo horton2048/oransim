@@ -6,6 +6,7 @@
 
 先红后绿: 适配器未实现时全部 FAIL。落 tests/ (禁 backend/tests/), mock 无关 (纯数据变换)。
 """
+
 from __future__ import annotations
 
 import json
@@ -86,9 +87,9 @@ def test_at_fe_1_01_deterministic(report):
 # ═══════════════════════════════ AT-FE-1-02 ═════════════════════════════════
 def test_at_fe_1_02_golden(out):
     """export() 输出 == 冻存黄金 (逐字节)。"""
-    assert GOLDEN.exists(), (
-        f"黄金缺失 {GOLDEN} — 适配器实现后由其产出, 人工核对再冻存 (绝不在循环里顺手重生)"
-    )
+    assert (
+        GOLDEN.exists()
+    ), f"黄金缺失 {GOLDEN} — 适配器实现后由其产出, 人工核对再冻存 (绝不在循环里顺手重生)"
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
     assert out == golden, "输出与黄金不一致 (逐字节比对失败)"
 
@@ -102,9 +103,9 @@ def test_at_fe_1_03_passes_valid_replay(out):
 # ═══════════════════════════════ AT-FE-1-04 ═════════════════════════════════
 def test_at_fe_1_04_spine_untouched(out, report):
     """脊柱真值不被篡改: daily_total 逐点 == timeline.daily_adopters; peak_day 一致。"""
-    assert out["daily_total"] == report["timeline"]["daily_adopters"], (
-        "daily_total 被平滑/裁剪/补值/重排 — 违诚实红线"
-    )
+    assert (
+        out["daily_total"] == report["timeline"]["daily_adopters"]
+    ), "daily_total 被平滑/裁剪/补值/重排 — 违诚实红线"
     assert out["meta"]["peak_day"] == report["timeline"]["peak_day"]
 
 
@@ -149,9 +150,9 @@ def test_at_fe_1_08_city_tier_truth(out, report):
         label = _TIER_LABEL[tier]
         expected = dist.get(label, 0.0) / 100.0
         got = w / total
-        assert abs(got - expected) < 0.005, (
-            f"{label} 占比 {got:.3f} 偏离真值 {expected:.3f} (>0.5pt)"
-        )
+        assert (
+            abs(got - expected) < 0.005
+        ), f"{label} 占比 {got:.3f} 偏离真值 {expected:.3f} (>0.5pt)"
     assert isinstance(out.get("unmapped_cities"), list)
 
 
@@ -176,9 +177,9 @@ def test_at_fe_1_10_sentiment_derivation(out):
         if pi is None:
             continue
         want = 1 if pi >= 0.5 else (-1 if pi <= 0.05 else 0)
-        assert s.get("sentiment") == want, (
-            f"sentiment 派生错: intent={pi} 应 {want} 实 {s.get('sentiment')}"
-        )
+        assert (
+            s.get("sentiment") == want
+        ), f"sentiment 派生错: intent={pi} 应 {want} 实 {s.get('sentiment')}"
 
 
 # ═══════════════════════════════ AT-FE-1-11 ═════════════════════════════════

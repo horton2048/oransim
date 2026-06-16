@@ -16,15 +16,19 @@ import os
 import sys
 from pathlib import Path
 
-import numpy as np
-
 BACKEND = Path(__file__).parent.parent / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
 
-def _spec(channels=None, *, with_channel_default=False, price=89.0, category="beauty",
-          one_liner="一款保湿面膜，定价 89 元，小红书美妆博主种草。"):
+def _spec(
+    channels=None,
+    *,
+    with_channel_default=False,
+    price=89.0,
+    category="beauty",
+    one_liner="一款保湿面膜，定价 89 元，小红书美妆博主种草。",
+):
     """构造一个 ProductSpec (不经 LLM)，可控 channels_hint 与是否标 channels_default。"""
     from oransim.spec.schema import ProductSpec, SpecField
 
@@ -57,6 +61,7 @@ def _runner():
 
 def _kols():
     from oransim.data.kols import generate_kol_library
+
     return generate_kol_library(n_per_platform=10)
 
 
@@ -96,9 +101,9 @@ def test_at_m3_02_recompile_hash_idempotent():
     c2 = compile_spec(spec, spec_id="s-1", revision=0, kols=_kols())
 
     assert c1.scenario.hash_tuple() == c2.scenario.hash_tuple(), "同版本重编译 hash 应相等"
-    assert c1.scenario.audience_filter is c2.scenario.audience_filter, (
-        "intern 失效: 同 (spec_id, revision) 应复用同一 AudienceFilter 实例"
-    )
+    assert (
+        c1.scenario.audience_filter is c2.scenario.audience_filter
+    ), "intern 失效: 同 (spec_id, revision) 应复用同一 AudienceFilter 实例"
 
 
 # ═══════════════════════════════════════ AT-M3-03 ═══════════════════════════
@@ -115,9 +120,9 @@ def test_at_m3_03_patch_bumps_intern():
     c0 = compile_spec(spec_v0, spec_id="s-2", revision=0, kols=_kols())
     c1 = compile_spec(spec_v1, spec_id="s-2", revision=1, kols=_kols())
 
-    assert c0.scenario.audience_filter is not c1.scenario.audience_filter, (
-        "升版后应产生新的 AudienceFilter 实例"
-    )
+    assert (
+        c0.scenario.audience_filter is not c1.scenario.audience_filter
+    ), "升版后应产生新的 AudienceFilter 实例"
     assert c0.scenario.hash_tuple() != c1.scenario.hash_tuple(), "升版后 hash 应改变"
 
 
@@ -136,7 +141,9 @@ def test_at_m3_04_creatives_via_make_creative():
     for plat, creatives in compiled.launch_creatives.items():
         assert 1 <= len(creatives) <= 3, f"平台 {plat} creative 数应 ∈ [1,3]，实际 {len(creatives)}"
         for cre in creatives:
-            assert cre.content_emb.shape[0] == 64, f"content_emb 维度应为 64，实际 {cre.content_emb.shape}"
+            assert (
+                cre.content_emb.shape[0] == 64
+            ), f"content_emb 维度应为 64，实际 {cre.content_emb.shape}"
             assert hasattr(cre, "audit_risk")
             assert 0.0 <= cre.audit_risk <= 1.0
 
@@ -209,9 +216,9 @@ def test_at_m3_07_hawkes_seed_scale_deterministic():
     for plat, size in c1.seed_events.items():
         budget_p = c1.scenario.total_budget * c1.scenario.platform_alloc[plat]
         expected = budget_to_impressions(budget_p, plat)
-        assert abs(size - expected) < 1e-3, (
-            f"平台 {plat} 种子规模 {size} ≠ budget_to_impressions 折算 {expected}"
-        )
+        assert (
+            abs(size - expected) < 1e-3
+        ), f"平台 {plat} 种子规模 {size} ≠ budget_to_impressions 折算 {expected}"
     # 确定性: 同输入同输出
     assert c1.seed_events == c2.seed_events
 
@@ -242,6 +249,7 @@ def test_at_m3_08_new_fields_default_none_behavior_unchanged():
 
     # 复制一份 Scenario 但显式确认三字段 None → run 结果应逐键相等 (行为不变)
     import copy
+
     sc2 = copy.copy(sc)
     r2 = runner.run(sc2, n_monte_carlo=3)
     for k, v in r1.total_kpis.items():

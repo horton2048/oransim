@@ -13,6 +13,7 @@ REG-4: agents 是引擎层, 不 import spec 包。spec 以 model_dump() dict 传
 build_launch_report)。LLM 走 soul_llm 的同一 provider 注册表 (mock 模式 / 桩 provider
 均可经 get_provider 接管 → 测试可注入)。
 """
+
 from __future__ import annotations
 
 import re
@@ -77,8 +78,12 @@ def _strip_think(s: str) -> str:
 def _build_header(spec_dict: dict, assumed_fields: list[str]) -> dict:
     """C 档头部: 与 A 档同款三色来源标注 (honest labeling 一致性)。"""
     spec_fields = [
-        "product_name", "one_liner", "category_raw",
-        "target_user_raw", "price_point", "channels_hint",
+        "product_name",
+        "one_liner",
+        "category_raw",
+        "target_user_raw",
+        "price_point",
+        "channels_hint",
     ]
     return {
         "disclaimer": FIRST_SENTENCE,
@@ -119,21 +124,25 @@ def _normalize_scenario(raw: dict) -> dict:
     for p in (raw.get("buyer_personas") or [])[:4]:
         if not isinstance(p, dict):
             continue
-        personas.append({
-            "who": str(p.get("who") or "").strip(),
-            "jobs_to_be_done": str(p.get("jobs_to_be_done") or "").strip(),
-            "willingness": str(p.get("willingness") or "").strip(),
-            "objection": str(p.get("objection") or "").strip(),  # 逐字不润色
-        })
+        personas.append(
+            {
+                "who": str(p.get("who") or "").strip(),
+                "jobs_to_be_done": str(p.get("jobs_to_be_done") or "").strip(),
+                "willingness": str(p.get("willingness") or "").strip(),
+                "objection": str(p.get("objection") or "").strip(),  # 逐字不润色
+            }
+        )
 
     channels = []
     for c in (raw.get("channels") or [])[:6]:
         if not isinstance(c, dict):
             continue
-        channels.append({
-            "channel": str(c.get("channel") or "").strip(),
-            "fit": str(c.get("fit") or "").strip(),
-        })
+        channels.append(
+            {
+                "channel": str(c.get("channel") or "").strip(),
+                "fit": str(c.get("fit") or "").strip(),
+            }
+        )
 
     ash = raw.get("adoption_shape") or {}
     adoption_shape = {
@@ -165,8 +174,17 @@ def _to_int(v: Any) -> int | None:
         return None
 
 
-def _envelope(*, spec_dict, assumed_fields, routed_reason, grounding_confidence,
-              scenario, degraded, degrade_note=None, _meta=None) -> dict:
+def _envelope(
+    *,
+    spec_dict,
+    assumed_fields,
+    routed_reason,
+    grounding_confidence,
+    scenario,
+    degraded,
+    degrade_note=None,
+    _meta=None,
+) -> dict:
     """统一 C 档响应信封 (design D-3)。degraded=True 时 scenario=None + 提示。"""
     env = {
         "tier": "C",
@@ -209,8 +227,11 @@ def build_scenario_report(
 
     if not llm_available():
         return _envelope(
-            spec_dict=spec_dict, assumed_fields=af, routed_reason=routed_reason,
-            grounding_confidence=grounding_confidence, scenario=None,
+            spec_dict=spec_dict,
+            assumed_fields=af,
+            routed_reason=routed_reason,
+            grounding_confidence=grounding_confidence,
+            scenario=None,
             degraded=True,
         )
 
@@ -223,25 +244,38 @@ def build_scenario_report(
     t0 = time.time()
     try:
         result = get_provider().generate(
-            system=_SYSTEM, user=prompt, model=MODEL,
-            temperature=0.7, max_tokens=900, stream=False,
+            system=_SYSTEM,
+            user=prompt,
+            model=MODEL,
+            temperature=0.7,
+            max_tokens=900,
+            stream=False,
         )
         raw = _extract_json_strict(_strip_think(result.content))
         scenario = _normalize_scenario(raw)
         meta = {
             "latency_ms": getattr(result, "latency_ms", None) or int((time.time() - t0) * 1000),
             "tokens_in": int((getattr(result, "usage", {}) or {}).get("prompt_tokens", 0) or 0),
-            "tokens_out": int((getattr(result, "usage", {}) or {}).get("completion_tokens", 0) or 0),
+            "tokens_out": int(
+                (getattr(result, "usage", {}) or {}).get("completion_tokens", 0) or 0
+            ),
         }
         return _envelope(
-            spec_dict=spec_dict, assumed_fields=af, routed_reason=routed_reason,
-            grounding_confidence=grounding_confidence, scenario=scenario,
-            degraded=False, _meta=meta,
+            spec_dict=spec_dict,
+            assumed_fields=af,
+            routed_reason=routed_reason,
+            grounding_confidence=grounding_confidence,
+            scenario=scenario,
+            degraded=False,
+            _meta=meta,
         )
     except Exception as e:  # noqa: BLE001 — 解析/网络失败 → 显式降级, 不造占位
         env = _envelope(
-            spec_dict=spec_dict, assumed_fields=af, routed_reason=routed_reason,
-            grounding_confidence=grounding_confidence, scenario=None,
+            spec_dict=spec_dict,
+            assumed_fields=af,
+            routed_reason=routed_reason,
+            grounding_confidence=grounding_confidence,
+            scenario=None,
             degraded=True,
             degrade_note=f"C 档 LLM 情景生成失败（{type(e).__name__}）——按红线不静默编造占位。",
         )

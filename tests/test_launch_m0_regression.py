@@ -118,8 +118,9 @@ def test_at_m0_01_hash_reflection():
     variants = _field_variants()
 
     # 步骤 4 (先做): 测试内白名单 ⊆ 冻结集 —— 只许减不许增。
-    assert FROZEN_HASH_EXEMPT <= frozenset(
-        {"macro_ctr_lift", "macro_cvr_lift", "cross_platform_overlap", "llm_calibration"}
+    assert (
+        frozenset({"macro_ctr_lift", "macro_cvr_lift", "cross_platform_overlap", "llm_calibration"})
+        >= FROZEN_HASH_EXEMPT
     ), "冻结白名单被扩容 —— 新字段不许免 hash"
 
     # 步骤 1-3: 枚举全部字段。
@@ -139,9 +140,9 @@ def test_at_m0_01_hash_reflection():
         s_b = _make_scenario(**{name: val_b})
 
         if name in FROZEN_HASH_EXEMPT:
-            assert s_a.hash_tuple() == s_b.hash_tuple(), (
-                f"白名单字段 '{name}' 不应进 hash, 但改它却改变了 hash_tuple()"
-            )
+            assert (
+                s_a.hash_tuple() == s_b.hash_tuple()
+            ), f"白名单字段 '{name}' 不应进 hash, 但改它却改变了 hash_tuple()"
         else:
             assert s_a.hash_tuple() != s_b.hash_tuple(), (
                 f"非白名单字段 '{name}' 必须影响 hash_tuple(), 但改它 hash 没变 —— "
@@ -219,10 +220,21 @@ def _extract_json_bytes(raw: bytes) -> bytes:
 # ephemeral IDs.  Decision: DECISIONS.md 2026-06-11 AT-M0-02 schema_outputs.
 _VOLATILE_KEYS = frozenset(
     {
-        "fit_id", "run_id", "plan_id", "prediction_id", "diffusion_id",
-        "simulation_id", "metric_id", "sensitivity_id", "report_id",
-        "comparison_id", "estimation_id", "elasticity_id",
-        "run_timestamp", "fetched_at", "generated_at",
+        "fit_id",
+        "run_id",
+        "plan_id",
+        "prediction_id",
+        "diffusion_id",
+        "simulation_id",
+        "metric_id",
+        "sensitivity_id",
+        "report_id",
+        "comparison_id",
+        "estimation_id",
+        "elasticity_id",
+        "run_timestamp",
+        "fetched_at",
+        "generated_at",
         # generation_ms (final_report.py): 墙钟遥测, 模板路径通常 0ms, 负载下偶尔
         # 1-4ms → 本 session 3 次「非复现」快照 flake 的根因 (现场 diff 证据:
         # 唯一差异路径 $.schema_outputs.report_strategy_case.generation_ms 0→4)。
@@ -236,8 +248,7 @@ def _normalize(obj):
     """Recursively replace volatile fields with a stable sentinel."""
     if isinstance(obj, dict):
         return {
-            k: ("<normalized>" if k in _VOLATILE_KEYS else _normalize(v))
-            for k, v in obj.items()
+            k: ("<normalized>" if k in _VOLATILE_KEYS else _normalize(v)) for k, v in obj.items()
         }
     if isinstance(obj, list):
         return [_normalize(x) for x in obj]
@@ -302,8 +313,8 @@ def _diff_summary(expected: bytes, actual: bytes, max_paths: int = 8) -> str:
         (i for i, (a, b) in enumerate(zip(expected, actual, strict=False)) if a != b),
         min(len(expected), len(actual)),
     )
-    ctx_e = expected[max(0, first - 40): first + 80]
-    ctx_a = actual[max(0, first - 40): first + 80]
+    ctx_e = expected[max(0, first - 40) : first + 80]
+    ctx_a = actual[max(0, first - 40) : first + 80]
 
     paths: list[str] = []
 
@@ -394,9 +405,7 @@ def test_at_m0_03_scale_kpi_revenue_conversions_ratio(api_client):
     sid = sess["id"]
 
     # 仅改预算 → 应走 fast_approx 分支
-    r_patch = api_client.patch(
-        f"/api/sandbox/session/{sid}", json={"total_budget": 100000}
-    )
+    r_patch = api_client.patch(f"/api/sandbox/session/{sid}", json={"total_budget": 100000})
     assert r_patch.status_code == 200, r_patch.text
     sess_after = r_patch.json()
 
@@ -405,7 +414,7 @@ def test_at_m0_03_scale_kpi_revenue_conversions_ratio(api_client):
         "budget-only patch must not trigger a full rerun"
     )
 
-    kpis_before = sess["baseline_kpis"]   # baseline == current at session creation
+    kpis_before = sess["baseline_kpis"]  # baseline == current at session creation
     kpis_after = sess_after["current_kpis"]
 
     rev_b = kpis_before.get("revenue", 0)

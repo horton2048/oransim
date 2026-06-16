@@ -3,6 +3,7 @@
 职责: 币种→CNY, 价格夹紧, 枚举强制, raw 字段逐字保留.
 规范 §3.3.
 """
+
 from __future__ import annotations
 
 from .schema import ProductSpec

@@ -11,7 +11,6 @@ AT-M2-07 synonyms 优先于嵌入兜底 — 关键词命中时嵌入路径调用
 from __future__ import annotations
 
 import json
-import math
 import os
 import sys
 from pathlib import Path
@@ -28,7 +27,9 @@ GOLDEN = Path(__file__).parent / "golden" / "launch_ideas.jsonl"
 def _load_ideas() -> list[dict]:
     if not GOLDEN.exists():
         return []
-    return [json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
 
 
 def _ground_idea(idea_text: str, bus=None):
@@ -64,12 +65,12 @@ def test_at_m2_01_category_mapping_accuracy_mock():
     total = len(positives)
     rate = ok / total
     threshold = 0.85
-    print(f"\n[AT-M2-01] niche mapping accuracy: {ok}/{total} = {rate:.1%}  (need ≥{threshold:.0%})")
+    print(
+        f"\n[AT-M2-01] niche mapping accuracy: {ok}/{total} = {rate:.1%}  (need ≥{threshold:.0%})"
+    )
     for m in misses:
         print("  MISS", m)
-    assert rate >= threshold, (
-        f"品类映射准确率 {rate:.1%} < 85% ({ok}/{total}); misses={misses}"
-    )
+    assert rate >= threshold, f"品类映射准确率 {rate:.1%} < 85% ({ok}/{total}); misses={misses}"
 
 
 # ═══════════════════════════════════════ AT-M2-02 (live) ════════════════════
@@ -84,6 +85,7 @@ def test_at_m2_02_category_mapping_accuracy_live():
     """
     os.environ["LLM_MODE"] = "api"
     from oransim.agents.soul_llm import llm_available
+
     if not llm_available():
         pytest.skip("no live LLM provider available")
 
@@ -202,9 +204,9 @@ def test_at_m2_06_corpus_coverage_lowers_confidence():
     # 无覆盖 niche (pet): synonyms 命中 pet, 但语料零覆盖 → 置信度被惩罚
     g_unc = _ground_idea("一款猫厕所自动清洁器，售价 1299 元，小红书宠物博主合作。", bus=bus)
 
-    assert g_unc.grounding_confidence < g_cov.grounding_confidence, (
-        f"无覆盖 niche 置信度 {g_unc.grounding_confidence} 应低于有覆盖 {g_cov.grounding_confidence}"
-    )
+    assert (
+        g_unc.grounding_confidence < g_cov.grounding_confidence
+    ), f"无覆盖 niche 置信度 {g_unc.grounding_confidence} 应低于有覆盖 {g_cov.grounding_confidence}"
     assert not g_cov.rejected, "有语料覆盖的 niche 不应被拒绝"
     assert g_unc.rejected, "零语料覆盖应触发硬拒绝"
     assert g_unc.grounding_confidence < 0.55

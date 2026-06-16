@@ -70,7 +70,6 @@ def test_at_m5_01b_base_and_paid_not_regressed(base):
 
 def test_at_m5_02_90day_horizon():
     """DiffusionConfig(horizon_days=90) → daily_buckets 长度 90；默认 config 仍 14."""
-    from oransim.diffusion.base import DiffusionConfig
     from oransim.diffusion.hawkes import ParametricHawkes, ParametricHawkesConfig
 
     # 默认仍 14
@@ -124,17 +123,27 @@ def test_at_m5_06_market_potential_m():
 
     # POP 守护栏: 取关键数组 checksum
     import hashlib
+
     def _checksum(arr):
         return hashlib.sha256(np.ascontiguousarray(arr).tobytes()).hexdigest()
-    before = (_checksum(pop.gender_idx), _checksum(pop.age_idx),
-              _checksum(pop.city_idx), _checksum(pop.income))
+
+    before = (
+        _checksum(pop.gender_idx),
+        _checksum(pop.age_idx),
+        _checksum(pop.city_idx),
+        _checksum(pop.income),
+    )
 
     m_beauty = market_potential(pop, "beauty")
     m_food = market_potential(pop, "food")
     m_pet = market_potential(pop, "pet")
 
-    after = (_checksum(pop.gender_idx), _checksum(pop.age_idx),
-             _checksum(pop.city_idx), _checksum(pop.income))
+    after = (
+        _checksum(pop.gender_idx),
+        _checksum(pop.age_idx),
+        _checksum(pop.city_idx),
+        _checksum(pop.income),
+    )
     assert before == after, "market_potential 不应写入 POP 单例数组"
 
     # 公式成立 (正数) 且不同 niche 不同
@@ -172,7 +181,7 @@ def test_at_m5_03_bass_saturation_shape():
     # (2) 日新增存在峰值 t_peak ∈ (0,90)，峰后 7 日均值 < 峰值 80% (趋平)
     t_peak = int(np.argmax(daily_new))
     assert 0 < t_peak < 89, f"峰值日 {t_peak} 应在 (0,90) 内部"
-    post = daily_new[t_peak + 1: t_peak + 8]
+    post = daily_new[t_peak + 1 : t_peak + 8]
     assert post, "峰后应有数据"
     assert np.mean(post) < 0.8 * daily_new[t_peak], "峰后 7 日均值应 < 峰值 80% (趋平)"
 
@@ -181,7 +190,9 @@ def test_at_m5_03_bass_saturation_shape():
         closed = bass_closed_form_cumulative(p, q, m, float(d + 1))
         if closed > m * 0.01:
             rel = abs(cum[d] - closed) / closed
-            assert rel <= 0.15, f"day {d}: 模拟累计 {cum[d]:.1f} vs 闭式 {closed:.1f} 相对误差 {rel:.2%} > 15%"
+            assert (
+                rel <= 0.15
+            ), f"day {d}: 模拟累计 {cum[d]:.1f} vs 闭式 {closed:.1f} 相对误差 {rel:.2%} > 15%"
 
     # (4) 饱和因子边界: N→m → 强度趋零
     assert model.saturation_factor(m) == 0.0
@@ -198,18 +209,18 @@ def test_at_m5_04_splice_window_no_hard_seam():
 
     # 两条同一过程的估计 (神经/parametric 在重叠区量级相近, 小偏移)。
     # 硬切会在 day 14 产生 |a-b| 的单点跳变; 线性混合把它摊到 8 天 → 无突变。
-    curve_a = [100.0 - d for d in range(30)]        # slope -1
-    curve_b = [97.0 - d for d in range(30)]         # slope -1, offset 3 (重叠区接近)
+    curve_a = [100.0 - d for d in range(30)]  # slope -1
+    curve_b = [97.0 - d for d in range(30)]  # slope -1, offset 3 (重叠区接近)
     blended = blend_intensity_curves(curve_a, curve_b, splice_start=10, splice_end=18)
 
     diffs = np.abs(np.diff(blended))
-    seam_window = diffs[9:19]                         # day 14 附近
+    seam_window = diffs[9:19]  # day 14 附近
     outside = np.concatenate([diffs[2:9], diffs[19:29]])  # 窗外
     seam_max = seam_window.max()
     outside_max = outside.max()
-    assert seam_max <= outside_max * 1.5 + 1e-9, (
-        f"day14 附近一阶差分 {seam_max:.3f} > 窗外最大 {outside_max:.3f}×1.5 (硬接缝)"
-    )
+    assert (
+        seam_max <= outside_max * 1.5 + 1e-9
+    ), f"day14 附近一阶差分 {seam_max:.3f} > 窗外最大 {outside_max:.3f}×1.5 (硬接缝)"
 
     # 对照: 硬切 (day≤14 用 a, day>14 用 b) 会在 day 14 产生远大于混合的跳变
     hard = [curve_a[d] if d <= 14 else curve_b[d] for d in range(30)]
@@ -227,12 +238,14 @@ def test_at_m5_04_splice_window_no_hard_seam():
 def _soul_pool(n=12):
     from oransim.agents.soul import SoulAgentPool
     from oransim.data.population import generate_population
+
     pop = generate_population(N=600, seed=42)
     return SoulAgentPool(pop, n=n, seed=7)
 
 
 def _creative():
     from oransim.data.creatives import make_creative
+
     return make_creative(creative_id="m5-cre", caption="新品上市 保湿面膜 种草", duration_sec=15.0)
 
 
@@ -269,12 +282,14 @@ def test_at_m5_08_voronoi_calibration_vote_source():
     # 构造 will_click 与 will_try 故意相反的 souls
     souls = []
     for i in range(6):
-        souls.append({
-            "persona_id": i,
-            "source": "llm",
-            "will_click": (i % 2 == 0),   # 偶数 click
-            "will_try": (i % 2 == 1),     # 奇数 try (与 click 相反)
-        })
+        souls.append(
+            {
+                "persona_id": i,
+                "source": "llm",
+                "will_click": (i % 2 == 0),  # 偶数 click
+                "will_try": (i % 2 == 1),  # 奇数 try (与 click 相反)
+            }
+        )
     S = len(souls)
     partition = VoronoiPartition(
         soul_indices=np.arange(S),
@@ -312,8 +327,9 @@ def test_at_m5_08b_voronoi_calibration_mode_plumbing(monkeypatch):
     monkeypatch.setattr(api_state, "PARTITION", object(), raising=False)
     monkeypatch.setattr(api_state, "PERSONA_TO_SLOT", {}, raising=False)
 
-    souls = [{"source": "llm", "persona_id": i, "will_click": True, "will_try": False}
-             for i in range(6)]
+    souls = [
+        {"source": "llm", "persona_id": i, "will_click": True, "will_try": False} for i in range(6)
+    ]
     stats = {i: 0.2 for i in range(6)}
 
     ah.voronoi_calibration(souls, stats, mode="launch")

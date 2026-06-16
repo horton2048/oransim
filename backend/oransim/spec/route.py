@@ -18,6 +18,7 @@ electronics→tech、parenting→mom 命中校准 prior 判 A; beverage/home/pet
 品类无对应 prior 判 B (design 明列 home→B, 即使 calibrated 里恰好有 home——分诊
 保守, 宁可 B 兜底也不假装精确)。
 """
+
 from __future__ import annotations
 
 from .ground import GroundingResult
@@ -30,8 +31,8 @@ _NICHE_TO_PRIOR: dict[str, str] = {
     "food": "food",
     "fitness": "fitness",
     "travel": "travel",
-    "electronics": "tech",   # 别名: 数码 → tech 校准 prior
-    "parenting": "mom",      # 别名: 母婴/育儿 → mom 校准 prior
+    "electronics": "tech",  # 别名: 数码 → tech 校准 prior
+    "parenting": "mom",  # 别名: 母婴/育儿 → mom 校准 prior
 }
 
 TIER_LABELS: dict[str, str] = {

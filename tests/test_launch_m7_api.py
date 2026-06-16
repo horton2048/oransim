@@ -13,8 +13,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 BACKEND = Path(__file__).parent.parent / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
@@ -25,6 +23,7 @@ if str(BACKEND) not in sys.path:
 
 def _make_spec(name="保湿面膜", price=89.0):
     from oransim.spec.schema import ProductSpec
+
     return ProductSpec(
         product_name=name,
         one_liner=f"{name}，定价 {price} 元，小红书种草。",
@@ -79,7 +78,13 @@ def test_at_m7_13_engine_no_spec_import():
     import re
 
     engine_dirs = [
-        "data", "config", "agents", "diffusion", "causal", "sandbox", "runtime",
+        "data",
+        "config",
+        "agents",
+        "diffusion",
+        "causal",
+        "sandbox",
+        "runtime",
     ]
     pat = re.compile(r"^\s*(import\s+oransim\.spec|from\s+oransim\.spec)", re.M)
     offenders = []
@@ -164,8 +169,9 @@ def test_at_m7_01_end_to_end_main_chain(api_client):
     assert "price_point" in pj["confirmed_fields"]
 
     # 3. simulate → LaunchReport 四区块齐全
-    sr = api_client.post("/api/launch/simulate",
-                         json={"spec_id": spec_id, "overrides": {"n_seeds": 5}})
+    sr = api_client.post(
+        "/api/launch/simulate", json={"spec_id": spec_id, "overrides": {"n_seeds": 5}}
+    )
     assert sr.status_code == 200, sr.text
     rep = sr.json()
     assert rep["disclaimer"] == "这是带标注不确定性的情景推演，不是预测"
@@ -183,8 +189,9 @@ def test_at_m7_01_end_to_end_main_chain(api_client):
     assert rep["what_breaks"]["intervention_cards"]
 
     # 4. 复现性: 同请求再跑 → 数值一致
-    sr2 = api_client.post("/api/launch/simulate",
-                          json={"spec_id": spec_id, "overrides": {"n_seeds": 5}})
+    sr2 = api_client.post(
+        "/api/launch/simulate", json={"spec_id": spec_id, "overrides": {"n_seeds": 5}}
+    )
     rep2 = sr2.json()
     assert rep["metrics"] == rep2["metrics"], "同请求两次 metrics 应一致 (固定 seed)"
     assert rep["timeline"] == rep2["timeline"], "同请求两次 timeline 应一致"
@@ -241,18 +248,21 @@ def test_at_m7_12_report_copy_redlines(api_client):
     # ② P35 行带「下行情形」
     assert rep["metrics"]["adopters"]["p35_label"] == "下行情形"
     # ③ 竞品卡前缀逐字
-    comp = [c for c in rep["what_breaks"]["intervention_cards"]
-            if c["name"] == "competitor_response"]
+    comp = [
+        c for c in rep["what_breaks"]["intervention_cards"] if c["name"] == "competitor_response"
+    ]
     assert comp and COMPETITOR_BRANCH_PREFIX in comp[0]["label"]
     assert comp[0]["branch"] is True
 
     # ⑤ locale != zh-CN → assumed_fields 含市场环境标注
-    en = _ingest(api_client, idea="An organic lip balm for Gen Z women. RMB 39. Xiaohongshu.",
-                 locale="en-US")
+    en = _ingest(
+        api_client, idea="An organic lip balm for Gen Z women. RMB 39. Xiaohongshu.", locale="en-US"
+    )
     if en.get("spec_id"):
         sim_en = api_client.post("/api/launch/simulate", json={"spec_id": en["spec_id"]}).json()
-        assert any("中国社媒市场" in a for a in sim_en["assumed_fields"]), \
-            "非 zh-CN locale 应在 assumed_fields 标注市场环境"
+        assert any(
+            "中国社媒市场" in a for a in sim_en["assumed_fields"]
+        ), "非 zh-CN locale 应在 assumed_fields 标注市场环境"
 
 
 # ═══════════════════════════════════════ AT-M7-09 ═══════════════════════════
@@ -264,21 +274,22 @@ def test_at_m7_09_n_seeds_degradation(api_client):
     sid = ing["spec_id"]
 
     # n_seeds=1 → 单点、无分位带
-    s1 = api_client.post("/api/launch/simulate",
-                         json={"spec_id": sid, "overrides": {"n_seeds": 1}}).json()
+    s1 = api_client.post(
+        "/api/launch/simulate", json={"spec_id": sid, "overrides": {"n_seeds": 1}}
+    ).json()
     m1 = s1["metrics"]["adopters"]
     assert m1["band"] is None, "n_seeds=1 应无分位带"
     assert "单点、无分位带" in (m1.get("note", "") + s1["metrics"].get("degradation_note", ""))
 
     # n_seeds=5 → 三档带齐
-    s5 = api_client.post("/api/launch/simulate",
-                         json={"spec_id": sid, "overrides": {"n_seeds": 5}}).json()
+    s5 = api_client.post(
+        "/api/launch/simulate", json={"spec_id": sid, "overrides": {"n_seeds": 5}}
+    ).json()
     m5 = s5["metrics"]["adopters"]
     assert m5["band"] and {"p35", "p50", "p65"} <= set(m5)
 
     # n_seeds>9 → 显式拒绝 (pydantic 422, 非静默截断)
-    r = api_client.post("/api/launch/simulate",
-                        json={"spec_id": sid, "overrides": {"n_seeds": 20}})
+    r = api_client.post("/api/launch/simulate", json={"spec_id": sid, "overrides": {"n_seeds": 20}})
     assert r.status_code == 422, f"n_seeds>9 应显式拒绝，实际 {r.status_code}"
 
 
@@ -305,13 +316,13 @@ def test_at_m7_06_launch_sandbox_sliders(api_client):
     assert p_bud.status_code == 200
 
     # alloc 滑杆
-    p_alloc = api_client.patch(f"/api/sandbox/session/{sid}",
-                               json={"platform_alloc": {"xhs": 1.0}})
+    p_alloc = api_client.patch(f"/api/sandbox/session/{sid}", json={"platform_alloc": {"xhs": 1.0}})
     assert p_alloc.status_code == 200
 
     # counterfactual
-    cf = api_client.post(f"/api/sandbox/session/{sid}/counterfactual",
-                         json={"total_budget": 80000.0})
+    cf = api_client.post(
+        f"/api/sandbox/session/{sid}/counterfactual", json={"total_budget": 80000.0}
+    )
     assert cf.status_code == 200
 
     # undo
@@ -338,10 +349,14 @@ def test_at_m7_07_lifecycle_never_silently_legacy(api_client):
     assert "legacy" in lc.text or "Bass" in lc.text or "90" in lc.text
 
     # campaign session → 行为不变 (200, legacy 14 天可用)
-    cs = api_client.post("/api/sandbox/session", json={
-        "creative": {"caption": "campaign lifecycle 回归"},
-        "total_budget": 50000, "platform_alloc": {"douyin": 1.0},
-    }).json()
+    cs = api_client.post(
+        "/api/sandbox/session",
+        json={
+            "creative": {"caption": "campaign lifecycle 回归"},
+            "total_budget": 50000,
+            "platform_alloc": {"douyin": 1.0},
+        },
+    ).json()
     lc2 = api_client.get(f"/api/sandbox/session/{cs['id']}/lifecycle")
     assert lc2.status_code == 200, "campaign session lifecycle 应不变 (200)"
 
@@ -362,8 +377,9 @@ def test_at_m7_10_souls_only_p50_seed(api_client, monkeypatch):
 
     monkeypatch.setattr(api_state.SOULS, "infer_batch", _spy)
     ing = _ingest(api_client)
-    api_client.post("/api/launch/simulate",
-                    json={"spec_id": ing["spec_id"], "overrides": {"n_seeds": 5}})
+    api_client.post(
+        "/api/launch/simulate", json={"spec_id": ing["spec_id"], "overrides": {"n_seeds": 5}}
+    )
     assert calls["n"] == 1, f"souls 应只跑 P50 主 seed (1 次)，实际 {calls['n']} 次"
 
 
@@ -379,8 +395,9 @@ def test_at_m7_11_cost_cap_explicit_reject(api_client, monkeypatch):
 
     ing = _ingest(api_client)
     monkeypatch.setattr(launch_mod, "MAX_REQUEST_COST_CNY", 0.0001)
-    r = api_client.post("/api/launch/simulate",
-                        json={"spec_id": ing["spec_id"], "overrides": {"n_souls": 100}})
+    r = api_client.post(
+        "/api/launch/simulate", json={"spec_id": ing["spec_id"], "overrides": {"n_souls": 100}}
+    )
     assert r.status_code == 402, f"超成本上限应显式拒绝 402，实际 {r.status_code}"
     assert "cost" in r.text.lower() or "成本" in r.text
 

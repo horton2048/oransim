@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>会不会火 · 上市预演</title>
+<meta name="description" content="输入任何产品上市想法，模型替你推演一遍——会不会火、谁会买、什么会出问题，并诚实标注哪些是算的、哪些是猜的。A/B/C 三档分诊，不硬拒任何想法。">
+<meta name="theme-color" content="#07090F">
+<meta property="og:type" content="website">
+<meta property="og:title" content="会不会火 · 上市预演">
+<meta property="og:description" content="任何产品想法，先让模型替你推演一遍。A/B/C 三档诚实预测，绝不让猜测伪装成精确。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090F'/%3E%3Cpath d='M16 5c3 4 6 6 6 11a6 6 0 1 1-12 0c0-2 1-3 2-4 0 2 1 3 2 3 1-3-1-7 2-11z' fill='%233BE0C8'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -241,6 +247,12 @@ textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px r
   background:#0d1019f5;border:1px solid var(--edge2);color:var(--ink);font-size:13px;padding:11px 18px;border-radius:30px;transition:.3s;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:480px){.kgrid{gap:8px}.kbox .v{font-size:19px}.scorepanel{gap:14px}}
+/* 尊重系统「减少动态效果」偏好 (无障碍/生产) */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .result,.stagger{opacity:1!important;transform:none!important}
+  .cta:hover,.btn-play:hover{transform:none}
+}
 </style>
 </head>
 <body>
@@ -256,7 +268,7 @@ textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px r
     <h1>任何想法，<span class="zh glow">先推演一遍</span></h1>
     <div class="sub">输入一个产品上市的想法，模型替你跑一遍「会不会火 · 谁会买 · 什么会出问题」——<br>并且诚实告诉你：哪些是算出来的，哪些只是猜的。</div>
     <div class="inputwrap">
-      <textarea id="idea" placeholder="说说你的产品想法，一句话即可。例：一款主打油痘肌的氨基酸洁面慕斯，定价 69 元，18-25 学生党，小红书+抖音种草"></textarea>
+      <textarea id="idea" maxlength="2000" aria-label="产品上市想法" placeholder="说说你的产品想法，一句话即可。例：一款主打油痘肌的氨基酸洁面慕斯，定价 69 元，18-25 学生党，小红书+抖音种草"></textarea>
       <details class="tune">
         <summary>细调目标人群（可选 · 默认全人群软定向）</summary>
         <div class="tune-body">
@@ -269,8 +281,8 @@ textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px r
           <div class="fine">命中人群权重 ×2、其余 ÷2（软定向，非硬筛）</div>
         </div>
       </details>
-      <button class="cta" id="go">▶ 揭幕<span class="en">Reveal</span></button>
-      <div id="msg" class="msg"></div>
+      <button class="cta" id="go" aria-label="揭幕：开始上市推演">▶ 揭幕<span class="en">Reveal</span></button>
+      <div id="msg" class="msg" role="alert" aria-live="assertive"></div>
     </div>
     <div class="chips" id="chips">
       <span class="chip" data-idea="一款主打熬夜修护的护肤精华，定价 199 元，主投小红书">护肤精华</span>
@@ -287,7 +299,7 @@ textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px r
   </section>
 
   <!-- RESULT -->
-  <section class="result" id="result">
+  <section class="result" id="result" aria-live="polite">
     <div class="rcard" id="rcard" data-tier="A">
       <div class="rhead" id="rhead"></div>
       <div class="rbody" id="rbody"></div>
@@ -353,6 +365,8 @@ function readAudience(){
   return ov;
 }
 $('#go').addEventListener('click',run);
+// Cmd/Ctrl+Enter 从输入框直接揭幕 (生产级输入习惯)
+$('#idea').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();if(!$('#go').disabled)run();}});
 $('#again').addEventListener('click',()=>{$('#result').classList.remove('on');$('#hero').style.display='flex';window.scrollTo(0,0);$('#idea').focus();});
 
 function showMsg(m){const d=$('#msg');d.style.display='block';d.innerHTML=m;}
@@ -590,9 +604,10 @@ function startReveal(){
   revStart=performance.now();const target=100000,t0=revStart,dur=1900;
   const rc=$('#rc'),rb=$('#rbar'),rl=$('#rl');
   const labels=['正在唤醒十万消费者…','逐个读你的文案…','在 40 城扩散…','聚合民意与判决…'];
-  (function tick(now){const p=Math.min(1,((now||performance.now())-t0)/dur),e=1-Math.pow(1-p,2);
+  (function tick(now){const t=now||performance.now();const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,2);
     rc.textContent=Math.round(target*e).toLocaleString();rb.style.width=(p*90)+'%';
-    rl.textContent=labels[Math.min(labels.length-1,Math.floor(p*labels.length))];
+    if(p<1){rl.textContent=labels[Math.min(labels.length-1,Math.floor(p*labels.length))];}
+    else{const dots='·'.repeat(1+(Math.floor(t/450)%3));rl.textContent='仍在推演中'+dots+'（真实模型思考需要一点时间）';}
     stars.forEach((st,i)=>{if(p*54>i)st.style.opacity=Math.min(1,(p*54-i)*.4)*.9;});
     revRAF=requestAnimationFrame(tick);})();
 }

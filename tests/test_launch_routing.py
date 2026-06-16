@@ -7,38 +7,41 @@
 
 mock 模式跑数据线; C 档 LLM 映射用桩 provider (仿 test_launch_soul_llm)。
 """
+
 from __future__ import annotations
 
 from oransim.agents import launch_scenario_llm as scen
 from oransim.spec.ground import GroundingResult
 from oransim.spec.route import resolve_prior_niche, route_idea
 
-
 # ═══════════════════════════ 单元: route_idea / 别名 ═══════════════════════════
+
 
 def _g(niche, rejected=False, reason=None, conf=0.9):
     return GroundingResult(
-        niche_key=niche, grounding_confidence=conf, rejected=rejected,
+        niche_key=niche,
+        grounding_confidence=conf,
+        rejected=rejected,
         reject_reason=reason,
     )
 
 
-def test_route_calibrated_niche_is_A():
+def test_route_calibrated_niche_tier_a():
     for n in ("beauty", "fashion", "food", "fitness", "travel", "electronics", "parenting"):
         assert route_idea(_g(n)) == "A", n
 
 
-def test_route_uncalibrated_consumer_is_B():
+def test_route_uncalibrated_consumer_tier_b():
     for n in ("beverage", "home", "pet"):
         assert route_idea(_g(n)) == "B", n
 
 
-def test_route_rejected_is_C():
+def test_route_rejected_tier_c():
     assert route_idea(_g(None, rejected=True, reason="b2b")) == "C"
     assert route_idea(_g(None, rejected=True, reason="unsupported_vertical")) == "C"
 
 
-def test_alias_resolves_prior_for_A():
+def test_alias_resolves_prior_tier_a():
     # electronics→tech, parenting→mom 让 A 档真用上校准 prior (否则退化 base-pop)
     assert resolve_prior_niche(_g("electronics")) == "tech"
     assert resolve_prior_niche(_g("parenting")) == "mom"
@@ -54,6 +57,7 @@ def test_routing_is_reproducible():
 
 
 # ═══════════════════════════ C 档: LLM 映射 + 无 KPI ═══════════════════════════
+
 
 class _StubResult:
     def __init__(self, content):
@@ -87,18 +91,24 @@ def _patch_llm(monkeypatch, content):
 
 def _spec_dict():
     return {
-        "product_name": "AI 智能排产 SaaS", "one_liner": "工厂排产换算法",
-        "category_raw": "B2B 工业软件", "target_user_raw": "中小制造厂",
-        "price_point": {"amount": None, "model": "per_seat"}, "channels_hint": ["行业展会"],
-        "fields": {}, "provenance": [],
+        "product_name": "AI 智能排产 SaaS",
+        "one_liner": "工厂排产换算法",
+        "category_raw": "B2B 工业软件",
+        "target_user_raw": "中小制造厂",
+        "price_point": {"amount": None, "model": "per_seat"},
+        "channels_hint": ["行业展会"],
+        "fields": {},
+        "provenance": [],
     }
 
 
 def test_c_scenario_maps_fields_and_has_no_kpi(monkeypatch):
     _patch_llm(monkeypatch, _C_JSON)
     rep = scen.build_scenario_report(
-        spec_dict=_spec_dict(), idea_text="给中小厂的 AI 排产 SaaS",
-        routed_reason="b2b", assumed_fields=[],
+        spec_dict=_spec_dict(),
+        idea_text="给中小厂的 AI 排产 SaaS",
+        routed_reason="b2b",
+        assumed_fields=[],
     )
     assert rep["tier"] == "C"
     assert rep["no_kpi"] is True and rep["degraded"] is False
@@ -115,8 +125,10 @@ def test_c_scenario_maps_fields_and_has_no_kpi(monkeypatch):
 def test_c_degrades_explicitly_when_llm_unavailable(monkeypatch):
     monkeypatch.setattr(scen, "llm_available", lambda: False)
     rep = scen.build_scenario_report(
-        spec_dict=_spec_dict(), idea_text="某 B2B SaaS",
-        routed_reason="b2b", assumed_fields=[],
+        spec_dict=_spec_dict(),
+        idea_text="某 B2B SaaS",
+        routed_reason="b2b",
+        assumed_fields=[],
     )
     assert rep["tier"] == "C" and rep["degraded"] is True
     assert rep["scenario"] is None  # 不静默造占位
@@ -126,7 +138,10 @@ def test_c_degrades_explicitly_when_llm_unavailable(monkeypatch):
 def test_c_bad_json_degrades_not_crashes(monkeypatch):
     _patch_llm(monkeypatch, "抱歉，无法生成")
     rep = scen.build_scenario_report(
-        spec_dict=_spec_dict(), idea_text="x", routed_reason="b2b", assumed_fields=[],
+        spec_dict=_spec_dict(),
+        idea_text="x",
+        routed_reason="b2b",
+        assumed_fields=[],
     )
     assert rep["degraded"] is True and rep["scenario"] is None
 
@@ -164,8 +179,7 @@ def test_e2e_b_tier_band_widened_and_uncalibrated(api_client):
     assert rep["tier"] == "B" and rep.get("uncalibrated") is True
     assert rep["metrics"].get("band_widened") is True
     # 至少一个指标真的被放宽了 (band_widen_factor 标记在)
-    widened = [v for v in rep["metrics"].values()
-               if isinstance(v, dict) and v.get("band_widened")]
+    widened = [v for v in rep["metrics"].values() if isinstance(v, dict) and v.get("band_widened")]
     assert widened, "B 档应至少放宽一个分位带指标"
 
 

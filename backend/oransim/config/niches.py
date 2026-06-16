@@ -99,34 +99,34 @@ def female_ratio(include_v2: bool = False) -> dict[str, int]:
 # Default reference prices per niche (CNY). Used when niches.json lacks 'reference_price'.
 # Aligned with CATEGORY_DEFAULTS in spec/extract.py (kept in sync manually).
 _REFERENCE_PRICE_FALLBACK: dict[str, float] = {
-    "beauty":      89.0,
-    "food":        25.0,
-    "fitness":    199.0,
-    "fashion":    159.0,
+    "beauty": 89.0,
+    "food": 25.0,
+    "fitness": 199.0,
+    "fashion": 159.0,
     "electronics": 399.0,
-    "pet":         59.0,
-    "travel":     299.0,
-    "baby":       129.0,
-    "education":  199.0,
-    "home":        89.0,
-    "general":     45.0,
+    "pet": 59.0,
+    "travel": 299.0,
+    "baby": 129.0,
+    "education": 199.0,
+    "home": 89.0,
+    "general": 45.0,
 }
 
 
 # 默认采纳率先验 (Bass m 标定用). niches.json 无 adoption_rate_prior (v2 字段, M8 补)
 # 前用这组逐 niche 区分的回退值; 不同 niche 不同 → 市场潜量 m 不同 (AT-M5-06).
 _ADOPTION_RATE_FALLBACK: dict[str, float] = {
-    "beauty":      0.080,
-    "fashion":     0.060,
-    "food":        0.120,
-    "beverage":    0.130,
-    "fitness":     0.055,
+    "beauty": 0.080,
+    "fashion": 0.060,
+    "food": 0.120,
+    "beverage": 0.130,
+    "fitness": 0.055,
     "electronics": 0.045,
-    "travel":      0.040,
-    "home":        0.050,
-    "pet":         0.070,
-    "parenting":   0.065,
-    "general":     0.060,
+    "travel": 0.040,
+    "home": 0.050,
+    "pet": 0.070,
+    "parenting": 0.065,
+    "general": 0.060,
 }
 
 

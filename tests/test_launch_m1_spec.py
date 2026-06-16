@@ -4,12 +4,12 @@
 依赖序: M0 完成 (commit e596eff) 后进入 M1.
 REG-4 生效: engine 层不得 import oransim.spec.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import socket
-import sys
 from pathlib import Path
 
 import pytest
@@ -24,12 +24,17 @@ GOLDEN_IDEAS = Path(__file__).parent / "golden" / "launch_ideas.jsonl"
 def _load_ideas() -> list[dict]:
     if not GOLDEN_IDEAS.exists():
         return []
-    return [json.loads(line) for line in GOLDEN_IDEAS.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line)
+        for line in GOLDEN_IDEAS.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 # ---------------------------------------------------------------------------
 # AT-M1-01  ProductSpec schema 严格性
 # ---------------------------------------------------------------------------
+
 
 def test_at_m1_01_product_spec_schema_strictness():
     """extra='forbid' 生效, schema_version 存在, 合法 payload 构造正常."""
@@ -56,6 +61,7 @@ def test_at_m1_01_product_spec_schema_strictness():
 
     # 2. extra='forbid' 拒绝未知字段
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         ProductSpec(
             product_name="X",
@@ -79,6 +85,7 @@ def test_at_m1_01_product_spec_schema_strictness():
 # AT-M1-02  无 provenance 必为 inferred
 # ---------------------------------------------------------------------------
 
+
 def test_at_m1_02_no_provenance_must_be_inferred():
     """provenance=[] 且 inferred=False 时被强制为 inferred=True 或抛 ValidationError."""
     from oransim.spec.schema import ProductSpec
@@ -95,26 +102,31 @@ def test_at_m1_02_no_provenance_must_be_inferred():
         channels_hint=[],
         value_props=[],
         confidence=0.5,
-        provenance=[],   # empty provenance
+        provenance=[],  # empty provenance
         inferred=False,  # user claims not inferred — schema should override
         default_applied=False,
     )
     # schema validator must force inferred=True when provenance is empty
-    assert spec.inferred is True, (
-        "When provenance=[], inferred must be forced to True by the schema validator"
-    )
+    assert (
+        spec.inferred is True
+    ), "When provenance=[], inferred must be forced to True by the schema validator"
 
 
 # ---------------------------------------------------------------------------
 # AT-M1-03  assumed_fields 派生正确
 # ---------------------------------------------------------------------------
 
+
 def test_at_m1_03_assumed_fields_derived():
     """assumed_fields = all fields where inferred=True OR default_applied=True."""
     from oransim.spec.schema import ProductSpec, SpecField
 
-    user_field_1 = SpecField(value="测试饮料", inferred=False, default_applied=False, provenance=[{"start": 0, "end": 5}])
-    user_field_2 = SpecField(value="19.9", inferred=False, default_applied=False, provenance=[{"start": 6, "end": 10}])
+    user_field_1 = SpecField(
+        value="测试饮料", inferred=False, default_applied=False, provenance=[{"start": 0, "end": 5}]
+    )
+    user_field_2 = SpecField(
+        value="19.9", inferred=False, default_applied=False, provenance=[{"start": 6, "end": 10}]
+    )
     inferred_1 = SpecField(value="健康饮料", inferred=True, default_applied=False, provenance=[])
     inferred_2 = SpecField(value="小红书", inferred=True, default_applied=False, provenance=[])
     defaulted = SpecField(value="50000.0", inferred=False, default_applied=True, provenance=[])
@@ -154,14 +166,19 @@ def test_at_m1_03_assumed_fields_derived():
 # AT-M1-04  mock 抽取确定性
 # ---------------------------------------------------------------------------
 
+
 class _BlockSocket:
     """Context manager: 拦截所有 socket 连接，防止网络出站."""
+
     def __enter__(self):
         self._orig = socket.socket
+
         def _no_net(*a, **kw):
             raise RuntimeError("Network access forbidden in test (socket guard)")
+
         socket.socket = _no_net
         return self
+
     def __exit__(self, *_):
         socket.socket = self._orig
 
@@ -176,19 +193,22 @@ def test_at_m1_04_mock_extract_deterministic():
         spec1 = extract_spec(idea)
         spec2 = extract_spec(idea)
 
-    assert spec1.model_dump() == spec2.model_dump(), (
-        "mock extraction must be deterministic: same idea → identical ProductSpec"
-    )
+    assert (
+        spec1.model_dump() == spec2.model_dump()
+    ), "mock extraction must be deterministic: same idea → identical ProductSpec"
 
 
 # ---------------------------------------------------------------------------
 # AT-M1-05  黄金集 spec 字段匹配率基线
 # ---------------------------------------------------------------------------
 
+
 def test_at_m1_05_golden_set_baseline():
     """黄金集存在且 mock 抽取后核心字段匹配率可记录 (M1 不设阈值)."""
     ideas = _load_ideas()
-    assert ideas, f"Golden set not found at {GOLDEN_IDEAS} — deliver tests/golden/launch_ideas.jsonl"
+    assert (
+        ideas
+    ), f"Golden set not found at {GOLDEN_IDEAS} — deliver tests/golden/launch_ideas.jsonl"
 
     # Only positive examples (expect_reject != True)
     positives = [e for e in ideas if not e.get("expect_reject")]
@@ -227,6 +247,7 @@ def test_at_m1_05_golden_set_baseline():
 # ---------------------------------------------------------------------------
 # AT-M1-06  normalize 纯函数规整
 # ---------------------------------------------------------------------------
+
 
 def test_at_m1_06_normalize_functions():
     """币种→CNY, 枚举强制, raw 字段逐字保留."""
@@ -276,14 +297,15 @@ def test_at_m1_06_normalize_functions():
     )
     normalized_bad = normalize_spec(spec_bad_model)
     valid_models = {"one_time", "subscription", "freemium"}
-    assert normalized_bad.price_point["model"] in valid_models, (
-        f"invalid pricing model must be normalized to one of {valid_models}"
-    )
+    assert (
+        normalized_bad.price_point["model"] in valid_models
+    ), f"invalid pricing model must be normalized to one of {valid_models}"
 
 
 # ---------------------------------------------------------------------------
 # AT-M1-07  CATEGORY_DEFAULTS 来源标记
 # ---------------------------------------------------------------------------
+
 
 def test_at_m1_07_category_defaults_tagging():
     """默认表填充的字段 default_applied=True 且进 assumed_fields."""
@@ -300,8 +322,8 @@ def test_at_m1_07_category_defaults_tagging():
     if spec.fields:
         for fname, fval in spec.fields.items():
             if hasattr(fval, "default_applied") and fval.default_applied:
-                assert fname in assumed, (
-                    f"Field '{fname}' has default_applied=True but is not in assumed_fields"
-                )
+                assert (
+                    fname in assumed
+                ), f"Field '{fname}' has default_applied=True but is not in assumed_fields"
     # The spec should have at least some assumed fields (budget/price from defaults)
     assert len(assumed) >= 0, "assumed_fields computed correctly"

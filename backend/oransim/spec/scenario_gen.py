@@ -10,6 +10,7 @@
 
 依赖方向: spec/ → engine. 引擎层不反向 import (REG-4).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -31,22 +32,40 @@ _DEFAULT_PLATFORM = "xhs"
 
 # 渠道 hint (extract 产出的英文/中文渠道名) → 世界模型平台名
 _CHANNEL_TO_PLATFORM: dict[str, str] = {
-    "xiaohongshu": "xhs", "xhs": "xhs", "小红书": "xhs",
-    "douyin": "douyin", "tiktok": "douyin", "抖音": "douyin",
-    "bilibili": "bilibili", "b站": "bilibili", "哔哩": "bilibili",
-    "kuaishou": "kuaishou", "快手": "kuaishou",
+    "xiaohongshu": "xhs",
+    "xhs": "xhs",
+    "小红书": "xhs",
+    "douyin": "douyin",
+    "tiktok": "douyin",
+    "抖音": "douyin",
+    "bilibili": "bilibili",
+    "b站": "bilibili",
+    "哔哩": "bilibili",
+    "kuaishou": "kuaishou",
+    "快手": "kuaishou",
     # 无诚实世界模型平台的渠道 → 映射到最近社媒代理
-    "weixin": "douyin", "wechat": "douyin", "微信": "douyin",
-    "jd": "xhs", "taobao": "xhs", "tmall": "xhs", "京东": "xhs", "weibo": "xhs",
+    "weixin": "douyin",
+    "wechat": "douyin",
+    "微信": "douyin",
+    "jd": "xhs",
+    "taobao": "xhs",
+    "tmall": "xhs",
+    "京东": "xhs",
+    "weibo": "xhs",
 }
 
 # 按 niche 的默认渠道先验 (无 channels_hint 时用). 与 extract.CATEGORY_DEFAULTS 同源理念.
 _NICHE_DEFAULT_CHANNELS: dict[str, list[str]] = {
-    "beauty": ["xhs", "douyin"], "fashion": ["xhs", "douyin"],
-    "food": ["douyin", "xhs"], "beverage": ["douyin", "xhs"],
-    "fitness": ["xhs", "douyin"], "electronics": ["douyin", "bilibili"],
-    "travel": ["xhs", "douyin"], "home": ["xhs", "douyin"],
-    "pet": ["xhs"], "parenting": ["xhs"],
+    "beauty": ["xhs", "douyin"],
+    "fashion": ["xhs", "douyin"],
+    "food": ["douyin", "xhs"],
+    "beverage": ["douyin", "xhs"],
+    "fitness": ["xhs", "douyin"],
+    "electronics": ["douyin", "bilibili"],
+    "travel": ["xhs", "douyin"],
+    "home": ["xhs", "douyin"],
+    "pet": ["xhs"],
+    "parenting": ["xhs"],
 }
 
 _PRICE_MODEL_DEFAULT = "one_time"
@@ -55,20 +74,26 @@ _PRICE_MODEL_DEFAULT = "one_time"
 @dataclass
 class CompiledScenario:
     """编译五元组 (方案 §3.5) + assumed_fields 诚实标记."""
+
     spec: ProductSpec
-    scenario: object                       # causal.counterfactual.Scenario
+    scenario: object  # causal.counterfactual.Scenario
     launch_creatives: dict[str, list[Creative]]
-    seed_events: dict[str, float]          # platform → 上市日种子脉冲规模
+    seed_events: dict[str, float]  # platform → 上市日种子脉冲规模
     clarification_questions: list[str] = field(default_factory=list)
     assumed_fields: list[str] = field(default_factory=list)
 
 
 def _spec_fingerprint(spec: ProductSpec) -> str:
     """spec 内容指纹 (不含易变元数据), 用于确定性 creative id."""
-    basis = "|".join([
-        spec.product_name, spec.category_raw, spec.target_user_raw,
-        str(spec.price_point.get("amount")), ",".join(spec.channels_hint),
-    ])
+    basis = "|".join(
+        [
+            spec.product_name,
+            spec.category_raw,
+            spec.target_user_raw,
+            str(spec.price_point.get("amount")),
+            ",".join(spec.channels_hint),
+        ]
+    )
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:10]
 
 
@@ -155,8 +180,9 @@ def _synth_creatives(spec: ProductSpec, niche: str, platform: str, fp: str) -> l
     creatives = []
     for i in range(n):
         cid = f"lc_{fp}_{platform}_{i}"
-        cre = make_creative(creative_id=cid, caption=templates[i % len(templates)],
-                            duration_sec=15.0)
+        cre = make_creative(
+            creative_id=cid, caption=templates[i % len(templates)], duration_sec=15.0
+        )
         creatives.append(cre)
     return creatives
 
@@ -200,9 +226,7 @@ def compile_scenario(
     # 4. KOL 种子
     kol_per_platform = None
     if kols:
-        kol_per_platform = {
-            p: pick_kol_by_spec(kols, p, niche=niche) for p in platform_alloc
-        }
+        kol_per_platform = {p: pick_kol_by_spec(kols, p, niche=niche) for p in platform_alloc}
         kol_per_platform = {p: k for p, k in kol_per_platform.items() if k is not None}
 
     # 5. Scenario (price/pricing_model/substitute_pressure 默认 None — 行为不变)
@@ -217,8 +241,7 @@ def compile_scenario(
 
     # 6. Hawkes 种子事件: 上市日曝光脉冲 = budget_to_impressions 折算
     seed_events = {
-        p: budget_to_impressions(total_budget * frac, p)
-        for p, frac in platform_alloc.items()
+        p: budget_to_impressions(total_budget * frac, p) for p, frac in platform_alloc.items()
     }
 
     return CompiledScenario(

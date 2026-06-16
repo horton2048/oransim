@@ -36,7 +36,9 @@ _GOLDEN_SOUL_POOL = "5"
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--run-live", action="store_true", default=False,
+        "--run-live",
+        action="store_true",
+        default=False,
         help="强制运行 @live_llm 用例 (默认仅在检测到真实 LLM 供应商时运行)",
     )
 
@@ -52,6 +54,7 @@ def pytest_configure(config):
 def _live_llm_available() -> bool:
     try:
         from oransim.agents.soul_llm import llm_available
+
         return bool(llm_available())
     except Exception:
         return False

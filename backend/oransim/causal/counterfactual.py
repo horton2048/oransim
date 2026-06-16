@@ -7,8 +7,8 @@ a trained Normalizing Flow / NPE net from the `sbi` library.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -31,8 +31,8 @@ class Scenario:
     cross_platform_overlap: float = 0.0  # 0..1, fraction of impressions that overlap users
     llm_calibration: float | None = None  # multiplier from LLM votes (set by API after explain)
     # M4 price fields (Iron Rule 4: all enter hash_tuple)
-    price_cny: float | None = None          # product price CNY; None → default AOV (45)
-    pricing_model: str | None = None        # e.g. "one_time" / "subscription" / "freemium"
+    price_cny: float | None = None  # product price CNY; None → default AOV (45)
+    pricing_model: str | None = None  # e.g. "one_time" / "subscription" / "freemium"
     substitute_pressure: float | None = None  # 0..1, competitive substitution intensity
 
     def hash_tuple(self) -> tuple:
@@ -124,7 +124,8 @@ class ScenarioRunner:
                 budget,
                 audience_filter=scenario.audience_filter,
                 kol=kol,
-                rng_seed=scenario.seed * 1000 + int(hashlib.sha256(plat.encode()).hexdigest()[:4], 16) % 1000,
+                rng_seed=scenario.seed * 1000
+                + int(hashlib.sha256(plat.encode()).hexdigest()[:4], 16) % 1000,
             )
             # optional fixed noise (for counterfactual)
             fu = None

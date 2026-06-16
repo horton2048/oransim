@@ -9,6 +9,7 @@
 
 每个响应顶层携带 assumed_fields + grounding_confidence (诚实标记红线)。
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -42,6 +43,7 @@ _KEEPALIVE_SEC = float(os.environ.get("LAUNCH_KEEPALIVE_SEC", "10"))
 def _projected_cost_cny(n_souls: int, n_seeds: int) -> float:
     """投射本请求 LLM 成本 (souls 仅 P50 主 seed; 走 COST_TABLE_CNY 同一账本)。"""
     from ..agents.soul_llm import estimate_cost_cny
+
     # 每 persona 估 ~250 in / ~150 out token (仅主 seed 跑 souls)
     tin = max(0, int(n_souls)) * 250
     tout = max(0, int(n_souls)) * 150
@@ -99,8 +101,9 @@ def _stream_json(sync_fn, *args):
     async def gen():
         while not fut.done():
             try:
-                await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(fut)),
-                                       timeout=_KEEPALIVE_SEC)
+                await asyncio.wait_for(
+                    asyncio.shield(asyncio.wrap_future(fut)), timeout=_KEEPALIVE_SEC
+                )
             except asyncio.TimeoutError:
                 yield b" \n"  # keepalive whitespace; JSON parser ignores
         result = fut.result()
@@ -145,8 +148,12 @@ async def launch_spec_patch(spec_id: str, req: SpecPatchRequest):
     fields_meta = dict(data.get("fields", {}))
     for f in confirmed_fields:
         fields_meta.pop(f"{f}_default", None)
-        fields_meta[f] = {"value": str(data.get(f)), "inferred": False,
-                          "default_applied": False, "provenance": [{"start": 0, "end": 1}]}
+        fields_meta[f] = {
+            "value": str(data.get(f)),
+            "inferred": False,
+            "default_applied": False,
+            "provenance": [{"start": 0, "end": 1}],
+        }
     data["fields"] = fields_meta
 
     new_spec = normalize_spec(type(cur)(**data))
@@ -217,6 +224,7 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     if ov.audience_age_buckets or ov.audience_gender is not None or ov.audience_city_tiers:
         from ..platforms.xhs.world_model_legacy import AudienceFilter
         from ..spec.scenario_gen import _make_audience_filter
+
         _base = _make_audience_filter(spec)
         aud_override = AudienceFilter(
             age_buckets=ov.audience_age_buckets or None,
@@ -230,9 +238,15 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     per_seed_kpis = []
     primary_compiled = None
     for i, sd in enumerate(seeds):
-        compiled = compile_spec(spec, spec_id=req.spec_id, revision=rev, kols=kols,
-                                budget_hint_cny=ov.budget, seed=sd,
-                                audience_override=aud_override)
+        compiled = compile_spec(
+            spec,
+            spec_id=req.spec_id,
+            revision=rev,
+            kols=kols,
+            budget_hint_cny=ov.budget,
+            seed=sd,
+            audience_override=aud_override,
+        )
         res = runner.run(compiled.scenario, n_monte_carlo=3)
         per_seed_kpis.append(res.total_kpis)
         if i == len(seeds) // 2:
@@ -247,8 +261,14 @@ def _simulate_sync(req: SimulateRequest) -> dict:
         cre = primary_compiled.scenario.creative
         first_plat = next(iter(primary_compiled.scenario.platform_alloc))
         launch_personas = souls.infer_batch(
-            cre, {}, None, first_plat, n_sample=min(8, ov.n_souls or 8),
-            seed=seeds[len(seeds) // 2], use_llm=ov.use_llm, mode="launch",
+            cre,
+            {},
+            None,
+            first_plat,
+            n_sample=min(8, ov.n_souls or 8),
+            seed=seeds[len(seeds) // 2],
+            use_llm=ov.use_llm,
+            mode="launch",
         )
 
     # 90 天 diffusion timeline (Bass 饱和)
@@ -261,6 +281,7 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     conv_idx = bass._conversion_idx()
     daily_adopters = [day[conv_idx] for day in fc.daily_buckets]
     import numpy as _np
+
     cum = _np.cumsum(daily_adopters)
     peak_day = int(_np.argmax(daily_adopters)) if daily_adopters else 0
     total = cum[-1] if len(cum) else 0.0
@@ -281,6 +302,7 @@ def _simulate_sync(req: SimulateRequest) -> dict:
 
     # 区块3: 谁会买 (fan_profile 有效人群画像 + persona 引语)
     from ..data.fan_profile import fan_profile_summary
+
     fps = fan_profile_summary(pop, niche)
     # niche 无 fan prior (如 beverage/electronics/home/pet/parenting) 时 fan_profile_summary
     # 早退、不含 effective_city_dist → 回放适配器拿不到城市占比 → 城市点阵空 → diorama 回退
@@ -291,8 +313,10 @@ def _simulate_sync(req: SimulateRequest) -> dict:
         _tot = float(_cc.sum()) or 1.0
         fps = dict(fps)
         fps["effective_city_dist"] = {
-            "T1": round(_cc[0] / _tot * 100, 1), "T2": round(_cc[1] / _tot * 100, 1),
-            "T3": round(_cc[2] / _tot * 100, 1), "T4": round(_cc[3] / _tot * 100, 1),
+            "T1": round(_cc[0] / _tot * 100, 1),
+            "T2": round(_cc[1] / _tot * 100, 1),
+            "T3": round(_cc[2] / _tot * 100, 1),
+            "T4": round(_cc[3] / _tot * 100, 1),
             "T5+": round(_cc[4] / _tot * 100, 1),
         }
         fps["city_dist_source"] = "base_population (该 niche 无 fan prior, 取基础人口层级分布)"
@@ -306,13 +330,19 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     for nm in ("price_up_30", "no_kol_launch", "competitor_response"):
         try:
             r = run_intervention(nm, primary_compiled.scenario, runner, base_result)
-            cards.append({"name": r.name, "label": r.label, "delta": r.delta,
-                          "branch": r.branch, "note": r.note})
+            cards.append(
+                {
+                    "name": r.name,
+                    "label": r.label,
+                    "delta": r.delta,
+                    "branch": r.branch,
+                    "note": r.note,
+                }
+            )
         except Exception:
             pass
 
-    season_window = {"note": "假日/季节因子最佳/最差上市窗口 (data/macro)",
-                     "category_hint": niche}
+    season_window = {"note": "假日/季节因子最佳/最差上市窗口 (data/macro)", "category_hint": niche}
 
     report = build_launch_report(
         spec_dict=spec.model_dump(),
@@ -339,7 +369,7 @@ def _simulate_sync(req: SimulateRequest) -> dict:
         # B 档: 同 A 管线但标「未校准」+ 拉宽分位带 (design D-4)。区间放宽是**真实写入**
         # 数据 (band_widened 标记 + 系数), 不让前端伪造「更宽」。
         report["uncalibrated"] = True
-        _widen_bands_for_B(report)
+        _widen_bands_for_b(report)
     return report
 
 
@@ -348,7 +378,7 @@ def _simulate_sync(req: SimulateRequest) -> dict:
 _B_BAND_WIDEN = 2.5
 
 
-def _widen_bands_for_B(report: dict) -> None:
+def _widen_bands_for_b(report: dict) -> None:
     """就地放宽 B 档 metrics 的 P35/P65 区间并打 band_widened 标 (保 p50 中位不动)。"""
     metrics = report.get("metrics")
     if not isinstance(metrics, dict):
@@ -472,7 +502,6 @@ async def launch_whatif(spec_id: str):
     from ..spec import store
     from ..spec.ground import ground
     from ..spec.pipeline import compile_spec
-
     from ..spec.route import route_idea
 
     if not store.exists(spec_id):
@@ -493,8 +522,16 @@ async def launch_whatif(spec_id: str):
     for nm in INTERVENTION_NAMES:
         try:
             r = run_intervention(nm, compiled.scenario, api_state.RUNNER, base)
-            cards.append({"name": r.name, "label": r.label, "delta": r.delta,
-                          "branch": r.branch, "note": r.note, "paid_events": r.paid_events})
+            cards.append(
+                {
+                    "name": r.name,
+                    "label": r.label,
+                    "delta": r.delta,
+                    "branch": r.branch,
+                    "note": r.note,
+                    "paid_events": r.paid_events,
+                }
+            )
         except Exception as e:  # noqa: BLE001
             cards.append({"name": nm, "error": str(e)})
 

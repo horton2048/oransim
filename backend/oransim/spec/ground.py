@@ -15,6 +15,7 @@ pet / parenting.
 依赖方向: spec/ → engine (config/niches, runtime/embedding_bus). 引擎层不反向
 import 本模块 (REG-4).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,13 +28,25 @@ from .schema import ProductSpec
 CONFIDENCE_THRESHOLD = 0.55
 _SYNONYM_BASE_CONF = 0.92
 _EMBED_CONF_CAP = 0.70
-_NO_COVERAGE_PENALTY = 0.5   # grounded niche 无语料覆盖 → 置信度 ×0.5
-_COVERAGE_OK = 0.45          # category_notes 自匹配相似度高于此视为有覆盖
+_NO_COVERAGE_PENALTY = 0.5  # grounded niche 无语料覆盖 → 置信度 ×0.5
+_COVERAGE_OK = 0.45  # category_notes 自匹配相似度高于此视为有覆盖
 
 # ── B2B/SaaS 强信号: 命中即硬拒绝 (诚实原则, 方案明令禁止静默映射) ───────────
 _B2B_SIGNALS = (
-    "saas", "b2b", "b2b2c", "to b", "系统集成", "医疗器械", "预测性维护",
-    "mes", "授权年费", "/席", " 席", "席/", "行业展会", "企业法务",
+    "saas",
+    "b2b",
+    "b2b2c",
+    "to b",
+    "系统集成",
+    "医疗器械",
+    "预测性维护",
+    "mes",
+    "授权年费",
+    "/席",
+    " 席",
+    "席/",
+    "行业展会",
+    "企业法务",
 )
 
 # ── 富品类关键词表: 产品名词 → niche key. 受众/渠道词不入表. ────────────────
@@ -41,44 +54,137 @@ _B2B_SIGNALS = (
 # /香氛机/卫衣/喂食器 等), 含英文条目 (出海 idea). 命中按文本最早出现位置取胜.
 _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "beauty": [
-        "洗发水", "护发", "精油", "素颜霜", "防晒", "spf", "面膜", "玻尿酸",
-        "精华", "保湿", "lip balm", "lipstick", "skincare", "唇膏", "护肤",
+        "洗发水",
+        "护发",
+        "精油",
+        "素颜霜",
+        "防晒",
+        "spf",
+        "面膜",
+        "玻尿酸",
+        "精华",
+        "保湿",
+        "lip balm",
+        "lipstick",
+        "skincare",
+        "唇膏",
+        "护肤",
         # 洁面类 (洗面奶/慕斯) 是高频美妆品类, 旧表漏收 → 误落 C 档 (像素验收发现)。
         # 用「洁面/洗面奶/洁面乳/洁面慕斯」精确词, 不收裸「慕斯」(慕斯蛋糕属 food, 防误判)。
-        "洁面", "洗面奶", "洁面乳", "洁面慕斯", "卸妆", "面霜", "眼霜", "气垫", "粉底",
+        "洁面",
+        "洗面奶",
+        "洁面乳",
+        "洁面慕斯",
+        "卸妆",
+        "面霜",
+        "眼霜",
+        "气垫",
+        "粉底",
     ],
     "fashion": [
-        "卫衣", "国潮", "帆布包", "折叠包", "手提包", "背包", "卫裤", "外套",
-        "hoodie", "tote", "bag", "联名款",
+        "卫衣",
+        "国潮",
+        "帆布包",
+        "折叠包",
+        "手提包",
+        "背包",
+        "卫裤",
+        "外套",
+        "hoodie",
+        "tote",
+        "bag",
+        "联名款",
     ],
     "food": [
-        "燕麦奶", "植物奶", "燕麦", "代餐", "零食", "饱腹", "noodle", "instant noodle",
-        "snack", "麦片", "坚果", "螺蛳粉",
+        "燕麦奶",
+        "植物奶",
+        "燕麦",
+        "代餐",
+        "零食",
+        "饱腹",
+        "noodle",
+        "instant noodle",
+        "snack",
+        "麦片",
+        "坚果",
+        "螺蛳粉",
     ],
     "beverage": [
-        "气泡水", "苏打水", "无糖茶", "冷萃", "咖啡液", "茶包",
+        "气泡水",
+        "苏打水",
+        "无糖茶",
+        "冷萃",
+        "咖啡液",
+        "茶包",
     ],
     "fitness": [
-        "蛋白棒", "蛋白", "可穿戴", "深蹲", "瑜伽垫", "筋膜枪", "代餐粉",
-        "protein", "增肌",
+        "蛋白棒",
+        "蛋白",
+        "可穿戴",
+        "深蹲",
+        "瑜伽垫",
+        "筋膜枪",
+        "代餐粉",
+        "protein",
+        "增肌",
     ],
     "electronics": [
-        "手机壳", "血压手环", "手环", "三脚架", "耳机", "充电", "数据线", "摄影",
-        "tripod", "earbuds", "gadget", "智能硬件",
+        "手机壳",
+        "血压手环",
+        "手环",
+        "三脚架",
+        "耳机",
+        "充电",
+        "数据线",
+        "摄影",
+        "tripod",
+        "earbuds",
+        "gadget",
+        "智能硬件",
     ],
     "travel": [
-        "行李箱", "旅行装", "颈枕", "护照夹", "登机箱", "luggage",
+        "行李箱",
+        "旅行装",
+        "颈枕",
+        "护照夹",
+        "登机箱",
+        "luggage",
     ],
     "home": [
-        "香氛机", "香薰", "浇水", "花园", "收纳盒", "台灯", "加湿器", "扫地",
-        "diffuser", "花艺",
+        "香氛机",
+        "香薰",
+        "浇水",
+        "花园",
+        "收纳盒",
+        "台灯",
+        "加湿器",
+        "扫地",
+        "diffuser",
+        "花艺",
     ],
     "pet": [
-        "猫零食", "冻干", "喂食器", "猫厕所", "猫砂", "宠物", "养宠", "养猫",
-        "狗粮", "猫粮", "litter", "pet",
+        "猫零食",
+        "冻干",
+        "喂食器",
+        "猫厕所",
+        "猫砂",
+        "宠物",
+        "养宠",
+        "养猫",
+        "狗粮",
+        "猫粮",
+        "litter",
+        "pet",
     ],
     "parenting": [
-        "亲子", "育儿", "宝妈", "新手妈妈", "辅食", "童装", "婴儿", "孕",
+        "亲子",
+        "育儿",
+        "宝妈",
+        "新手妈妈",
+        "辅食",
+        "童装",
+        "婴儿",
+        "孕",
     ],
 }
 
@@ -86,14 +192,15 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
 @dataclass
 class GroundingResult:
     """Grounding 输出: niche 映射 + 置信度 + 诚实标记."""
-    niche_key: str | None                 # 硬拒绝时为 None
+
+    niche_key: str | None  # 硬拒绝时为 None
     grounding_confidence: float
     matched_synonyms: list[str] = field(default_factory=list)
     corpus_coverage: float = 1.0
     clarification_questions: list[str] = field(default_factory=list)
     rejected: bool = False
-    method: str = ""                      # "synonyms" | "embedding" | "rejected"
-    reject_reason: str | None = None      # "b2b" | "unsupported_vertical" | None
+    method: str = ""  # "synonyms" | "embedding" | "rejected"
+    reject_reason: str | None = None  # "b2b" | "unsupported_vertical" | None
 
 
 def _grounding_text(spec: ProductSpec) -> str:
@@ -159,10 +266,6 @@ def _embed_fallback(spec: ProductSpec, bus) -> tuple[str | None, float]:
     """
     if bus is None:
         return None, 0.0
-    try:
-        from oransim.runtime.embedding_bus import BUS as _DEFAULT_BUS  # noqa: F401
-    except Exception:
-        pass
     src = "product_categories"
     try:
         vecs = bus.vectors(src)

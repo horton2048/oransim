@@ -97,11 +97,21 @@ NODES: list[SCMNode] = [
     SCMNode("ab_variants", "L3", "decision", "AB 变体", intervenable=True),
     # ---- L3 launch decisions (M6: 只增不改, 加点加边) ----
     SCMNode(
-        "price_point", "L3", "decision", "定价点", intervenable=True, launch_only=True,
+        "price_point",
+        "L3",
+        "decision",
+        "定价点",
+        intervenable=True,
+        launch_only=True,
         description="上市定价 (价格弹性 do() 节点; 走 ScenarioRunner.counterfactual 图级反事实)",
     ),
     SCMNode(
-        "launch_channel_mix", "L3", "decision", "上市渠道组合", intervenable=True, launch_only=True,
+        "launch_channel_mix",
+        "L3",
+        "decision",
+        "上市渠道组合",
+        intervenable=True,
+        launch_only=True,
         description="上市平台分配 (channels_hint→platform_alloc 的图节点)",
     ),
     # ---- L4 Distribution ----
@@ -302,9 +312,9 @@ EDGES: list[tuple[str, str]] = [
     ("organic_search_uplift", "attributed_revenue"),
     ("comment_sentiment", "nps_delta"),
     # ---- L3 launch decisions → funnel/distribution (M6: 新增边, 不改旧边) ----
-    ("price_point", "conversion"),       # 价格弹性: 价格 → 转化
-    ("price_point", "add_to_cart"),      # 价格 → 加购
-    ("price_point", "direct_revenue"),   # 价格 → 客单价/GMV
+    ("price_point", "conversion"),  # 价格弹性: 价格 → 转化
+    ("price_point", "add_to_cart"),  # 价格 → 加购
+    ("price_point", "direct_revenue"),  # 价格 → 客单价/GMV
     ("launch_channel_mix", "impression_dist"),
     ("launch_channel_mix", "audience_match"),
 ]
@@ -386,8 +396,7 @@ def dag_dict(include_launch: bool = False) -> dict:
         "stats": {
             "by_layer": {L: sum(1 for n in nodes if n.layer == L) for L in LAYERS},
             "by_category": {
-                c: sum(1 for n in nodes if n.category == c)
-                for c in {n.category for n in nodes}
+                c: sum(1 for n in nodes if n.category == c) for c in {n.category for n in nodes}
             },
             "intervenable_count": len(intervenable),
             "time_varying_count": sum(1 for n in nodes if n.time_varying),

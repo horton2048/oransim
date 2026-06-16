@@ -3,6 +3,7 @@
 FE-M6 后端增量: SimulateOverrides 加 audience_age_buckets/gender/city_tiers,
 经 compile_spec(audience_override) → AudienceFilter → 世界模型 _audience_score 重加权人群。
 """
+
 from __future__ import annotations
 
 _GOLD = "一款保湿面膜，定价 89 元，小红书美妆博主种草。"

@@ -69,6 +69,7 @@ class IdeaIngestRequest(BaseModel):
 
 class SpecPatchRequest(BaseModel):
     """字段级修正 (人在回路确认闸)。仅传要改的字段。"""
+
     product_name: str | None = None
     one_liner: str | None = None
     category_raw: str | None = None
@@ -85,9 +86,11 @@ class SimulateOverrides(BaseModel):
     horizon_days: int = Field(default=90, ge=1, le=365)
     use_llm: bool = False
     # 结构化人群定向 (软 boost, 复用 AudienceFilter)。None=不定向。
-    audience_age_buckets: list[int] | None = None   # age_idx 子集 0..5 (15-24/25-34/35-44/45-54/55-64/65+)
-    audience_gender: int | None = None              # 0=女 1=男 None=不限
-    audience_city_tiers: list[int] | None = None    # city_idx 子集 0..4 (T1..T5+)
+    audience_age_buckets: list[int] | None = (
+        None  # age_idx 子集 0..5 (15-24/25-34/35-44/45-54/55-64/65+)
+    )
+    audience_gender: int | None = None  # 0=女 1=男 None=不限
+    audience_city_tiers: list[int] | None = None  # city_idx 子集 0..4 (T1..T5+)
 
 
 class SimulateRequest(BaseModel):

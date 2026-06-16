@@ -8,6 +8,7 @@ v2 字段 / 仍为默认) 的分位带变化, 落盘对照, 并对未标定项�
 
 依赖方向: spec/ → config (引擎)。不被引擎层反向 import (REG-4)。
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -71,10 +72,16 @@ def calibration_trace(niche: str, *, record_path: str | Path | None = None) -> d
         "after": after,
         "uncalibrated": uncalibrated,
         "source": CALIBRATION_SOURCE,
-        "before_priors": {"reference_price": before_rp, "adoption_rate": before_ar,
-                          "bass": before_bass},
-        "after_priors": {"reference_price": after_rp, "adoption_rate": after_ar,
-                         "bass": after_bass},
+        "before_priors": {
+            "reference_price": before_rp,
+            "adoption_rate": before_ar,
+            "bass": before_bass,
+        },
+        "after_priors": {
+            "reference_price": after_rp,
+            "adoption_rate": after_ar,
+            "bass": after_bass,
+        },
     }
 
     path = Path(record_path) if record_path is not None else _RECORD_PATH

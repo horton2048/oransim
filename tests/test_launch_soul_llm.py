@@ -1,6 +1,7 @@
 """soul_infer_llm_launch — launch 版真 LLM soul 的字段映射 (曾因 campaign/launch 字段
 错位导致 objection/would_pay 丢空)。stub 掉 provider, 断言映射 + 强制规范化 + 错误路径。
 """
+
 from __future__ import annotations
 
 import types
@@ -36,8 +37,11 @@ def _patch(monkeypatch, content):
 
 
 def test_launch_soul_maps_launch_fields(monkeypatch):
-    _patch(monkeypatch, '{"will_try": true, "would_pay_cny": 199, '
-           '"objection": "怕太复杂", "purchase_intent_7d": 0.7}')
+    _patch(
+        monkeypatch,
+        '{"will_try": true, "would_pay_cny": 199, '
+        '"objection": "怕太复杂", "purchase_intent_7d": 0.7}',
+    )
     r = soul_llm.soul_infer_llm_launch(_persona(), caption="咖啡套装上市", platform="xhs")
     assert r["will_try"] is True
     assert r["would_pay_cny"] == 199.0
@@ -49,8 +53,9 @@ def test_launch_soul_maps_launch_fields(monkeypatch):
 
 def test_launch_soul_coerces_messy_values(monkeypatch):
     # 金额带单位、意向越界、objection 缺失 → 规范化
-    _patch(monkeypatch, '{"will_try": "yes", "would_pay_cny": "¥299元", '
-           '"purchase_intent_7d": 1.8}')
+    _patch(
+        monkeypatch, '{"will_try": "yes", "would_pay_cny": "¥299元", ' '"purchase_intent_7d": 1.8}'
+    )
     r = soul_llm.soul_infer_llm_launch(_persona(), caption="x", platform="xhs")
     assert r["would_pay_cny"] == 299.0
     assert r["purchase_intent_7d"] == 1.0  # clamp 到 [0,1]

@@ -22,8 +22,18 @@ if str(BACKEND) not in sys.path:
 GOLDEN = Path(__file__).parent / "golden" / "launch_ideas.jsonl"
 
 # 原 10 campaign 品类 (v1 基线)
-_V1_KEYS = ["beauty", "fashion", "food", "beverage", "fitness",
-           "electronics", "travel", "home", "pet", "parenting"]
+_V1_KEYS = [
+    "beauty",
+    "fashion",
+    "food",
+    "beverage",
+    "fitness",
+    "electronics",
+    "travel",
+    "home",
+    "pet",
+    "parenting",
+]
 
 
 # ═══════════════════════════════════════ AT-M8-01 ═══════════════════════════
@@ -134,18 +144,23 @@ def test_at_m8_03_calibration_traceable(tmp_path):
 def test_at_m8_04_golden_accuracy_no_regression():
     """扩品类与 synonyms 后重跑 AT-M2-01 → 准确率仍 ≥85%；3 条 B2B 反例仍硬拒绝."""
     import os
+
     os.environ["LLM_MODE"] = "mock"
     from oransim.spec.extract import extract_spec
     from oransim.spec.ground import ground
 
-    rows = [json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines()
-            if line.strip()]
+    rows = [
+        json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     positives = [r for r in rows if not r.get("expect_reject")]
     b2b = [r for r in rows if r.get("reject_reason") == "b2b"]
 
-    ok = sum(1 for r in positives
-             if not (g := ground(extract_spec(r["idea_text"]))).rejected
-             and g.niche_key == r["expected_niche_key"])
+    ok = sum(
+        1
+        for r in positives
+        if not (g := ground(extract_spec(r["idea_text"]))).rejected
+        and g.niche_key == r["expected_niche_key"]
+    )
     rate = ok / len(positives)
     print(f"\n[AT-M8-04] golden accuracy after v2: {ok}/{len(positives)} = {rate:.1%}")
     assert rate >= 0.85, f"扩品类后准确率 {rate:.1%} 回退到 85% 以下"
@@ -167,22 +182,29 @@ def test_at_m8_live_golden_accuracy_after_v2():
     """
     os.environ["LLM_MODE"] = "api"
     from oransim.agents.soul_llm import llm_available
+
     if not llm_available():
         pytest.skip("no live LLM provider available")
 
     from oransim.spec.extract import extract_spec
     from oransim.spec.ground import ground
 
-    rows = [json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines()
-            if line.strip()]
+    rows = [
+        json.loads(line) for line in GOLDEN.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     positives = [r for r in rows if not r.get("expect_reject")]
     b2b = [r for r in rows if r.get("reject_reason") == "b2b"]
 
-    ok = sum(1 for r in positives
-             if not (g := ground(extract_spec(r["idea_text"]))).rejected
-             and g.niche_key == r["expected_niche_key"])
+    ok = sum(
+        1
+        for r in positives
+        if not (g := ground(extract_spec(r["idea_text"]))).rejected
+        and g.niche_key == r["expected_niche_key"]
+    )
     rate = ok / len(positives)
     print(f"\n[M8 LIVE] golden accuracy after v2: {ok}/{len(positives)} = {rate:.1%}")
     assert rate >= 0.85, f"live 扩品类后准确率 {rate:.1%} < 85%"
     for r in b2b:
-        assert ground(extract_spec(r["idea_text"])).rejected, f"live: B2B 漏过 {r['idea_text'][:24]}"
+        assert ground(
+            extract_spec(r["idea_text"])
+        ).rejected, f"live: B2B 漏过 {r['idea_text'][:24]}"

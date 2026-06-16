@@ -4,6 +4,7 @@ LLM_MODE=mock: 关键词匹配 + 品类默认预算/价格表, 零网络出站, 
 LLM_MODE=api : call_llm_json_with_retry() + provenance span, 结构化 JSON.
 规范 §3.2.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,17 +19,21 @@ from .schema import ProductSpec, SpecField
 # ---------------------------------------------------------------------------
 
 CATEGORY_DEFAULTS: dict[str, dict[str, Any]] = {
-    "beauty":       {"price_cny": 89.0,  "budget_cny": 50_000.0, "channels": ["xiaohongshu", "douyin"]},
-    "food":         {"price_cny": 25.0,  "budget_cny": 30_000.0, "channels": ["douyin", "xiaohongshu"]},
-    "fitness":      {"price_cny": 199.0, "budget_cny": 60_000.0, "channels": ["xiaohongshu", "douyin"]},
-    "fashion":      {"price_cny": 159.0, "budget_cny": 80_000.0, "channels": ["xiaohongshu", "tiktok"]},
-    "electronics":  {"price_cny": 399.0, "budget_cny": 100_000.0, "channels": ["douyin", "jd"]},
-    "pet":          {"price_cny": 59.0,  "budget_cny": 40_000.0, "channels": ["xiaohongshu"]},
-    "travel":       {"price_cny": 299.0, "budget_cny": 70_000.0, "channels": ["xiaohongshu", "douyin"]},
-    "baby":         {"price_cny": 129.0, "budget_cny": 50_000.0, "channels": ["xiaohongshu"]},
-    "education":    {"price_cny": 199.0, "budget_cny": 40_000.0, "channels": ["xiaohongshu", "weixin"]},
-    "home":         {"price_cny": 89.0,  "budget_cny": 30_000.0, "channels": ["xiaohongshu", "douyin"]},
-    "general":      {"price_cny": 99.0,  "budget_cny": 50_000.0, "channels": ["xiaohongshu", "douyin"]},
+    "beauty": {"price_cny": 89.0, "budget_cny": 50_000.0, "channels": ["xiaohongshu", "douyin"]},
+    "food": {"price_cny": 25.0, "budget_cny": 30_000.0, "channels": ["douyin", "xiaohongshu"]},
+    "fitness": {"price_cny": 199.0, "budget_cny": 60_000.0, "channels": ["xiaohongshu", "douyin"]},
+    "fashion": {"price_cny": 159.0, "budget_cny": 80_000.0, "channels": ["xiaohongshu", "tiktok"]},
+    "electronics": {"price_cny": 399.0, "budget_cny": 100_000.0, "channels": ["douyin", "jd"]},
+    "pet": {"price_cny": 59.0, "budget_cny": 40_000.0, "channels": ["xiaohongshu"]},
+    "travel": {"price_cny": 299.0, "budget_cny": 70_000.0, "channels": ["xiaohongshu", "douyin"]},
+    "baby": {"price_cny": 129.0, "budget_cny": 50_000.0, "channels": ["xiaohongshu"]},
+    "education": {
+        "price_cny": 199.0,
+        "budget_cny": 40_000.0,
+        "channels": ["xiaohongshu", "weixin"],
+    },
+    "home": {"price_cny": 89.0, "budget_cny": 30_000.0, "channels": ["xiaohongshu", "douyin"]},
+    "general": {"price_cny": 99.0, "budget_cny": 50_000.0, "channels": ["xiaohongshu", "douyin"]},
 }
 
 # ---------------------------------------------------------------------------
@@ -37,11 +42,17 @@ CATEGORY_DEFAULTS: dict[str, dict[str, Any]] = {
 
 _PRICE_RE = re.compile(r"[¥￥]?\s*(\d+(?:\.\d+)?)\s*(?:元|RMB|CNY|块|¥)?")
 _CHANNEL_KW: dict[str, str] = {
-    "小红书": "xiaohongshu", "xhs": "xiaohongshu",
-    "抖音": "douyin", "tiktok": "douyin",
-    "微信": "weixin", "wechat": "weixin",
-    "淘宝": "taobao", "天猫": "tmall", "京东": "jd",
-    "bilibili": "bilibili", "b站": "bilibili",
+    "小红书": "xiaohongshu",
+    "xhs": "xiaohongshu",
+    "抖音": "douyin",
+    "tiktok": "douyin",
+    "微信": "weixin",
+    "wechat": "weixin",
+    "淘宝": "taobao",
+    "天猫": "tmall",
+    "京东": "jd",
+    "bilibili": "bilibili",
+    "b站": "bilibili",
     "微博": "weibo",
 }
 
@@ -53,6 +64,7 @@ def _niche_synonyms() -> dict[str, list[str]]:
     if not _NICHE_SYNONYMS:
         try:
             from oransim.config import niches as _n
+
             _NICHE_SYNONYMS = _n.synonyms()
         except Exception:
             pass
@@ -68,13 +80,30 @@ def _detect_category(text: str) -> tuple[str, str]:
             return niche, kws[0] if kws else niche
     # Chinese keyword fallback
     _CH: dict[str, str] = {
-        "美妆": "beauty", "口红": "beauty", "粉底": "beauty", "护肤": "beauty",
-        "食品": "food", "饮料": "food", "零食": "food", "奶": "food", "茶": "food",
-        "健身": "fitness", "运动": "fitness", "蛋白": "fitness",
-        "服装": "fashion", "穿搭": "fashion", "手机壳": "electronics",
-        "数码": "electronics", "耳机": "electronics", "宠物": "pet",
-        "旅行": "travel", "旅游": "travel", "母婴": "baby", "教育": "education",
-        "家居": "home", "家具": "home",
+        "美妆": "beauty",
+        "口红": "beauty",
+        "粉底": "beauty",
+        "护肤": "beauty",
+        "食品": "food",
+        "饮料": "food",
+        "零食": "food",
+        "奶": "food",
+        "茶": "food",
+        "健身": "fitness",
+        "运动": "fitness",
+        "蛋白": "fitness",
+        "服装": "fashion",
+        "穿搭": "fashion",
+        "手机壳": "electronics",
+        "数码": "electronics",
+        "耳机": "electronics",
+        "宠物": "pet",
+        "旅行": "travel",
+        "旅游": "travel",
+        "母婴": "baby",
+        "教育": "education",
+        "家居": "home",
+        "家具": "home",
     }
     for kw, cat in _CH.items():
         if kw in text:
@@ -178,6 +207,7 @@ If no price mentioned, use amount=0."""
 
 def _llm_extract(idea_text: str) -> ProductSpec:
     from oransim.agents.soul_llm import call_llm_json_with_retry, llm_available
+
     if not llm_available():
         return _mock_extract(idea_text)
 
@@ -204,14 +234,18 @@ def _llm_extract(idea_text: str) -> ProductSpec:
 
     def _slist(x):
         out = []
-        for it in (x or []):
+        for it in x or []:
             v = it.get("value", it.get("text")) if isinstance(it, dict) else it
             if v is not None and str(v).strip():
                 out.append(str(v))
         return out
 
     pp = parsed.get("price_point", {})
-    if isinstance(pp, dict) and "value" in pp and not any(k in pp for k in ("amount", "currency", "model")):
+    if (
+        isinstance(pp, dict)
+        and "value" in pp
+        and not any(k in pp for k in ("amount", "currency", "model"))
+    ):
         pp = pp["value"] if isinstance(pp["value"], dict) else {"amount": pp["value"]}
     if not pp or not isinstance(pp, dict):
         pp = {"amount": 0.0, "currency": "CNY", "model": "one_time"}
@@ -246,6 +280,7 @@ def _llm_extract(idea_text: str) -> ProductSpec:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def extract_spec(idea_text: str) -> ProductSpec:
     """Extract ProductSpec from free-text idea (dual mode: mock or LLM)."""

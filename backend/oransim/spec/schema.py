@@ -3,6 +3,7 @@
 模式照抄 data/schema/canonical.py: extra='forbid' + 独立 schema_version.
 忠实度三元标记: provenance / inferred / default_applied (规范 §3.2).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,6 +20,7 @@ class SpecField(BaseModel):
 
     每个 ProductSpec 的细粒度字段可用此类携带 provenance/inferred/default_applied.
     """
+
     model_config = ConfigDict(extra="forbid")
 
     value: Any
@@ -27,7 +29,7 @@ class SpecField(BaseModel):
     provenance: list[dict[str, int]] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _force_inferred_when_no_provenance(self) -> "SpecField":
+    def _force_inferred_when_no_provenance(self) -> SpecField:
         if not self.provenance and not self.default_applied:
             self.inferred = True
         return self
@@ -45,6 +47,7 @@ class ProductSpec(BaseModel):
     - default_applied: True when a system default was used.
     - fields: optional fine-grained per-field metadata (SpecField).
     """
+
     model_config = ConfigDict(extra="forbid")
 
     product_name: str
@@ -69,7 +72,7 @@ class ProductSpec(BaseModel):
     schema_version: str = SCHEMA_VERSION
 
     @model_validator(mode="after")
-    def _enforce_faithfulness(self) -> "ProductSpec":
+    def _enforce_faithfulness(self) -> ProductSpec:
         # Red line: no provenance at top level → must be inferred
         if not self.provenance and not self.default_applied:
             self.inferred = True

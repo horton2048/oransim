@@ -12,6 +12,7 @@ p = 创新系数 (外部驱动, 对应 Hawkes 基率 μ), q = 模仿系数 (口�
 收入时间线 = 每日 conversion 桶 × price_cny (调用方算)。
 依赖方向: diffusion → data/config (引擎内), 不 import spec (REG-4)。
 """
+
 from __future__ import annotations
 
 import math
@@ -22,9 +23,9 @@ from typing import Any
 from .base import DiffusionConfig, DiffusionForecast, DiffusionModel
 
 # 未标定 Bass 先验 (报告需标注「未经真实数据标定」)
-_DEFAULT_BASS_P = 0.03   # 创新系数
-_DEFAULT_BASS_Q = 0.38   # 模仿系数 (q > p → 曲线有内部峰值)
-_DEFAULT_M = 10_000.0     # 兜底市场潜量 (无 population 时)
+_DEFAULT_BASS_P = 0.03  # 创新系数
+_DEFAULT_BASS_Q = 0.38  # 模仿系数 (q > p → 曲线有内部峰值)
+_DEFAULT_M = 10_000.0  # 兜底市场潜量 (无 population 时)
 
 
 def market_potential(population, niche: str) -> float:
@@ -36,8 +37,8 @@ def market_potential(population, niche: str) -> float:
     from oransim.config import niches as _niches
     from oransim.data.fan_profile import fan_weight_vector
 
-    w = fan_weight_vector(population, niche)        # (N,) 只读, mean-1 归一
-    weighted_mass = float(w.sum())                  # 加权可达质量 (≈ N)
+    w = fan_weight_vector(population, niche)  # (N,) 只读, mean-1 归一
+    weighted_mass = float(w.sum())  # 加权可达质量 (≈ N)
     rate = _niches.adoption_rate_prior(niche)
     return weighted_mass * rate
 
@@ -45,10 +46,11 @@ def market_potential(population, niche: str) -> float:
 @dataclass
 class BassSaturatedConfig(DiffusionConfig):
     """Bass 饱和配置: 在 DiffusionConfig 上加 p/q/m。"""
+
     bass_p: float = _DEFAULT_BASS_P
     bass_q: float = _DEFAULT_BASS_Q
     market_m: float = _DEFAULT_M
-    sub_steps_per_day: int = 24   # Euler 子步 (日内积分精度)
+    sub_steps_per_day: int = 24  # Euler 子步 (日内积分精度)
 
 
 class BassSaturatedHawkes(DiffusionModel):
@@ -101,7 +103,7 @@ class BassSaturatedHawkes(DiffusionModel):
             day_new = 0.0
             for s in range(steps):
                 sat = max(0.0, m - n)
-                intensity = (p + q * n / m) * sat          # dN/dt
+                intensity = (p + q * n / m) * sat  # dN/dt
                 dn = intensity * dt
                 # 不越过 m
                 dn = min(dn, max(0.0, m - n))
@@ -121,7 +123,9 @@ class BassSaturatedHawkes(DiffusionModel):
             daily_buckets=daily_buckets,
             latent={
                 "backend": "bass_saturated_hawkes",
-                "p": p, "q": q, "m": m,
+                "p": p,
+                "q": q,
+                "m": m,
                 "n_final": n,
                 "calibrated": False,
                 "note": "Bass p/q/m 未经真实数据标定 (niches.json v2 先验)",
@@ -155,7 +159,7 @@ class BassSaturatedHawkes(DiffusionModel):
         pass
 
     @classmethod
-    def load_pretrained(cls, path: str | None = None, **kwargs: Any) -> "BassSaturatedHawkes":
+    def load_pretrained(cls, path: str | None = None, **kwargs: Any) -> BassSaturatedHawkes:
         # 解析模型, 无 checkpoint 概念
         return cls(**kwargs)
 
@@ -189,6 +193,6 @@ def blend_intensity_curves(
         elif d >= splice_end:
             out.append(curve_b[d])
         else:
-            wb = (d - splice_start) / span        # 0→1 across window
+            wb = (d - splice_start) / span  # 0→1 across window
             out.append((1.0 - wb) * curve_a[d] + wb * curve_b[d])
     return out

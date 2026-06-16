@@ -7,6 +7,7 @@ SandboxStore 一致)。多 worker / Redis 持久化显式为不做项。
 
 spec_id 内容无关 (uuid hex); revision 从 0 递增。
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -20,7 +21,7 @@ _DEFAULT_CACHE = Path("/tmp/oransim_specs.json")
 
 # spec_id → [ProductSpec, ...] (index = revision)
 _STORE: dict[str, list[ProductSpec]] = {}
-_LOCALE: dict[str, str] = {}   # spec_id → locale (报告市场环境标注用)
+_LOCALE: dict[str, str] = {}  # spec_id → locale (报告市场环境标注用)
 _CACHE_PATH: Path = _DEFAULT_CACHE
 
 
@@ -84,6 +85,7 @@ def exists(spec_id: str) -> bool:
 
 
 # ---------------------------------------------------------------- file cache
+
 
 def _flush() -> None:
     """落盘 (world_events 同款; 失败静默, 不阻塞 API)。"""

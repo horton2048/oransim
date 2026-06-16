@@ -461,11 +461,13 @@ def bootstrap_default_sources() -> None:
     BUS.register("competitor_signal", HashTextEmbedder(seed_offset=30), notes="竞品历史投放素材")
     # M2 grounding 双源: 品类代表向量 (synonyms 兜底) + 品类语料覆盖 (置信度标定)
     BUS.register(
-        "product_categories", HashTextEmbedder(seed_offset=40),
+        "product_categories",
+        HashTextEmbedder(seed_offset=40),
         notes="各 niche 代表文案；grounding 嵌入兜底 (spec/ground.py)",
     )
     BUS.register(
-        "category_notes", HashTextEmbedder(seed_offset=41),
+        "category_notes",
+        HashTextEmbedder(seed_offset=41),
         notes="按 niche 的语料覆盖；grounding 置信度 + substitute_pressure 标定",
     )
     BUS.register("macro_econ", TabularEmbedder(in_dim=10), notes="宏观经济 / CPI / 消费信心")

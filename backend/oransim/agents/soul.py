@@ -424,9 +424,7 @@ class SoulAgentPool:
         镜像 infer_one 但换成 try/pay/objection 语义。"""
         p = self.personas[persona_id]
         base = trial_prob
-        if kol and any(
-            n in p.interests for n in [kol.niche, _niche_en_to_zh().get(kol.niche, "")]
-        ):
+        if kol and any(n in p.interests for n in [kol.niche, _niche_en_to_zh().get(kol.niche, "")]):
             base = min(1.0, base * 1.3)
         will_try = rng.random() < min(1.0, base * 1.2)
 

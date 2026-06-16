@@ -65,3 +65,18 @@ htmlcov/
 
 # MkDocs
 site/
+
+# Agent / tooling local state (not for the repo)
+.claude/
+.playwright-mcp/
+.run-backend.log
+.run-frontend.log
+.run-backend.err.log
+.run-frontend.err.log
+
+# Test scratch outputs (golden actuals are regenerated, not committed)
+tests/golden/*.actual.json
+
+# Local debug scratch
+scripts/p1.json
+scripts/p2.json

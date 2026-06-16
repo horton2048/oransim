@@ -17,6 +17,7 @@
 依赖方向: agents 是引擎层, 禁止依赖 spec 包 (REG-4)。spec 对象由调用方
 (api_routers/launch.py) 以 model_dump() 字典传入, 本模块只收 dict。
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -101,8 +102,14 @@ def build_launch_report(
     grounding_confidence = float(grounding.get("grounding_confidence", 0.0))
 
     # ---- 头部: 假设回显 + 三色来源 ----
-    spec_fields = ["product_name", "one_liner", "category_raw", "target_user_raw",
-                   "price_point", "channels_hint"]
+    spec_fields = [
+        "product_name",
+        "one_liner",
+        "category_raw",
+        "target_user_raw",
+        "price_point",
+        "channels_hint",
+    ]
     header = {
         "disclaimer": FIRST_SENTENCE,
         "grounding_confidence": grounding_confidence,
@@ -151,7 +158,7 @@ def build_launch_report(
         {
             "will_try": p.get("will_try"),
             "would_pay_cny": p.get("would_pay_cny"),
-            "objection": p.get("objection", ""),   # 原话逐字
+            "objection": p.get("objection", ""),  # 原话逐字
             "purchase_intent_7d": p.get("purchase_intent_7d"),
         }
         for p in launch_personas

@@ -8,13 +8,14 @@ AudienceFilter intern (红线, 规范 §3.3): 对 (spec_id, 修正版本号) 做
 禁止改 hash_tuple() 的 id() 语义; intern 的归属点在本文件, 不在 hash_tuple()。
 部署假设单 worker (与 SandboxStore 一致), 进程内 dict 即可。
 """
+
 from __future__ import annotations
 
 from oransim.platforms.xhs.world_model_legacy import AudienceFilter
 
 from .extract import extract_spec
 from .normalize import normalize_spec
-from .scenario_gen import CompiledScenario, compile_scenario, _make_audience_filter
+from .scenario_gen import CompiledScenario, _make_audience_filter, compile_scenario
 from .schema import ProductSpec
 
 # (spec_id, revision) → AudienceFilter 实例. 同版本重编译复用同一对象。

@@ -274,16 +274,22 @@ def soul_infer_llm_launch(
     t0 = time.time()
     try:
         result = provider.generate(
-            system=SYSTEM_LAUNCH, user=prompt, model=MODEL,
-            temperature=0.7, max_tokens=250, stream=stream_ok,
+            system=SYSTEM_LAUNCH,
+            user=prompt,
+            model=MODEL,
+            temperature=0.7,
+            max_tokens=250,
+            stream=stream_ok,
         )
         raw = _extract_json_strict(result.content)
+
         # 字段强制规范化 (LLM 可能给字符串金额 / 缺字段)
         def _num(v, default=0.0):
             try:
                 return float(str(v).replace("¥", "").replace("元", "").strip())
             except Exception:
                 return default
+
         intent = _num(raw.get("purchase_intent_7d"), 0.1)
         parsed = {
             "will_try": bool(raw.get("will_try")),

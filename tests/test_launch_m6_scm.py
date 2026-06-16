@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 BACKEND = Path(__file__).parent.parent / "backend"
 if str(BACKEND) not in sys.path:
@@ -24,7 +23,7 @@ if str(BACKEND) not in sys.path:
 
 def _runner_and_baseline(platform_alloc=None, with_kol=True):
     from oransim.agents.statistical import StatisticalAgents
-    from oransim.causal.counterfactual import ScenarioRunner, Scenario
+    from oransim.causal.counterfactual import Scenario, ScenarioRunner
     from oransim.data.creatives import make_creative
     from oransim.data.kols import generate_kol_library, pick_kol_by_spec
     from oransim.data.population import generate_population
@@ -39,8 +38,13 @@ def _runner_and_baseline(platform_alloc=None, with_kol=True):
         kpp = {p: pick_kol_by_spec(kols, p, niche="beauty") for p in alloc}
     cre = make_creative(creative_id="m6-base", caption="新品面膜 上市种草", duration_sec=15.0)
     sc = Scenario(
-        creative=cre, total_budget=50000.0, platform_alloc=alloc,
-        kol_per_platform=kpp, seed=42, price_cny=89.0, substitute_pressure=0.5,
+        creative=cre,
+        total_budget=50000.0,
+        platform_alloc=alloc,
+        kol_per_platform=kpp,
+        seed=42,
+        price_cny=89.0,
+        substitute_pressure=0.5,
     )
     base = runner.run(sc, n_monte_carlo=5)
     return runner, sc, base
@@ -58,15 +62,24 @@ def test_at_m6_01_graph_additive_only():
 
     # 旧图代表性节点/边仍在 (只增不改)
     old_repr_nodes = {
-        "competitor_action", "total_budget", "platform_alloc", "conversion",
-        "click", "impression_dist", "audience_match", "direct_revenue", "add_to_cart",
+        "competitor_action",
+        "total_budget",
+        "platform_alloc",
+        "conversion",
+        "click",
+        "impression_dist",
+        "audience_match",
+        "direct_revenue",
+        "add_to_cart",
     }
     assert old_repr_nodes <= names, "旧图节点缺失 — 违反只增不改"
 
     edges = {(s, t) for s, t in scm.EDGES}
     old_repr_edges = {
-        ("competitor_action", "ecpm_bid"), ("total_budget", "impression_dist"),
-        ("platform_alloc", "impression_dist"), ("conversion", "direct_revenue"),
+        ("competitor_action", "ecpm_bid"),
+        ("total_budget", "impression_dist"),
+        ("platform_alloc", "impression_dist"),
+        ("conversion", "direct_revenue"),
         ("add_to_cart", "conversion"),
     }
     assert old_repr_edges <= edges, "旧图边缺失 — 违反只增不改"
@@ -92,8 +105,12 @@ def test_at_m6_02_new_graph_converges():
     assert base["converged"] is True
     assert base["spectral_radius"] < 1.0
 
-    for do in [{"price_point": 1.3}, {"launch_channel_mix": 1.0},
-               {"competitor_action": 0.8}, {"total_budget": 2.0}]:
+    for do in [
+        {"price_point": 1.3},
+        {"launch_channel_mix": 1.0},
+        {"competitor_action": 0.8},
+        {"total_budget": 2.0},
+    ]:
         eq = equilibrium_under_do(do)
         assert eq["converged"] is True, f"do {do} 未收敛"
         assert eq["spectral_radius"] < 1.0, f"do {do} 谱半径 ≥ 1"
@@ -175,6 +192,7 @@ def test_at_m6_05_substitute_pressure_wiring():
 
     # competitor_action 节点确实存在 (既有, 非新增)
     from oransim.causal import scm
+
     assert any(n.name == "competitor_action" for n in scm.NODES)
 
 
@@ -211,10 +229,11 @@ def test_at_m6_07_protected_modules_untouched():
     """
     import inspect
 
+    from oransim.causal.cate import __name__ as _cate_name  # noqa: F401
+
     # 1. 受保护面存在且签名完好
     from oransim.causal.counterfactual import ScenarioRunner
     from oransim.causal.fixed_point import banach_iterate, solve_linear_scm  # noqa: F401
-    from oransim.causal.cate import __name__ as _cate_name  # noqa: F401
     from oransim.causal.scm import equilibrium_under_do
     from oransim.data.population import generate_population  # noqa: F401
 
