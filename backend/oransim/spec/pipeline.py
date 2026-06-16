@@ -42,6 +42,17 @@ def reset_intern() -> None:
     _AUDIENCE_INTERN.clear()
 
 
+def _aud_sig(flt: AudienceFilter) -> tuple:
+    """AudienceFilter 的值签名 (用于按值 intern, 保证同定向→同实例→hash 稳定/可复现)。"""
+    return (
+        tuple(flt.age_buckets) if flt.age_buckets else None,
+        flt.gender,
+        tuple(flt.city_tiers) if flt.city_tiers else None,
+        tuple(flt.interest_keywords) if flt.interest_keywords else None,
+        flt.boost_strength,
+    )
+
+
 def compile_spec(
     spec: ProductSpec,
     *,
@@ -50,13 +61,24 @@ def compile_spec(
     kols=None,
     budget_hint_cny: float | None = None,
     seed: int = 0,
+    audience_override: AudienceFilter | None = None,
 ) -> CompiledScenario:
     """Stage 4: 编译为 Scenario (M3). AudienceFilter 经 (spec_id, revision) intern。
 
     同一 (spec_id, revision) 重编译 → 同 AudienceFilter 实例 → hash_tuple() 相等。
     revision 改变 → 新实例 → hash 改变 (旧缓存语义失效)。
+
+    audience_override (结构化人群定向, launch C 端用): 给定则按 (spec_id, revision, 值签名) intern,
+    替代 spec 文本派生的软定向；同定向值复用同实例 → hash 稳定 + 结果可复现。不给则维持原行为。
     """
-    flt = _intern_audience_filter(spec, spec_id, revision)
+    if audience_override is not None:
+        key = (spec_id, int(revision), _aud_sig(audience_override))
+        flt = _AUDIENCE_INTERN.get(key)
+        if flt is None:
+            flt = audience_override
+            _AUDIENCE_INTERN[key] = flt
+    else:
+        flt = _intern_audience_filter(spec, spec_id, revision)
     return compile_scenario(
         spec,
         audience_filter=flt,

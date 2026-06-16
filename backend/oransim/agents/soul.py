@@ -478,7 +478,16 @@ class SoulAgentPool:
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             from . import async_pool, llm_dedup, stream_memory
-            from .soul_llm import estimate_cost_cny, llm_available, soul_infer_llm
+            from .soul_llm import (
+                estimate_cost_cny,
+                llm_available,
+                soul_infer_llm,
+                soul_infer_llm_launch,
+            )
+
+            # launch 模式用 launch 版 LLM soul (产 will_try/would_pay/objection),
+            # 否则 campaign 版 (will_click/reason/feel)。
+            _infer_fn = soul_infer_llm_launch if mode == "launch" else soul_infer_llm
 
             if llm_available():
                 kol_kwargs = dict(
@@ -496,9 +505,11 @@ class SoulAgentPool:
                 def _post(pid, r):
                     p = self.personas[pid]
                     if "_error" in r:
-                        r = self.infer_one(
-                            pid, creative, outcome_click_probs.get(pid, 0.05), kol, platform, rng
-                        )
+                        _cp = outcome_click_probs.get(pid, 0.05)
+                        if mode == "launch":
+                            r = self.infer_one_launch(pid, creative, _cp, kol, platform, rng)
+                        else:
+                            r = self.infer_one(pid, creative, _cp, kol, platform, rng)
                         r["source"] = "mock-fallback"
                     else:
                         r["source"] = "llm"
@@ -575,10 +586,10 @@ class SoulAgentPool:
                         )
                         r = llm_dedup.dedup_call(
                             key,
-                            lambda: soul_infer_llm(persona=p, **kol_kwargs),
+                            lambda: _infer_fn(persona=p, **kol_kwargs),
                         )
                     else:
-                        r = soul_infer_llm(persona=p, **kol_kwargs)
+                        r = _infer_fn(persona=p, **kol_kwargs)
                     return _post(pid, r)
 
                 # floor at 1: ThreadPoolExecutor(max_workers=0) raises ValueError,

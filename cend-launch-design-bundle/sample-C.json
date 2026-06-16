@@ -1,0 +1,85 @@
+{
+  "_bundle_meta": {
+    "tier": "C",
+    "tier_label": "C · LLM 情景推演",
+    "source": "DESIGN-TARGET — 后端尚未实现。本样例为手写设计目标，定义 C 档的产出契约，供 open-design 据此设计；非真后端响应。",
+    "what_is_real": "无。C 档是本次新建的能力（真 LLM 出定性情景），当前后端对这类想法是硬拒的。",
+    "why": "用户的工作流是「先定前端、再据此改后端」。C 档正是那一档：前端定下形态后，我据此实现后端 LLM 情景推演模块。",
+    "honest_redline": "C 档绝不产精确 KPI（无 reach/conversions/revenue 分位带）。一切量级都是数量级 / 超宽区间，且逐字标注「数量级估计，非校准」。视觉必须与 A 档（精确分位带）明显区分，绝不借用 A 档的精确数字外观。"
+  },
+  "tier": "C",
+  "tier_label": "C · LLM 情景推演",
+  "disclaimer": "这是带标注不确定性的情景推演，不是预测",
+  "uncalibrated": true,
+  "no_kpi": true,
+  "no_kpi_note": "C 档不产精确 KPI：没有 reach/trials/adopters/revenue 的分位带。下方一切量级均为数量级估计，逐字标注「非校准」。",
+  "grounding_confidence": null,
+  "routed_reason": "b2b — 引擎无校准语料，分诊台不再硬拒，路由到 C 档定性推演",
+  "assumed_fields": [
+    "市场环境按中国市场推演",
+    "无校准语料 → 全部为 LLM 定性估计"
+  ],
+  "header": {
+    "disclaimer": "这是带标注不确定性的情景推演，不是预测",
+    "tier_badge": "C · LLM 情景推演 · 未校准",
+    "assumptions": [
+      { "field": "product_name", "value": "给中小制造厂的 AI 智能排产 SaaS，按工位每月收费", "source": "用户原话" },
+      { "field": "one_liner", "value": "工厂排产从老师傅拍脑袋，换成算法自动排，按工位月费订阅", "source": "用户原话" },
+      { "field": "category_raw", "value": "B2B 工业软件 / SaaS（引擎无此垂类校准语料）", "source": "LLM 推断" },
+      { "field": "target_user_raw", "value": "中小型离散制造厂的生产/计划负责人", "source": "LLM 推断" },
+      { "field": "price_point", "value": { "amount": null, "model": "per_seat_subscription", "note": "按工位月费，具体未给定" }, "source": "LLM 推断" },
+      { "field": "channels_hint", "value": ["行业展会", "渠道代理", "老板社群转介绍"], "source": "LLM 推断" }
+    ]
+  },
+  "scenario": {
+    "market_sizing": {
+      "label": "市场盘子（数量级估计，非校准）",
+      "magnitude_only": true,
+      "range_low": 200000000,
+      "range_high": 2000000000,
+      "unit": "CNY / 年（可服务市场 SAM）",
+      "interval_note": "跨一个数量级——这是有意的超宽区间，反映「测不准」而非精确",
+      "basis": "LLM 定性估计：中小离散制造厂数量 × 渗透率 × 客单，三项均为粗估"
+    },
+    "buyer_personas": [
+      {
+        "who": "厂长 / 老板（决策与买单）",
+        "jobs_to_be_done": "降人力依赖、交期更稳、少压库存",
+        "willingness": "看得见 ROI 才掏钱，怕上了系统反而乱",
+        "objection": "我们老师傅排了二十年也没出大事，凭什么信算法"
+      },
+      {
+        "who": "生产计划员（日常使用者）",
+        "jobs_to_be_done": "少加班、插单不慌、对得上老板的临时要求",
+        "willingness": "好用就用，难用就架空",
+        "objection": "录入太麻烦的话我宁可用 Excel"
+      },
+      {
+        "who": "车间主任（落地阻力点）",
+        "jobs_to_be_done": "工人听话、机台别空转",
+        "willingness": "中性偏抵触",
+        "objection": "系统排的顺序工人不认，照样自己调"
+      }
+    ],
+    "channels": [
+      { "channel": "行业展会 / 垂直媒体", "fit": "高——决策人聚集，但转化周期长" },
+      { "channel": "渠道代理 / 系统集成商", "fit": "高——借其既有工厂关系，但要分润且控不住交付质量" },
+      { "channel": "老板社群口碑转介绍", "fit": "中高——B2B 信任驱动，慢但扎实" },
+      { "channel": "线上投放（抖音/小红书）", "fit": "低——决策人不在这买工业软件，别照搬 C 端打法" }
+    ],
+    "adoption_shape": {
+      "shape": "长导入期 + 滞后陡峭 S 曲线",
+      "no_numbers": true,
+      "narrative": "前期极慢：每家都要 POC、对接 ERP/工单、改工人习惯，6–18 个月才跑通一家标杆。一旦同行业出现可复制的标杆案例，渠道与口碑会带来一段陡峭放量，随后被服务交付能力（而非需求）卡住增速。",
+      "contrast_with_A": "与 A 档「90 天日采纳曲线」根本不同：C 档不给逐日数字，只给曲线的形状与拐点逻辑"
+    },
+    "key_risks": [
+      "交付即服务：卖出去只是开始，落地实施重，交付能力是真天花板",
+      "数据脏：中小厂工单/BOM 数据不规范，算法吃不到干净输入",
+      "人治惯性：车间主任/老师傅架空系统，工具沦为摆设",
+      "回款与现金流：中小制造业账期长、预算紧，订阅制未必收得动",
+      "巨头下场：用友/金蝶等一旦做轻量排产模块，渠道与信任碾压"
+    ],
+    "confidence_note": "以上全部为 LLM 定性推演，无任何校准数据支撑。把它当作「该往哪些方向做尽调」的起点，不是「会发生什么」的预测。"
+  }
+}

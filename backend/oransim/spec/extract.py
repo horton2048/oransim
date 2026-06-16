@@ -195,24 +195,47 @@ def _llm_extract(idea_text: str) -> ProductSpec:
     except Exception:
         return _mock_extract(idea_text)
 
+    # 部分模型 (如 agnes) 会把字段返回成 {"value":..., "provenance":...} 对象 (我们的
+    # prompt 允许带 provenance)。统一解包成标量, 否则 str(dict) 会把整坨字典塞进字段。
+    def _sval(x, default=""):
+        if isinstance(x, dict):
+            x = x.get("value", x.get("text", default))
+        return default if x is None else str(x)
+
+    def _slist(x):
+        out = []
+        for it in (x or []):
+            v = it.get("value", it.get("text")) if isinstance(it, dict) else it
+            if v is not None and str(v).strip():
+                out.append(str(v))
+        return out
+
     pp = parsed.get("price_point", {})
+    if isinstance(pp, dict) and "value" in pp and not any(k in pp for k in ("amount", "currency", "model")):
+        pp = pp["value"] if isinstance(pp["value"], dict) else {"amount": pp["value"]}
     if not pp or not isinstance(pp, dict):
         pp = {"amount": 0.0, "currency": "CNY", "model": "one_time"}
 
+    def _amt(v):
+        try:
+            return float(str(_sval(v, "0")).replace("¥", "").replace("元", "").strip() or 0)
+        except Exception:
+            return 0.0
+
     return ProductSpec(
-        product_name=str(parsed.get("product_name", idea_text[:40])),
-        one_liner=str(parsed.get("one_liner", idea_text[:80])),
-        category_raw=str(parsed.get("category_raw", "")),
-        target_user_raw=str(parsed.get("target_user_raw", "")),
+        product_name=_sval(parsed.get("product_name"), idea_text[:40]),
+        one_liner=_sval(parsed.get("one_liner"), idea_text[:80]),
+        category_raw=_sval(parsed.get("category_raw"), ""),
+        target_user_raw=_sval(parsed.get("target_user_raw"), ""),
         price_point={
-            "amount": float(pp.get("amount", 0.0)),
-            "currency": str(pp.get("currency", "CNY")),
-            "model": str(pp.get("model", "one_time")),
+            "amount": _amt(pp.get("amount", 0.0)),
+            "currency": _sval(pp.get("currency"), "CNY"),
+            "model": _sval(pp.get("model"), "one_time"),
         },
-        differentiation=list(parsed.get("differentiation") or []),
-        substitutes_raw=list(parsed.get("substitutes_raw") or []),
-        channels_hint=list(parsed.get("channels_hint") or []),
-        value_props=list(parsed.get("value_props") or []),
+        differentiation=_slist(parsed.get("differentiation")),
+        substitutes_raw=_slist(parsed.get("substitutes_raw")),
+        channels_hint=_slist(parsed.get("channels_hint")),
+        value_props=_slist(parsed.get("value_props")),
         confidence=0.75,
         provenance=[{"start": 0, "end": len(idea_text)}],
         inferred=False,

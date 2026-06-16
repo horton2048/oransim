@@ -29,7 +29,27 @@
 
 | D16 | 2026-06-13 | **字体取扎实降级栈、不全量自托管**：v3 三套字体 var 补优秀系统 CJK 回退；Google Fonts 留渐进增强 | CJK 全量自托管 = 数 MB woff2（Google 按 unicode-range 切上百子集），为「挂了回退系统字体」的装饰项塞这么多不成比例；扎实降级栈即可保证挂了也好看 | ⚠待复核（若公网全离线必须零外网字体请求：用 pyftsubset 把静态标题字 subset 自托管 + 动态文本走系统字体） |
 
+| D17 | 2026-06-15 | **宿主纠正（用户驳回 D1）**：产品前端 = 独立 `launch-console.html`（照 v4-console 视觉做 launch 版），**不是**把回放挂进旧 `frontend/` campaign 广告文案 SPA。M4 挂 tab 那步作废 | 用户明确："v4-console 才是我要的样子；挂进旧 SPA 完全不对"。复用真资产（适配器/后端路由/v3 回放）不变 | — |
+| D18 | 2026-06-15 | **卡片映射（"都保留"遇无数据时的替换，FE-M5）**：五阶漏斗→指标分位带(P35/P50/P65)；KOL优选→命名干预叙事卡；分平台/宏观→降级(渠道占比/潜在盘/季节窗，标 stub/未校准)；KPI 6→触达/试用/采纳/采纳率/营收/回本；龙卷风→干预卡Δ采纳 | launch 后端无五阶漏斗/无KOL块；卡槽保留+填最贴近的 launch 等价物，既守"都保留"又不留空壳/不伪造 | ⚠待复核（你看 filled 截图后定这些替换是否合意） |
+| D19 | 2026-06-15 | **采纳率显示精度**：现 pct() 1 位小数→微小率显 0.0%（如 27/1.67M）。本轮未改 | 信息量不足但非错（真值就这么小）；打磨项 | ⚠待复核（要不要改成 万分比/更多小数） |
+
+| D20 | 2026-06-15 | **删 launch-console 的死 Smiley @font-face**：原 v4 的 得意黑 两个 jsdelivr CDN 均 404（v4 本就回退 Noto），删 @font-face + --disp 改纯 Noto → console 0 报错 | 消除外网噪声/404；与 v4 实际渲染一致（v4 也没真加载到 Smiley）；得意黑本体如需→自托管 woff2 到 vendor/ 再加回 | ⚠待复核（要不要自托管 得意黑 显示字体提升标题观感） |
+
+| D21 | 2026-06-15 | **reveal overlay 最短 1.8s**：真后端可能 <1s 响应，纯绑后端会让揭幕动画一闪而过失去 v4 仪式感；故 overlay 至少跑 1.8s（数据更快也跑满，更慢则等数据）后揭幕 | 还原 v4 那个刻意 ~2s 的「唤醒十万人群」揭幕感；render 在 overlay 后揭幕（数据先填充背后） | — |
+
+| D22 | 2026-06-15 | **修 bug：拒绝/错误消息被「待预演」遮罩盖住**（用户实测「划词解释工具/vibecoding」→「没反应」）。根因：#disclaimer 在 position:relative 容器内、#idle veil(absolute inset:0) 之下；拒绝路径不调 render() 故 idle 不隐藏→消息被盖。修：把 #disclaimer 移到遮罩外（容器上方，任何状态可见）+ 拒绝文案改为「无法模拟：只推演消费品上市…」明示原因 | 后端对非消费品类(开发者工具/SaaS)正确硬拒绝是设计行为；问题只在前端没把拒绝可见化 | 注：launch 模型只建模消费品采纳；dev-tool/SaaS 本就不在范围（非 bug，是 scope） |
+
+| D23 | 2026-06-15 | **会火指数公式（FE-M6 启发式）**：score=40%意向+35%试用率+25%置信，0-100。mock 模式 persona 意向普遍低(~0.02)→多数想法落 24-40 分(★1-2)、显「存疑」 | C端要一个直观「会不会火」总分；当前 mock 数据意向低导致分数偏低且区间窄，真 LLM 模式会更有区分度 | ⚠待复核（公式权重/锚定；要不要拉高区分度、或换更乐观的口径；真 LLM 下重校） |
+| D24 | 2026-06-15 | **分享=复制文案/截图（最小实现）**：点「分享这张卡」复制一句结果摘要到剪贴板 + 提示截图；无图片生成/短链/海报 | 先打通主流程，海报/分享图是独立增量 | ⚠待复核（要不要做分享海报图/短链） |
+
+| D25 | 2026-06-15 | **结构化人群定向（FE-M6，用户要求「调模拟目标用户参数」）→ 后端增量已落**：SimulateOverrides 加 audience_age_buckets/gender/city_tiers；compile_spec 加 audience_override（按值 intern 保 hash 稳定/可复现）；_simulate_sync 构造 AudienceFilter 注入。前端 launch-c 加「细调目标人群」可展开区(性别单选/年龄+城市多选 chips)。复用世界模型 `_audience_score`（命中×2/其余÷2 软定向） | 用户选「结构化(需后端增量)」而非轻量文字版；人群本体已有 age/gender/city 维度、机制现成，增量小且真实生效 | 实测：面膜定向女 vs 男 → 采纳 51 vs 21（2.4×，方向合理）；pytest 4/4 + 回归 28/28；souls/会火指数对定向不敏感(souls 采样未按受众, 见 D23) ⚠待复核(要不要让 souls 也按受众采样) |
+
+| D26 | 2026-06-16 | **修 bug：diorama 回放对无 fan-prior 品类失真**（用户切真 LLM 时发现）。根因：`fan_profile_summary` 只认 8 个 niche（beauty/fashion/finance/fitness/food/mom/tech/travel），**beverage/electronics/home/pet/parenting 早退、不产 `effective_city_dist`** → 回放适配器城市点阵空 → v3 形状校验不过 → 回退内嵌散粉 demo。**一直如此、非本次回归**（mock 下咖啡也命中 beverage，旧"咖啡回放"其实也是 demo，只是 demo 也像样没被发现）。修：`_simulate_sync` 在 fps 缺 `effective_city_dist` 时，由 `pop.city_idx` 统计**基础人口层级分布**注入（无 prior=均匀加权=基础人口分布，非编造，标 `city_dist_source=base_population`）。router 层、不动引擎。实测咖啡回放出 24 城（北京/上海/南宁…）。回放黄金未变（黄金 idea 属 in-prior 品类，跳过注入分支） | advisor 指方案：base-pop 比"硬编默认"诚实、比"niche 别名(pet→?)"语义可靠；pop 本就有该真值，只是被 fan_profile 早退丢了 | ⚠待复核（更优是给 beverage/home/pet 也配 fan prior；另 v3 unmapped 披露显示「[object Object]」是纯显示层小 bug 待修） |
+| D27 | 2026-06-16 | **真 LLM 全量接入（用户："全量接这个模型，把 think 关掉"）→ Agnes AI**。先前 .env 配 MiniMax-Text-01 套餐不支持(2061)→ 静默回退 mock（即此前"真后端"其实一直 mock 抽取）。改用 **Agnes AI**（OpenAI 兼容免费网关，`apihub.agnes-ai.com/v1`，模型 `agnes-2.0-flash` 非推理无 `<think>`、~1.5s/次）。三处接通：① 抽取(extract 本就读 LLM_MODE) ② **souls 放开**：`launch.py` `use_llm=ov.use_llm`、C 端 launch-c 发 `use_llm:true` ③ **新增 launch 版 LLM soul**：`soul_infer_llm_launch`（产 will_try/would_pay/objection/intent，与 infer_one_launch 同形）+ `soul.py` LLM 路径按 mode 路由（含 fallback 走 launch mock）。另修 extract 把模型偶发的 `{value,provenance}` 字段解包。实测咖啡：抽取出目标用户/卖点、souls 意向 0.0–0.6 真实分布、objection 逐字 persona 化。新增单测 test_launch_soul_llm 3/3 + 回归 18/18 | 用户给的 agnes key（永久有效，见 reference_agnes_ai_api）+ 选 flash（快/免费/无 think）适合 soul 扇出；launch 版 soul 是必需（否则证词字段错位丢空，比 mock 退步） | ⚠待复核（**会火指数反而降**：souls 从通用人群抽样、且 D25 souls 不认受众→意向被非目标人群拉低；要真正体现"聪明"需让 souls 按受众采样。另：真 LLM 非确定→每跑结果浮动，与字节级黄金不冲突因测试跑 mock） |
+
 ## 待复核汇总（产品级，给人过目）
+- **D27：真 LLM 已接通但「会火指数」反而降——根因 souls 未按受众采样(D25)，是当前最该补的一刀。**
+- **D26：beverage/home/pet 等暂用基础人口城市分布；要不要给它们配真 fan prior。**
 - D3：引爆幕要不要具名 KOL？
 - D4：合成城市数 / GAZETTEER 覆盖度。
 - D6：sentiment 分档阈值。

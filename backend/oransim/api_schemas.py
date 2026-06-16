@@ -84,6 +84,10 @@ class SimulateOverrides(BaseModel):
     n_seeds: int = Field(default=5, ge=1, le=9)
     horizon_days: int = Field(default=90, ge=1, le=365)
     use_llm: bool = False
+    # 结构化人群定向 (软 boost, 复用 AudienceFilter)。None=不定向。
+    audience_age_buckets: list[int] | None = None   # age_idx 子集 0..5 (15-24/25-34/35-44/45-54/55-64/65+)
+    audience_gender: int | None = None              # 0=女 1=男 None=不限
+    audience_city_tiers: list[int] | None = None    # city_idx 子集 0..4 (T1..T5+)
 
 
 class SimulateRequest(BaseModel):

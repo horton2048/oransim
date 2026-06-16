@@ -62,36 +62,32 @@ def _ingest_sync(req: IdeaIngestRequest) -> dict:
     from ..spec.extract import extract_spec
     from ..spec.ground import ground
     from ..spec.normalize import normalize_spec
+    from ..spec.route import TIER_BLURB, TIER_LABELS, route_idea, routed_reason
 
     spec = normalize_spec(extract_spec(req.idea_text))
     g = ground(spec)
+    tier = route_idea(g)  # 分诊台: A/B/C, 永不硬拒 (proposal BREAKING, design D-1)
 
     assumed = list(spec.assumed_fields)
     if req.locale != "zh-CN" and NON_ZH_LOCALE_NOTE not in assumed:
         assumed.append(NON_ZH_LOCALE_NOTE)
 
-    if g.rejected:
-        # 硬拒绝: 无 spec_id, clarification 非空 (规范 §6.2)
-        return {
-            "spec_id": None,
-            "spec": None,
-            "assumed_fields": assumed,
-            "grounding_confidence": g.grounding_confidence,
-            "grounding": _ground_dict(g),
-            "clarification_questions": g.clarification_questions,
-            "rejected": True,
-            "note": _REJECT_NOTE,
-        }
-
+    # 任何想法都存 spec + 回带档位提示, 不再 dead-end。ground 的 rejected/niche/
+    # confidence 仍用于决定走哪一档 (引擎诚实判定保留), 但产品层不再对用户报「测不了」。
     spec_id, _rev = store.put(spec, locale=req.locale)
     return {
         "spec_id": spec_id,
         "spec": spec.model_dump(),
+        "tier": tier,
+        "tier_label": TIER_LABELS[tier],
+        "tier_blurb": TIER_BLURB[tier],
+        "routed_reason": routed_reason(g, tier),
         "assumed_fields": assumed,
         "grounding_confidence": g.grounding_confidence,
         "grounding": _ground_dict(g),
-        "clarification_questions": [],
+        # 兼容字段: 不再 dead-end。clarification 仅 C 档作可选引导, 非拒绝信号。
         "rejected": False,
+        "clarification_questions": g.clarification_questions if tier == "C" else [],
     }
 
 
@@ -179,11 +175,33 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     from ..spec import store
     from ..spec.ground import ground
     from ..spec.pipeline import compile_spec
+    from ..spec.route import (
+        TIER_LABELS,
+        resolve_prior_niche,
+        route_idea,
+        routed_reason,
+    )
 
     spec = store.get(req.spec_id)
     g = ground(spec)
+    tier = route_idea(g)
     rev = store.latest_revision(req.spec_id)
     locale = store.get_locale(req.spec_id)
+
+    # C 档: 引擎演不了 → LLM 定性情景 (不进 Bass/world-model, 无伪精确 KPI; design D-2)
+    if tier == "C":
+        from ..agents.launch_scenario_llm import build_scenario_report
+
+        rep = build_scenario_report(
+            spec_dict=spec.model_dump(),
+            idea_text=spec.one_liner or spec.product_name or "",
+            routed_reason=routed_reason(g, tier),
+            assumed_fields=list(spec.assumed_fields),
+            grounding_confidence=None,
+        )
+        rep["spec_id"] = req.spec_id
+        rep["locale"] = locale
+        return rep
 
     ov = req.overrides
     n_seeds = max(1, min(9, ov.n_seeds))
@@ -193,12 +211,28 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     kols = api_state.KOLS
     pop = api_state.POP
 
+    # 结构化人群定向 (C 端可调): 任一字段给定 → 构造 AudienceFilter 覆盖 spec 文本软定向。
+    # 复用 spec 关键词 + boost; 经 compile_spec 按值 intern → 同定向可复现。
+    aud_override = None
+    if ov.audience_age_buckets or ov.audience_gender is not None or ov.audience_city_tiers:
+        from ..platforms.xhs.world_model_legacy import AudienceFilter
+        from ..spec.scenario_gen import _make_audience_filter
+        _base = _make_audience_filter(spec)
+        aud_override = AudienceFilter(
+            age_buckets=ov.audience_age_buckets or None,
+            gender=ov.audience_gender,
+            city_tiers=ov.audience_city_tiers or None,
+            interest_keywords=_base.interest_keywords,
+            boost_strength=_base.boost_strength,
+        )
+
     # 多 seed Monte Carlo: 经验分位带 (souls 只跑 P50 主 seed — AT-M7-10)
     per_seed_kpis = []
     primary_compiled = None
     for i, sd in enumerate(seeds):
         compiled = compile_spec(spec, spec_id=req.spec_id, revision=rev, kols=kols,
-                                budget_hint_cny=ov.budget, seed=sd)
+                                budget_hint_cny=ov.budget, seed=sd,
+                                audience_override=aud_override)
         res = runner.run(compiled.scenario, n_monte_carlo=3)
         per_seed_kpis.append(res.total_kpis)
         if i == len(seeds) // 2:
@@ -214,11 +248,13 @@ def _simulate_sync(req: SimulateRequest) -> dict:
         first_plat = next(iter(primary_compiled.scenario.platform_alloc))
         launch_personas = souls.infer_batch(
             cre, {}, None, first_plat, n_sample=min(8, ov.n_souls or 8),
-            seed=seeds[len(seeds) // 2], use_llm=False, mode="launch",
+            seed=seeds[len(seeds) // 2], use_llm=ov.use_llm, mode="launch",
         )
 
     # 90 天 diffusion timeline (Bass 饱和)
-    niche = g.niche_key or "beauty"
+    # A 档: 把 niche_key 解析成校准 prior (electronics→tech), 让 market/fan 用上真校准;
+    # B 档: prior=None → 用原 niche_key 走 base-population (未校准, D26)。
+    niche = resolve_prior_niche(g) or g.niche_key or "beauty"
     m = market_potential(pop, niche)
     bass = BassSaturatedHawkes(BassSaturatedConfig(horizon_days=ov.horizon_days, market_m=m))
     fc = bass.forecast([(0.0, "impression")])
@@ -246,6 +282,20 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     # 区块3: 谁会买 (fan_profile 有效人群画像 + persona 引语)
     from ..data.fan_profile import fan_profile_summary
     fps = fan_profile_summary(pop, niche)
+    # niche 无 fan prior (如 beverage/electronics/home/pet/parenting) 时 fan_profile_summary
+    # 早退、不含 effective_city_dist → 回放适配器拿不到城市占比 → 城市点阵空 → diorama 回退
+    # 内嵌 demo。补真值: 无 prior 即均匀加权 = 基础人口层级分布, 直接由 pop.city_idx 统计注入
+    # (非编造, 标 source)。修复回放对这些品类失真 (DECISIONS D26)。
+    if "effective_city_dist" not in fps:
+        _cc = _np.bincount(pop.city_idx, minlength=5)[:5].astype(float)
+        _tot = float(_cc.sum()) or 1.0
+        fps = dict(fps)
+        fps["effective_city_dist"] = {
+            "T1": round(_cc[0] / _tot * 100, 1), "T2": round(_cc[1] / _tot * 100, 1),
+            "T3": round(_cc[2] / _tot * 100, 1), "T4": round(_cc[3] / _tot * 100, 1),
+            "T5+": round(_cc[4] / _tot * 100, 1),
+        }
+        fps["city_dist_source"] = "base_population (该 niche 无 fan prior, 取基础人口层级分布)"
     cate_segments = [
         {"dimension": "fan_profile", "niche": niche, "summary": fps},
     ]
@@ -280,7 +330,44 @@ def _simulate_sync(req: SimulateRequest) -> dict:
     )
     report["spec_id"] = req.spec_id
     report["n_seeds"] = n_seeds
+
+    # 统一信封: 顶层 tier 标记 (A/B 同走上面管线; design D-3)
+    report["tier"] = tier
+    report["tier_label"] = TIER_LABELS[tier]
+    report["routed_reason"] = routed_reason(g, tier)
+    if tier == "B":
+        # B 档: 同 A 管线但标「未校准」+ 拉宽分位带 (design D-4)。区间放宽是**真实写入**
+        # 数据 (band_widened 标记 + 系数), 不让前端伪造「更宽」。
+        report["uncalibrated"] = True
+        _widen_bands_for_B(report)
     return report
+
+
+# B 档分位带放宽系数: 围绕 p50 把上下行半宽各放大此倍数 (design D-4; sample-B ×3 示意,
+# 取 2.5 略保守)。"未校准" = 不确定性更大 = 区间更宽, 这是诚实标注不是装饰。
+_B_BAND_WIDEN = 2.5
+
+
+def _widen_bands_for_B(report: dict) -> None:
+    """就地放宽 B 档 metrics 的 P35/P65 区间并打 band_widened 标 (保 p50 中位不动)。"""
+    metrics = report.get("metrics")
+    if not isinstance(metrics, dict):
+        return
+    any_widened = False
+    for band in metrics.values():
+        if not isinstance(band, dict) or not band.get("band"):
+            continue
+        p50, p35, p65 = band.get("p50"), band.get("p35"), band.get("p65")
+        if p50 is None or p35 is None or p65 is None:
+            continue
+        band["p35"] = max(0.0, p50 - (p50 - p35) * _B_BAND_WIDEN)
+        band["p65"] = p65 + (p65 - p50) * _B_BAND_WIDEN
+        band["band_widened"] = True
+        band["band_widen_factor"] = _B_BAND_WIDEN
+        any_widened = True
+    # 仅在确有分位带被放宽时打总标 (单 seed 无 band → 不谎称放宽; 诚实标注)
+    if any_widened:
+        metrics["band_widened"] = True
 
 
 @router.post("/api/launch/simulate")
@@ -315,9 +402,20 @@ async def launch_replay(spec_id: str):
     供主 SPA「战况回放」tab 的 iframe (?session=<spec_id>) 取数。
     """
     from ..spec import store
+    from ..spec.ground import ground
+    from ..spec.route import route_idea
 
     if not store.exists(spec_id):
         raise HTTPException(status_code=404, detail=f"unknown spec_id {spec_id}")
+
+    # C 档无微缩沙盘: simulate 返回的是定性情景信封 (无 metrics/timeline/who_buys),
+    # 喂给 export() 会 KeyError。先按档拦截 → 422, 不跑 LLM、不崩。前端对 C 档隐藏
+    # 回放入口; 此处是直接打 URL 的防御 (design: C 档优雅降级)。
+    if route_idea(ground(store.get(spec_id))) == "C":
+        raise HTTPException(
+            status_code=422,
+            detail="C 档为 LLM 定性情景推演，无微缩沙盘回放 (no diorama replay for tier C)",
+        )
     report = _simulate_sync(SimulateRequest(spec_id=spec_id))
     # 回放适配器在 replay-viz/ (单一转换源, D4/D15)。打包/部署解析顺序:
     #   1) OSIM_REPLAY_VIZ_DIR 显式配置  2) monorepo 默认 (仓库根/replay-viz)。
@@ -375,10 +473,18 @@ async def launch_whatif(spec_id: str):
     from ..spec.ground import ground
     from ..spec.pipeline import compile_spec
 
+    from ..spec.route import route_idea
+
     if not store.exists(spec_id):
         raise HTTPException(status_code=404, detail=f"unknown spec_id {spec_id}")
     spec = store.get(spec_id)
     g = ground(spec)
+    # C 档: 跑引擎反事实 = 对 B2B/域外想法产精确 delta = 踩「无伪精确 KPI」红线。拦截。
+    if route_idea(g) == "C":
+        raise HTTPException(
+            status_code=422,
+            detail="C 档为定性情景推演，不产精确反事实 KPI (no quantified what-if for tier C)",
+        )
     rev = store.latest_revision(spec_id)
     compiled = compile_spec(spec, spec_id=spec_id, revision=rev, kols=api_state.KOLS, seed=42)
     base = api_state.RUNNER.run(compiled.scenario, n_monte_carlo=5)

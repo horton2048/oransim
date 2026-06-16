@@ -1,0 +1,438 @@
+{
+  "_bundle_meta": {
+    "tier": "A",
+    "tier_label": "A · 校准模拟",
+    "source": "REAL — 真后端 /api/launch/simulate 捕获 (replay-viz/fixtures/launch_sample.json, 100k 人口, agnes 真 LLM persona)",
+    "note": "以下所有字段为后端原样输出，未改一字。_bundle_meta 是本包注释，非后端字段。"
+  },
+  "assumed_fields": [
+    "budget_default"
+  ],
+  "grounding_confidence": 0.92,
+  "disclaimer": "这是带标注不确定性的情景推演，不是预测",
+  "header": {
+    "disclaimer": "这是带标注不确定性的情景推演，不是预测",
+    "grounding_confidence": 0.92,
+    "assumptions": [
+      {
+        "field": "product_name",
+        "value": "一款保湿面膜，定价 89 元，小红书美妆博主种草。",
+        "source": "用户原话"
+      },
+      {
+        "field": "one_liner",
+        "value": "一款保湿面膜，定价 89 元，小红书美妆博主种草。",
+        "source": "用户原话"
+      },
+      {
+        "field": "category_raw",
+        "value": "美妆",
+        "source": "用户原话"
+      },
+      {
+        "field": "target_user_raw",
+        "value": "",
+        "source": "用户原话"
+      },
+      {
+        "field": "price_point",
+        "value": {
+          "amount": 89.0,
+          "currency": "CNY",
+          "model": "one_time"
+        },
+        "source": "用户原话"
+      },
+      {
+        "field": "channels_hint",
+        "value": [
+          "xiaohongshu"
+        ],
+        "source": "用户原话"
+      }
+    ]
+  },
+  "metrics": {
+    "unique_reach": {
+      "p35": 472656.25,
+      "p50": 472656.25,
+      "p65": 472656.25,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "trials": {
+      "p35": 133.82099100748698,
+      "p50": 139.14678446451822,
+      "p65": 139.36957499186198,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "adopters": {
+      "p35": 26.7973768568959,
+      "p50": 27.728573878839324,
+      "p65": 27.820440626351328,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "adoption_rate": {
+      "p35": 5.669527665591199e-05,
+      "p50": 5.8665412503990636e-05,
+      "p65": 5.885977520947058e-05,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "revenue": {
+      "p35": 1205.8819585603155,
+      "p50": 1247.7858245477694,
+      "p65": 1251.9198281858096,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "payback": {
+      "p35": 0.05315182186491749,
+      "p50": 0.054998824222491215,
+      "p65": 0.05518103925887866,
+      "p35_label": "下行情形",
+      "band": true
+    },
+    "n_seeds": 5,
+    "quantile_source": "ScenarioRunner 多 seed Monte Carlo 经验分位数"
+  },
+  "timeline": {
+    "daily_adopters": [
+      5.6745,
+      7.8136,
+      10.3707,
+      13.1113,
+      15.5907,
+      17.2376,
+      17.5838,
+      16.5165,
+      14.349,
+      11.641,
+      8.9288,
+      6.5572,
+      4.6631,
+      3.2406,
+      2.2162,
+      1.499,
+      1.0063,
+      0.6722,
+      0.4475,
+      0.2972,
+      0.1971,
+      0.1306,
+      0.0865,
+      0.0572,
+      0.0379,
+      0.0251,
+      0.0166,
+      0.011,
+      0.0073,
+      0.0048,
+      0.0032,
+      0.0021,
+      0.0014,
+      0.0009,
+      0.0006,
+      0.0004,
+      0.0003,
+      0.0002,
+      0.0001,
+      0.0001,
+      0.0001,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "daily_revenue": [
+      505.0323,
+      695.4066,
+      922.988,
+      1166.9059,
+      1387.5693,
+      1534.1483,
+      1564.9575,
+      1469.9706,
+      1277.0635,
+      1036.0525,
+      794.6589,
+      583.5904,
+      415.015,
+      288.4165,
+      197.2398,
+      133.4067,
+      89.5597,
+      59.8224,
+      39.8248,
+      26.4528,
+      17.5445,
+      11.6248,
+      7.6973,
+      5.0946,
+      3.371,
+      2.2301,
+      1.4751,
+      0.9757,
+      0.6453,
+      0.4268,
+      0.2822,
+      0.1866,
+      0.1234,
+      0.0816,
+      0.054,
+      0.0357,
+      0.0236,
+      0.0156,
+      0.0103,
+      0.0068,
+      0.0045,
+      0.003,
+      0.002,
+      0.0013,
+      0.0009,
+      0.0006,
+      0.0004,
+      0.0002,
+      0.0002,
+      0.0001,
+      0.0001,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "n_points": 90,
+    "peak_day": 6,
+    "half_life": 6,
+    "saturation_date": 11,
+    "market_potential_m": 160.0,
+    "calibrated": false
+  },
+  "who_buys": {
+    "cate_segments": [
+      {
+        "dimension": "fan_profile",
+        "niche": "beauty",
+        "summary": {
+          "niche": "beauty",
+          "applied": true,
+          "notes": "synthetic 50 KOL 校准 · 0 粉丝聚合",
+          "effective_gender_pct_female": 50.6,
+          "effective_age_dist": {
+            "15-24": 13.9,
+            "25-34": 18.3,
+            "35-44": 19.9,
+            "45-54": 16.9,
+            "55-64": 15.2,
+            "65+": 15.6
+          },
+          "effective_city_dist": {
+            "T1": 8.9,
+            "T2": 15.9,
+            "T3": 22.8,
+            "T4": 28.1,
+            "T5+": 24.3
+          },
+          "concentration_ratio": 0.026
+        }
+      }
+    ],
+    "persona_quotes": [
+      {
+        "will_try": false,
+        "would_pay_cny": 11.0,
+        "objection": "价格一看就贵 不是我这个价位",
+        "purchase_intent_7d": 0.02
+      },
+      {
+        "will_try": true,
+        "would_pay_cny": 82.82,
+        "objection": "",
+        "purchase_intent_7d": 0.35
+      },
+      {
+        "will_try": false,
+        "would_pay_cny": 39.46,
+        "objection": "Z世代味太重 看不懂",
+        "purchase_intent_7d": 0.02
+      },
+      {
+        "will_try": false,
+        "would_pay_cny": 25.5,
+        "objection": "老年感重 不是我的风格",
+        "purchase_intent_7d": 0.02
+      },
+      {
+        "will_try": false,
+        "would_pay_cny": 41.03,
+        "objection": "又是美颜滤镜 真货肯定没这效果",
+        "purchase_intent_7d": 0.02
+      }
+    ],
+    "objections_as_risk": [
+      "价格一看就贵 不是我这个价位",
+      "Z世代味太重 看不懂",
+      "老年感重 不是我的风格",
+      "又是美颜滤镜 真货肯定没这效果"
+    ]
+  },
+  "what_breaks": {
+    "intervention_cards": [
+      {
+        "name": "price_up_30",
+        "label": "价格 +30%",
+        "delta": {
+          "impressions": 0.0,
+          "clicks": 1.0417724609374943,
+          "conversions": -2.0847896241253387,
+          "cost": 0.0,
+          "revenue": 255.9628661079762,
+          "ctr": 2.2040805785124035e-06,
+          "cvr": -0.01634842978523965,
+          "roi": 0.011282109800902496
+        },
+        "branch": false,
+        "note": "价格弹性 (图级 do(price_point))"
+      },
+      {
+        "name": "no_kol_launch",
+        "label": "不请达人",
+        "delta": {
+          "impressions": 0.0,
+          "clicks": -1.4860290527343807,
+          "conversions": -0.487870985963081,
+          "cost": 0.0,
+          "revenue": -21.95419436833845,
+          "ctr": -3.143995351239683e-06,
+          "cvr": -0.0013730321645396004,
+          "roi": -0.0009676779886871323
+        },
+        "branch": false,
+        "note": "kol_per_platform=None"
+      },
+      {
+        "name": "competitor_response",
+        "label": "如果竞品跟进——这是分支不是预测：竞品 substitute_pressure=0.5",
+        "delta": {
+          "ad_recall": 0.0,
+          "add_to_cart": 0.0,
+          "audience_match": 0.0,
+          "brand_awareness": 0.0,
+          "brand_equity": 0.0,
+          "brand_favor": 0.0,
+          "brand_lift_aware": 0.0,
+          "brand_recall": 0.0,
+          "brand_search_lift": 0.0,
+          "click": 0.0,
+          "conversion": 0.0,
+          "ecpm_bid": 0.0,
+          "engagement": 0.0,
+          "exposure_count": 0.0,
+          "frequency": 0.0,
+          "impression_dist": 0.0,
+          "organic_amplification": 0.0,
+          "peer_influence": 0.0,
+          "product_view": 0.0,
+          "recsys_amplification": 0.0,
+          "repurchase": 0.0,
+          "site_visit": 0.0,
+          "unique_reach": 0.0,
+          "user_fatigue": 0.0,
+          "viral_score": 0.0
+        },
+        "branch": true,
+        "note": "competitor_action do() + equilibrium_under_do"
+      }
+    ],
+    "audit_risk": 0.0,
+    "season_window": {
+      "note": "假日/季节因子最佳/最差上市窗口 (data/macro)",
+      "category_hint": "beauty"
+    }
+  },
+  "locale": "zh-CN",
+  "spec_id": "3ede65d40a0545c4beebed7623d39abd",
+  "n_seeds": 5
+}

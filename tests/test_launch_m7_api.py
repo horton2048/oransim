@@ -127,14 +127,20 @@ def test_at_m7_03_ingest_no_simulation(api_client, monkeypatch):
 # ═══════════════════════════════════════ AT-M7-05 ═══════════════════════════
 
 
-def test_at_m7_05_hard_reject_e2e(api_client):
-    """B2B idea ingest → clarification 非空、无 spec_id；伪造 spec_id simulate → 4xx."""
-    res = _ingest(api_client, idea=_B2B_IDEA)
-    assert res["rejected"] is True
-    assert res["spec_id"] is None, "硬拒绝不应产出 spec_id"
-    assert res["clarification_questions"], "硬拒绝必须返回非空 clarification_questions"
+def test_at_m7_05_b2b_routes_to_tier_c(api_client):
+    """分诊台 (BREAKING, design D-1): B2B idea 不再硬拒, 路由到 C 档并产出 spec_id。
 
-    # 伪造 spec_id 调 simulate → 显式 4xx, 不产出部分报告
+    旧行为 (rejected=True / spec_id=None) 是本次有意改掉的「保安式守门」。
+    新行为: 任何想法都不 dead-end —— B2B → tier=C, 仍给 spec_id 走统一 simulate。
+    伪造 spec_id 仍是 4xx (未知 spec 与「拒绝」是两回事)。
+    """
+    res = _ingest(api_client, idea=_B2B_IDEA)
+    assert res["rejected"] is False, "分诊台不再硬拒"
+    assert res["spec_id"], "B2B 也应产出 spec_id (路由到 C, 非 dead-end)"
+    assert res["tier"] == "C", f"B2B 应路由到 C 档, 实际 {res.get('tier')}"
+    assert "routed_reason" in res and res["routed_reason"]
+
+    # 伪造 spec_id 调 simulate → 显式 4xx (未知 spec, 不产出部分报告)
     r = api_client.post("/api/launch/simulate", json={"spec_id": "deadbeef_fake"})
     assert 400 <= r.status_code < 500, f"伪造 spec_id 应 4xx，实际 {r.status_code}"
 

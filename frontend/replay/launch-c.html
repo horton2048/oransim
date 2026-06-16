@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>会不会火 · 上市预演</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090F; --bg2:#05070C; --panel:#0E1220; --panel2:#11162A;
+  --edge:#1E2536; --edge2:#2A3450;
+  --ink:#ECF0FA; --dim:#9099AE; --faint:#5A6479; --faintest:#3A4255;
+  /* tier accents */
+  --teal:#3BE0C8; --teal-soft:#1c5f57;        /* A · calibrated */
+  --amber:#F2B33C; --amber-soft:#5c4516;       /* B · uncalibrated */
+  --violet:#A88BFF; --violet-soft:#37305c;     /* C · scenario */
+  --pos:#54C98B; --neg:#FF6B6B;
+  --display:'Space Grotesk',var(--sans);
+  --serif:'Noto Serif SC',Georgia,serif;
+  --sans:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 78% -10%, rgba(59,224,200,.07), transparent 58%),
+    radial-gradient(1000px 560px at 6% 110%, rgba(168,139,255,.06), transparent 55%),
+    var(--bg);
+  color:var(--ink);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased;
+  min-height:100%;overflow-x:hidden}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px;min-height:100vh;display:flex;flex-direction:column}
+
+/* ---- topbar ---- */
+.topbar{display:flex;align-items:center;gap:11px;padding:20px 2px;font-family:var(--display);font-size:13px;letter-spacing:.02em;color:var(--dim)}
+.brand{display:flex;align-items:baseline;gap:9px}
+.brand .mark{font-weight:700;font-size:17px;color:var(--ink);letter-spacing:-.01em}
+.brand .kick{font-size:10px;letter-spacing:.34em;color:var(--faint);text-transform:uppercase}
+.status{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em}
+.status .dot{width:7px;height:7px;border-radius:50%;background:var(--faintest);transition:.3s}
+.status .dot.live{background:var(--teal);box-shadow:0 0 10px 1px var(--teal)}
+.status .dot.mock{background:var(--amber);box-shadow:0 0 10px 1px var(--amber)}
+
+/* ---- HERO ---- */
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0 52px}
+.hero h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,7.2vw,52px);line-height:1.12;letter-spacing:-.02em;text-align:center}
+.hero h1 .zh{font-family:var(--sans);font-weight:900}
+.hero h1 .glow{color:var(--teal);text-shadow:0 0 34px rgba(59,224,200,.4)}
+.hero .sub{color:var(--dim);font-size:clamp(13.5px,3.2vw,16px);margin:20px auto 28px;line-height:1.75;text-align:center;max-width:540px;font-weight:300}
+.inputwrap{position:relative}
+textarea{width:100%;min-height:104px;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--edge);border-radius:16px;
+  color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;padding:18px 20px;resize:vertical;transition:.18s;font-weight:300}
+textarea::placeholder{color:var(--faint)}
+textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px rgba(59,224,200,.09)}
+.cta{width:100%;margin-top:14px;border:none;border-radius:16px;padding:18px;cursor:pointer;
+  font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:.01em;color:#04201c;
+  background:linear-gradient(180deg,#6ff0dc,var(--teal));
+  box-shadow:0 14px 40px -12px rgba(59,224,200,.55);transition:.18s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 18px 48px -12px rgba(59,224,200,.7)}
+.cta:active{transform:none} .cta:disabled{opacity:.55;cursor:wait}
+.cta .en{font-size:13px;opacity:.7;font-weight:500;margin-left:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;justify-content:center}
+.chip{padding:8px 15px;border:1px solid var(--edge);border-radius:30px;background:var(--panel);
+  color:var(--dim);font-size:13px;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--teal-soft);color:var(--ink)}
+/* triage legend */
+.triage{display:flex;gap:8px;margin-top:24px;justify-content:center;flex-wrap:wrap}
+.tlg{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint);border:1px solid var(--edge);border-radius:9px;padding:7px 11px;background:var(--panel)}
+.tlg b{font-family:var(--mono);font-weight:600;font-size:11px}
+.tlg.a b{color:var(--teal)} .tlg.b b{color:var(--amber)} .tlg.c b{color:var(--violet)}
+/* audience tune */
+.tune{margin-top:12px;border:1px solid var(--edge);border-radius:14px;background:var(--panel);overflow:hidden}
+.tune summary{list-style:none;cursor:pointer;padding:14px 18px;color:var(--dim);font-size:13.5px;user-select:none}
+.tune summary::-webkit-details-marker{display:none}
+.tune summary::before{content:"▸";color:var(--teal);margin-right:8px;display:inline-block;transition:.18s}
+.tune[open] summary::before{transform:rotate(90deg)}
+.tune-body{padding:2px 18px 18px;display:flex;flex-direction:column;gap:15px}
+.tg label{display:block;font-size:11.5px;color:var(--faint);margin-bottom:9px;letter-spacing:.02em}
+.chips2{display:flex;flex-wrap:wrap;gap:7px}
+.chip2{padding:7px 13px;border:1px solid var(--edge);border-radius:9px;background:var(--bg2);color:var(--dim);font-size:13px;cursor:pointer;user-select:none;transition:.14s}
+.chip2:hover{border-color:var(--teal-soft)}
+.chip2.on{color:#04201c;background:linear-gradient(180deg,#6ff0dc,var(--teal));border-color:transparent;font-weight:500}
+.fine{font-size:11px;color:var(--faintest)}
+.note{color:var(--faint);font-size:11.5px;margin-top:28px;line-height:1.7;text-align:center}
+.msg{display:none;margin-top:16px;font-size:13.5px;color:var(--amber);border:1px dashed var(--amber-soft);
+  border-radius:13px;padding:14px 17px;line-height:1.8;background:rgba(242,179,60,.05)}
+
+/* ---- REVEAL overlay ---- */
+.reveal{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(820px 540px at 50% 42%,rgba(14,18,32,.96),rgba(5,7,12,.99));backdrop-filter:blur(7px)}
+.reveal.on{display:flex}
+.rc{font-family:var(--mono);font-size:clamp(46px,12vw,68px);font-weight:500;color:var(--teal);text-shadow:0 0 46px rgba(59,224,200,.5);line-height:1}
+.rl{font-size:16px;color:var(--ink);margin-top:18px;letter-spacing:.03em;font-weight:300}
+.rs{font-family:var(--display);font-size:10.5px;color:var(--faint);margin-top:10px;letter-spacing:.34em;text-transform:uppercase}
+.rfield{position:relative;width:300px;height:108px;margin-top:24px}
+.rfield .star{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--teal);opacity:0}
+.rbar{width:280px;height:2px;background:var(--edge);margin-top:20px;border-radius:2px;overflow:hidden}
+.rbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),#6ff0dc)}
+
+/* ---- RESULT ---- */
+.result{display:none;padding:8px 0 60px;animation:rise .55s cubic-bezier(.2,.7,.3,1)}
+.result.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.stagger{opacity:0;animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+
+/* tier-tinted result shell */
+.rcard{border-radius:22px;padding:0;overflow:hidden;box-shadow:0 28px 70px -24px rgba(0,0,0,.75);
+  background:linear-gradient(168deg,var(--panel),var(--bg2));border:1px solid var(--edge2)}
+[data-tier="A"]{--acc:var(--teal);--acc-soft:var(--teal-soft)}
+[data-tier="B"]{--acc:var(--amber);--acc-soft:var(--amber-soft)}
+[data-tier="C"]{--acc:var(--violet);--acc-soft:var(--violet-soft)}
+
+/* header band (all tiers) */
+.rhead{padding:22px 24px 18px;border-bottom:1px solid var(--edge);position:relative}
+.rhead::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;
+  color:var(--acc);border:1px solid var(--acc-soft);background:rgba(255,255,255,.02);border-radius:30px;padding:6px 13px;letter-spacing:.02em}
+.badge .glyph{width:8px;height:8px;border-radius:2px;background:var(--acc)}
+.conf{float:right;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:right;line-height:1.5}
+.conf b{color:var(--acc)}
+.rcap{font-size:13px;color:var(--dim);line-height:1.6;margin:14px 0 8px}
+.rcap b{color:var(--ink);font-weight:500}
+.routed{font-size:12px;color:var(--faint);line-height:1.6;margin-bottom:10px}
+.routed em{font-style:normal;color:var(--acc)}
+.disc{font-size:11.5px;color:var(--faint);border-top:1px dashed var(--edge);padding-top:11px;margin-top:4px;line-height:1.6}
+.disc::before{content:"⚠ ";color:var(--amber)}
+/* assumptions three-color chips */
+.assum{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.atag{font-size:11px;border-radius:7px;padding:4px 9px;line-height:1.4;border:1px solid var(--edge);color:var(--dim);background:var(--bg2)}
+.atag i{font-style:normal;font-size:9px;font-family:var(--mono);margin-left:5px;padding:1px 5px;border-radius:4px}
+.atag.user i{color:#7fd9ff;background:rgba(127,217,255,.12)}
+.atag.llm i{color:var(--violet);background:rgba(168,139,255,.13)}
+.atag.def i{color:var(--faint);background:rgba(120,130,150,.13)}
+
+.rbody{padding:22px 24px 24px}
+
+/* ---- A/B body ---- */
+.scorepanel{display:flex;align-items:center;gap:18px;padding:6px 0 18px;border-bottom:1px solid var(--edge);margin-bottom:18px}
+.score-ring{position:relative;width:88px;height:88px;flex:none}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring .v{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-ring .v b{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink);line-height:1}
+.score-ring .v s{font-size:9px;color:var(--faint);text-decoration:none;margin-top:2px;font-family:var(--mono)}
+.score-meta .verdict{font-size:17px;font-weight:700;line-height:1.3}
+.score-meta .sub{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.6}
+.score-meta .hint{font-size:10.5px;color:var(--faintest);margin-top:7px;font-family:var(--mono)}
+
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:20px}
+.kbox{background:var(--bg2);border:1px solid var(--edge);border-radius:13px;padding:13px 12px;text-align:center}
+.kbox .l{font-size:10.5px;color:var(--faint);letter-spacing:.03em}
+.kbox .v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink);margin-top:5px;line-height:1.1}
+.kbox .band{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:4px}
+[data-tier="B"] .kbox .band{color:var(--amber)}
+
+.sec{margin-top:20px}
+.sec-h{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.sec-h::before{content:"";width:14px;height:1px;background:var(--acc-soft)}
+
+/* timeline sparkline */
+.spark{background:var(--bg2);border:1px solid var(--edge);border-radius:13px;padding:14px 16px}
+.spark svg{width:100%;height:64px;display:block;overflow:visible}
+.spark .meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-size:11px;color:var(--dim)}
+.spark .meta b{font-family:var(--mono);color:var(--ink);font-weight:500}
+
+/* demographics */
+.demo{display:flex;gap:9px;flex-wrap:wrap}
+.dchip{font-size:11.5px;color:var(--dim);background:var(--bg2);border:1px solid var(--edge);border-radius:9px;padding:8px 11px;line-height:1.4}
+.dchip b{color:var(--ink);font-family:var(--mono);font-weight:500}
+
+/* persona quotes */
+.pq{display:flex;flex-direction:column;gap:9px}
+.pqcard{background:var(--bg2);border:1px solid var(--edge);border-radius:12px;padding:13px 15px}
+.pqcard .top{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--dim)}
+.pqcard .tag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:5px}
+.pqcard .tag.try{color:var(--pos);background:rgba(84,201,139,.12)}
+.pqcard .tag.no{color:var(--neg);background:rgba(255,107,107,.1)}
+.pqcard .q{font-size:14px;color:var(--ink);font-style:italic;line-height:1.6;margin-top:9px}
+.pqcard .q::before{content:"「"} .pqcard .q::after{content:"」"}
+
+/* intervention cards */
+.lev{display:flex;flex-direction:column;gap:9px}
+.levcard{background:var(--bg2);border:1px solid var(--edge);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:13px}
+.levcard .body{flex:1;min-width:0}
+.levcard .lab{font-size:13.5px;color:var(--ink);font-weight:500}
+.levcard .note{font-size:11px;color:var(--faint);margin-top:4px;line-height:1.5}
+.levcard .branch{font-size:9.5px;color:var(--violet);font-family:var(--mono);margin-top:5px}
+.levcard .delta{font-family:var(--mono);font-size:15px;font-weight:600;flex:none;text-align:right}
+.levcard .delta.up{color:var(--pos)} .levcard .delta.down{color:var(--neg)}
+
+/* ---- C body: scenario memo (serif, no dashboard numerals) ---- */
+.cmemo{font-family:var(--serif)}
+.cband{background:rgba(168,139,255,.06);border:1px solid var(--violet-soft);border-radius:13px;padding:15px 17px;margin-bottom:18px}
+.cband .lab{font-family:var(--mono);font-size:10.5px;color:var(--violet);letter-spacing:.06em;text-transform:uppercase}
+.cband .mag{font-family:var(--serif);font-size:23px;font-weight:700;color:var(--ink);margin-top:8px;line-height:1.25}
+.cband .basis{font-family:var(--sans);font-size:12px;color:var(--dim);margin-top:9px;line-height:1.6;font-weight:300}
+.cband .warn{font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:8px}
+.cper{display:flex;flex-direction:column;gap:11px}
+.cpcard{border-left:2px solid var(--violet-soft);padding:4px 0 4px 15px}
+.cpcard .who{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink)}
+.cpcard .jobs{font-family:var(--sans);font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.6;font-weight:300}
+.cpcard .obj{font-family:var(--serif);font-size:14px;color:var(--violet);font-style:italic;margin-top:7px;line-height:1.55}
+.cpcard .obj::before{content:"「"} .cpcard .obj::after{content:"」"}
+.cchan{display:flex;flex-direction:column;gap:8px}
+.cchan .row{display:flex;gap:12px;font-family:var(--sans);font-size:13px;font-weight:300;align-items:baseline}
+.cchan .row .nm{color:var(--ink);font-weight:500;min-width:120px;flex:none}
+.cchan .row .fit{color:var(--dim);line-height:1.5}
+.cshape{font-family:var(--sans);font-weight:300}
+.cshape .hd{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);line-height:1.4}
+.cshape .nar{font-size:13.5px;color:var(--dim);line-height:1.8;margin-top:9px}
+.cshape .contrast{font-size:11px;color:var(--faint);margin-top:9px;border-top:1px dashed var(--edge);padding-top:9px;line-height:1.5}
+.crisks{font-family:var(--sans);font-weight:300;display:flex;flex-direction:column;gap:7px}
+.crisks .r{font-size:13px;color:var(--ink);line-height:1.6;padding-left:18px;position:relative}
+.crisks .r::before{content:"▸";position:absolute;left:0;color:var(--violet)}
+.cfoot{font-family:var(--sans);font-size:11.5px;color:var(--faint);line-height:1.7;margin-top:18px;border-top:1px solid var(--edge);padding-top:14px;font-weight:300}
+.cdegrade{text-align:center;padding:30px 20px}
+.cdegrade .ic{font-size:34px}
+.cdegrade .t{font-family:var(--serif);font-size:18px;color:var(--ink);margin-top:14px;font-weight:700}
+.cdegrade .d{font-family:var(--sans);font-size:13px;color:var(--dim);margin-top:11px;line-height:1.7;font-weight:300;max-width:420px;margin-left:auto;margin-right:auto}
+
+/* actions */
+.acts{display:flex;gap:11px;margin-top:24px}
+.acts button{flex:1;border-radius:14px;padding:15px;cursor:pointer;font-family:var(--display);font-weight:600;font-size:15px;transition:.16s;border:1px solid}
+.btn-play{color:#04201c;background:linear-gradient(180deg,#6ff0dc,var(--teal));border-color:transparent;box-shadow:0 10px 28px -10px rgba(59,224,200,.5)}
+.btn-play:hover{transform:translateY(-2px)}
+.btn-share{color:var(--ink);background:transparent;border-color:var(--edge2)}
+.btn-share:hover{border-color:var(--acc);color:var(--acc)}
+.noplay{margin-top:22px;text-align:center;font-size:12px;color:var(--faint);border:1px dashed var(--edge);border-radius:12px;padding:13px;line-height:1.6}
+.again{display:block;margin:20px auto 0;background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ---- diorama overlay ---- */
+.dio{position:fixed;inset:0;z-index:100;display:none;background:#05070c}
+.dio.on{display:block}
+.dio iframe{width:100%;height:100%;border:0;display:block;background:#05070c}
+.dio .x{position:absolute;top:13px;right:15px;z-index:102;font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:#0a0e18e6;border:1px solid var(--edge2);border-radius:10px;padding:8px 14px;cursor:pointer}
+.dio .x:hover{color:var(--teal);border-color:var(--teal)}
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:120;opacity:0;
+  background:#0d1019f5;border:1px solid var(--edge2);color:var(--ink);font-size:13px;padding:11px 18px;border-radius:30px;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:480px){.kgrid{gap:8px}.kbox .v{font-size:19px}.scorepanel{gap:14px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><span class="mark">会不会火</span><span class="kick">Launch Foresight</span></div>
+    <div class="status"><span class="dot" id="dot"></span><span id="api">connecting…</span></div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <h1>任何想法，<span class="zh glow">先推演一遍</span></h1>
+    <div class="sub">输入一个产品上市的想法，模型替你跑一遍「会不会火 · 谁会买 · 什么会出问题」——<br>并且诚实告诉你：哪些是算出来的，哪些只是猜的。</div>
+    <div class="inputwrap">
+      <textarea id="idea" placeholder="说说你的产品想法，一句话即可。例：一款主打油痘肌的氨基酸洁面慕斯，定价 69 元，18-25 学生党，小红书+抖音种草"></textarea>
+      <details class="tune">
+        <summary>细调目标人群（可选 · 默认全人群软定向）</summary>
+        <div class="tune-body">
+          <div class="tg"><label>性别</label><div class="chips2" data-grp="gender" data-single="1">
+            <span class="chip2 on" data-v="">不限</span><span class="chip2" data-v="0">女</span><span class="chip2" data-v="1">男</span></div></div>
+          <div class="tg"><label>年龄段（可多选）</label><div class="chips2" data-grp="age">
+            <span class="chip2" data-v="0">15-24</span><span class="chip2" data-v="1">25-34</span><span class="chip2" data-v="2">35-44</span><span class="chip2" data-v="3">45-54</span><span class="chip2" data-v="4">55-64</span><span class="chip2" data-v="5">65+</span></div></div>
+          <div class="tg"><label>城市层级（可多选）</label><div class="chips2" data-grp="city">
+            <span class="chip2" data-v="0">一线</span><span class="chip2" data-v="1">二线</span><span class="chip2" data-v="2">三线</span><span class="chip2" data-v="3">四线</span><span class="chip2" data-v="4">五线+</span></div></div>
+          <div class="fine">命中人群权重 ×2、其余 ÷2（软定向，非硬筛）</div>
+        </div>
+      </details>
+      <button class="cta" id="go">▶ 揭幕<span class="en">Reveal</span></button>
+      <div id="msg" class="msg"></div>
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip" data-idea="一款主打熬夜修护的护肤精华，定价 199 元，主投小红书">护肤精华</span>
+      <span class="chip" data-idea="一款无糖气泡水，定价 6 元/瓶，便利店铺货 + 小红书种草">低糖气泡水</span>
+      <span class="chip" data-idea="一款便携蛋白棒，定价 12 元/根，健身房和通勤代餐，抖音+小红书">蛋白棒</span>
+      <span class="chip" data-idea="一款给中小制造厂的 AI 智能排产 SaaS，按工位月费，主要走 B2B 销售">B2B SaaS</span>
+    </div>
+    <div class="triage">
+      <span class="tlg a"><b>A</b> 校准模拟</span>
+      <span class="tlg b"><b>B</b> 未校准结构化</span>
+      <span class="tlg c"><b>C</b> AI 情景推演</span>
+    </div>
+    <div class="note">任何想法都不拒，按可信度分流三档诚实标注 · 这是带标注不确定性的情景推演，不是预测</div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="result" id="result">
+    <div class="rcard" id="rcard" data-tier="A">
+      <div class="rhead" id="rhead"></div>
+      <div class="rbody" id="rbody"></div>
+    </div>
+    <button class="again" id="again">↺ 换个想法再测</button>
+  </section>
+</div>
+
+<!-- REVEAL -->
+<div class="reveal" id="reveal">
+  <div class="rc" id="rc">0</div>
+  <div class="rl" id="rl">正在唤醒十万消费者…</div>
+  <div class="rs" id="rs">Simulating Launch</div>
+  <div class="rfield" id="rfield"></div>
+  <div class="rbar"><i id="rbar"></i></div>
+</div>
+
+<!-- DIORAMA -->
+<div class="dio" id="dio">
+  <button class="x" id="dioX">✕ 关闭</button>
+  <iframe id="dioFrame" title="电影回放"></iframe>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const API_PORT=new URLSearchParams(location.search).get('api')||(window.localStorage&&localStorage.getItem('osim_api_port'))||'8001';
+const API='http://localhost:'+API_PORT;
+let LAST=null, LAST_SPEC=null, LAST_TIER=null;
+
+function fmt(n){if(n==null||isNaN(n))return '—';const a=Math.abs(n);
+  if(a>=1e8)return (n/1e8).toFixed(2)+'亿';if(a>=1e4)return (n/1e4).toFixed(1)+'w';
+  if(a>=1e3)return (n/1e3).toFixed(1)+'k';if(a>=10)return Math.round(n).toLocaleString();return (+n).toFixed(1);}
+const yuan=n=>'¥'+fmt(n);
+function magnitude(n){if(n==null||isNaN(n))return '—';const a=Math.abs(n);
+  if(a>=1e8)return (n/1e8).toFixed(1).replace(/\.0$/,'')+'亿';if(a>=1e4)return Math.round(n/1e4)+'w';return Math.round(n).toLocaleString();}
+
+// ---- health ----
+(async()=>{try{const h=await (await fetch(API+'/api/health',{cache:'no-store'})).json();
+  const mode=h.llm&&h.llm.mode;$('#api').textContent=mode==='api'?'LLM 在线':'mock 模式';
+  $('#dot').className='dot '+(mode==='api'?'live':'mock');
+}catch(e){$('#api').textContent='后端未连 · :'+API_PORT;$('#dot').className='dot';}})();
+
+// ---- chips + tune ----
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{$('#idea').value=c.dataset.idea;$('#idea').focus();}));
+document.querySelectorAll('.chips2').forEach(grp=>{
+  const single=grp.dataset.single==='1';
+  grp.querySelectorAll('.chip2').forEach(ch=>ch.addEventListener('click',()=>{
+    if(single){grp.querySelectorAll('.chip2').forEach(c=>c.classList.remove('on'));ch.classList.add('on');}
+    else ch.classList.toggle('on');
+  }));
+});
+function readAudience(){
+  const ov={};
+  const g=document.querySelector('.chips2[data-grp="gender"] .chip2.on');
+  if(g&&g.dataset.v!=='')ov.audience_gender=+g.dataset.v;
+  const ages=[...document.querySelectorAll('.chips2[data-grp="age"] .chip2.on')].map(c=>+c.dataset.v);
+  if(ages.length)ov.audience_age_buckets=ages;
+  const cities=[...document.querySelectorAll('.chips2[data-grp="city"] .chip2.on')].map(c=>+c.dataset.v);
+  if(cities.length)ov.audience_city_tiers=cities;
+  return ov;
+}
+$('#go').addEventListener('click',run);
+$('#again').addEventListener('click',()=>{$('#result').classList.remove('on');$('#hero').style.display='flex';window.scrollTo(0,0);$('#idea').focus();});
+
+function showMsg(m){const d=$('#msg');d.style.display='block';d.innerHTML=m;}
+function hideMsg(){$('#msg').style.display='none';}
+
+async function run(){
+  const idea=($('#idea').value||'').trim();
+  if(!idea){showMsg('先写一句你的产品想法 🙂');return;}
+  const btn=$('#go');btn.disabled=true;hideMsg();startReveal();
+  try{
+    const ing=await postJSON('/api/launch/ingest',{idea_text:idea,locale:'zh-CN'});
+    if(!ing||!ing.spec_id){stopReveal(false);showMsg('抽取失败，换种说法再试。');btn.disabled=false;return;}
+    LAST_SPEC=ing.spec_id;LAST_TIER=ing.tier;
+    const ov={n_souls:8,n_seeds:5,use_llm:true,...readAudience()};
+    const rep=await postJSON('/api/launch/simulate',{spec_id:ing.spec_id,overrides:ov});
+    if(rep&&rep.detail){stopReveal(false);showMsg('✗ '+esc(rep.detail));btn.disabled=false;return;}
+    LAST=rep;
+    stopReveal(true);
+    setTimeout(()=>renderResult(ing,rep),300);
+  }catch(e){stopReveal(false);showMsg('连不上后端（:'+API_PORT+'）。请确认上市后端服务已在本机启动，并在地址栏用 <code style="font-family:var(--mono);font-size:12px">?api=端口</code> 指定端口。');btn.disabled=false;}
+}
+async function postJSON(path,body){
+  const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const txt=await r.text();
+  try{return JSON.parse(txt);}catch(e){return {detail:'后端返回非 JSON（'+r.status+'）'};}
+}
+
+// ════════════════════ RESULT ROUTER ════════════════════
+function renderResult(ing,rep){
+  $('#go').disabled=false;
+  const tier=(rep&&rep.tier)||ing.tier||'A';
+  $('#rcard').dataset.tier=tier;
+  $('#rhead').innerHTML=renderHead(tier,ing,rep);
+  $('#rbody').innerHTML = tier==='C' ? renderC(rep) : renderAB(tier,rep);
+  wireActions(tier,rep);
+  // staggered reveal of body sections
+  [...$('#rbody').children].forEach((el,i)=>{el.classList.add('stagger');el.style.animationDelay=(i*70)+'ms';});
+  $('#hero').style.display='none';$('#result').classList.add('on');window.scrollTo(0,0);
+}
+
+const TIER_NAME={A:'A · 校准模拟',B:'B · 未校准结构化',C:'C · AI 情景推演'};
+function renderHead(tier,ing,rep){
+  const hd=(rep&&rep.header)||{};
+  const assumptions=hd.assumptions||[];
+  const nameA=assumptions.find(a=>a.field==='product_name');
+  const cap=nameA?nameA.value:(ing.spec&&ing.spec.product_name)||'（你的产品）';
+  const conf=(rep&&rep.grounding_confidence!=null)?rep.grounding_confidence:ing.grounding_confidence;
+  const confTxt = tier==='C' ? '无校准<br>置信度 N/A'
+    : 'grounding<br><b>'+(conf!=null?(+conf).toFixed(2):'—')+'</b>';
+  const routed=esc((rep&&rep.routed_reason)||ing.routed_reason||'');
+  const disc=esc((rep&&rep.disclaimer)||'这是带标注不确定性的情景推演，不是预测');
+  return `
+    <span class="conf">${confTxt}</span>
+    <span class="badge"><span class="glyph"></span>${esc(TIER_NAME[tier]||tier)}</span>
+    <div class="rcap">你的产品 · <b>${esc(cap)}</b></div>
+    <div class="routed">分诊：<em>${routed}</em></div>
+    <div class="assum">${assumptions.map(renderAssum).join('')}</div>
+    <div class="disc">${disc}</div>`;
+}
+function renderAssum(a){
+  const cls=a.source==='用户原话'?'user':a.source==='系统默认'?'def':'llm';
+  let v=a.value;
+  if(v&&typeof v==='object')v=v.amount!=null?('¥'+v.amount):(Array.isArray(v)?v.join('/'):JSON.stringify(v));
+  if(v==null||v==='')return '';
+  v=String(v);if(v.length>22)v=v.slice(0,22)+'…';
+  return `<span class="atag ${cls}">${esc(v)}<i>${esc(a.source||'')}</i></span>`;
+}
+
+// ──────── A / B body ────────
+function bandTxt(m){if(!m)return '';if(m.band===false||m.band==null)return '单点估计';
+  return 'P35–P65 '+fmt(m.p35)+' – '+fmt(m.p65);}
+function hotIndex(rep){
+  const q=(rep.who_buys&&rep.who_buys.persona_quotes)||[];
+  const intent=q.length?q.reduce((s,x)=>s+(+x.purchase_intent_7d||0),0)/q.length:0;
+  const tryR=q.length?q.filter(x=>x.will_try).length/q.length:0;
+  const conf=+rep.grounding_confidence||0;
+  return Math.round(Math.max(0,Math.min(1,0.40*intent+0.35*tryR+0.25*conf))*100);
+}
+function verdictOf(s){return s>=70?{t:'高潜 · 有爆款相',c:'var(--pos)'}:s>=45?{t:'中等 · 有机会，需打磨',c:'var(--amber)'}:{t:'存疑 · 先验证需求',c:'var(--neg)'};}
+
+function renderAB(tier,rep){
+  const m=rep.metrics||{},who=rep.who_buys||{},wb=rep.what_breaks||{},tl=rep.timeline||{};
+  const s=hotIndex(rep),vd=verdictOf(s);
+  const C=Math.PI*2*38, off=C*(1-s/100);
+  const uncal = tier==='B';
+  let html=`<div class="scorepanel">
+    <div class="score-ring">
+      <svg width="88" height="88"><circle cx="44" cy="44" r="38" fill="none" stroke="var(--edge)" stroke-width="6"/>
+      <circle cx="44" cy="44" r="38" fill="none" stroke="var(--acc)" stroke-width="6" stroke-linecap="round"
+        stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>
+      <div class="v"><b>${s}</b><s>会火指数</s></div>
+    </div>
+    <div class="score-meta">
+      <div class="verdict" style="color:${vd.c}">${vd.t}</div>
+      <div class="sub">${uncal?'未校准垂类：同一套推演，但读数仅供参考、区间已放宽。':'命中校准垂类：分位带、时间线、真实证词齐全。'}</div>
+      <div class="hint">会火指数为启发式评分（意向 40% · 试用 35% · 接地 25%）</div>
+    </div></div>`;
+  const kpi=(label,m,fmtfn)=>`<div class="kbox"><div class="l">${label}</div><div class="v">${m?fmtfn(m.p50):'—'}</div><div class="band">${bandTxt(m)}</div></div>`;
+  html+=`<div class="kgrid">
+    ${kpi('触达',m.unique_reach,v=>fmt(v))}
+    ${kpi('采纳',m.adopters,v=>fmt(v))}
+    ${kpi('营收',m.revenue,v=>yuan(v))}
+  </div>`;
+  if(uncal)html+=`<div style="font-size:11.5px;color:var(--amber);margin:-8px 0 4px;text-align:center">⚑ 未校准 · 分位带已按 ×${(m.band_widen_factor||2.5)} 放宽以反映更大不确定性</div>`;
+  if(tl.daily_adopters&&tl.daily_adopters.length)html+=section('90 天扩散时间线（Bass 饱和）',renderSpark(tl));
+  html+=section('谁会买 · 有效人群 + 真实模拟用户',renderWho(who));
+  if((wb.intervention_cards||[]).length)html+=section('什么会出问题 · 反事实干预',renderBreaks(wb));
+  html+=`<div class="acts">
+    <button class="btn-play" id="play">🎬 看电影回放</button>
+    <button class="btn-share" id="share">分享这张卡</button>
+  </div>`;
+  return html;
+}
+function section(title,inner){return `<div class="sec"><div class="sec-h">${esc(title)}</div>${inner}</div>`;}
+
+function renderSpark(tl){
+  const a=tl.daily_adopters||[];const max=Math.max(...a,1e-6);const n=a.length;
+  const W=600,H=64;
+  const pts=a.map((v,i)=>[(i/(n-1))*W,H-(v/max)*H]);
+  const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+  const area=d+` L${W},${H} L0,${H} Z`;
+  const peakX=tl.peak_day!=null?(tl.peak_day/(n-1))*W:null;
+  const satX=tl.saturation_date!=null?(tl.saturation_date/(n-1))*W:null;
+  let mk='';
+  if(peakX!=null)mk+=`<line x1="${peakX.toFixed(0)}" y1="0" x2="${peakX.toFixed(0)}" y2="${H}" stroke="var(--acc)" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>`;
+  if(satX!=null)mk+=`<line x1="${satX.toFixed(0)}" y1="0" x2="${satX.toFixed(0)}" y2="${H}" stroke="var(--amber)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>`;
+  return `<div class="spark">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--acc)" stop-opacity=".35"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0"/></linearGradient></defs>
+      <path d="${area}" fill="url(#sg)"/><path d="${d}" fill="none" stroke="var(--acc)" stroke-width="2"/>${mk}
+    </svg>
+    <div class="meta">
+      <span>峰值 <b>第 ${tl.peak_day} 天</b></span>
+      <span>半程 <b>第 ${tl.half_life} 天</b></span>
+      <span>近饱和 <b>${tl.saturation_date!=null?('第 '+tl.saturation_date+' 天'):'—'}</b></span>
+      <span>市场盘 <b>${magnitude(tl.market_potential_m)}</b></span>
+    </div></div>`;
+}
+function renderWho(who){
+  const cs=(who.cate_segments||[])[0]||{};const sm=cs.summary||{};
+  let demo='';
+  if(sm.effective_gender_pct_female!=null)demo+=`<div class="dchip">女性占比 <b>${Math.round(sm.effective_gender_pct_female)}%</b></div>`;
+  if(sm.effective_age_dist)demo+=distChip('主力年龄',sm.effective_age_dist);
+  if(sm.effective_city_dist)demo+=distChip('主力城市',sm.effective_city_dist);
+  const q=(who.persona_quotes||[]).slice(0,5);
+  const cards=q.map(p=>`<div class="pqcard">
+    <div class="top"><span class="tag ${p.will_try?'try':'no'}">${p.will_try?'会试用':'不会试'}</span>
+      <span>愿付 ¥${fmt(p.would_pay_cny)} · 7日意向 ${Math.round((+p.purchase_intent_7d||0)*100)}%</span></div>
+    ${p.objection?`<div class="q">${esc(p.objection)}</div>`:''}
+  </div>`).join('');
+  return `<div class="demo">${demo||'<div class="dchip">该垂类未校准人群画像（base-population）</div>'}</div>
+    <div class="pq" style="margin-top:11px">${cards||'<div class="pqcard"><div class="top">无证词</div></div>'}</div>`;
+}
+function distChip(label,dist){
+  const ent=Object.entries(dist||{});if(!ent.length)return '';
+  ent.sort((a,b)=>b[1]-a[1]);const top=ent[0];
+  return `<div class="dchip">${label} <b>${esc(top[0])}</b> (${Math.round(top[1])}%)</div>`;
+}
+function renderBreaks(wb){
+  const cards=(wb.intervention_cards||[]).slice()
+    .sort((a,b)=>Math.abs((b.delta&&b.delta.conversions)||0)-Math.abs((a.delta&&a.delta.conversions)||0));
+  const rows=cards.map(c=>{
+    const dc=(c.delta&&c.delta.conversions)||0;const up=dc>=0;
+    return `<div class="levcard"><div class="body">
+      <div class="lab">${esc(c.label||c.name)}</div>
+      ${c.note?`<div class="note">${esc(c.note)}</div>`:''}
+      ${c.branch?`<div class="branch">⎇ 这是分支，不是预测</div>`:''}
+    </div><div class="delta ${up?'up':'down'}">采纳 ${up?'+':''}${dc.toFixed(0)}</div></div>`;
+  }).join('');
+  const ar=wb.audit_risk;
+  const extra=ar!=null?`<div class="note" style="margin-top:9px;color:var(--faint);font-size:11.5px">合规/AIGC 审核风险 ${(+ar).toFixed(2)} · ${esc((wb.season_window&&wb.season_window.note)||'')}</div>`:'';
+  return `<div class="lev">${rows}</div>${extra}`;
+}
+
+// ──────── C body: scenario memo ────────
+function renderC(rep){
+  if(rep.degraded||!rep.scenario){
+    return `<div class="cdegrade">
+      <div class="ic">🜂</div>
+      <div class="t">C 档情景需要真 LLM 在线</div>
+      <div class="d">${esc(rep.degrade_note||'当前 LLM 不可用，故未生成情景——按诚实红线不编造占位内容。把后端切到 LLM_MODE=api（密钥就绪）后重试。')}</div>
+    </div>`;
+  }
+  const s=rep.scenario;const ms=s.market_sizing||{};
+  let html=`<div class="cmemo">`;
+  html+=`<div class="cband">
+    <div class="lab">${esc(ms.label||'市场盘子（数量级估计，非校准）')}</div>
+    <div class="mag">${ms.range_low!=null?magnitude(ms.range_low):'?'} – ${ms.range_high!=null?magnitude(ms.range_high):'?'} <span style="font-size:13px;color:var(--dim);font-family:var(--sans);font-weight:300">${esc(ms.unit||'')}</span></div>
+    ${ms.basis?`<div class="basis">${esc(ms.basis)}</div>`:''}
+    <div class="warn">⚠ ${esc(ms.interval_note||'数量级估计，跨约一个数量级的超宽区间')}</div>
+  </div>`;
+  if((s.buyer_personas||[]).length)html+=section('买家画像',`<div class="cper">${s.buyer_personas.map(p=>`
+    <div class="cpcard"><div class="who">${esc(p.who)}</div>
+      <div class="jobs">要解决：${esc(p.jobs_to_be_done)}${p.willingness?(' · '+esc(p.willingness)):''}</div>
+      ${p.objection?`<div class="obj">${esc(p.objection)}</div>`:''}</div>`).join('')}</div>`);
+  if((s.channels||[]).length)html+=section('渠道适配',`<div class="cchan">${s.channels.map(c=>`
+    <div class="row"><span class="nm">${esc(c.channel)}</span><span class="fit">${esc(c.fit)}</span></div>`).join('')}</div>`);
+  const ash=s.adoption_shape||{};
+  if(ash.shape||ash.narrative)html+=section('采纳曲线形状（非逐日数字）',`<div class="cshape">
+    ${ash.shape?`<div class="hd">${esc(ash.shape)}</div>`:''}
+    ${ash.narrative?`<div class="nar">${esc(ash.narrative)}</div>`:''}
+    ${ash.contrast_with_A?`<div class="contrast">${esc(ash.contrast_with_A)}</div>`:''}</div>`);
+  if((s.key_risks||[]).length)html+=section('关键风险',`<div class="crisks">${s.key_risks.map(r=>`<div class="r">${esc(r)}</div>`).join('')}</div>`);
+  if(s.confidence_note)html+=`<div class="cfoot">${esc(s.confidence_note)}</div>`;
+  html+=`</div>`;
+  html+=`<div class="noplay">本档为 LLM 定性情景推演，无微缩沙盘回放 — 沙盘只在有校准人群的 A/B 档出现。</div>`;
+  return html;
+}
+
+// ──────── actions ────────
+function wireActions(tier,rep){
+  const play=$('#play'),share=$('#share');
+  if(play)play.onclick=()=>{const url='./v3-final.html?session='+encodeURIComponent(LAST_SPEC)+'&api='+encodeURIComponent(API_PORT);$('#dioFrame').src=url;$('#dio').classList.add('on');};
+  if(share)share.onclick=()=>shareCard(tier,rep);
+}
+function shareCard(tier,rep){
+  const capEl=$('#rhead .rcap b');const cap=capEl?capEl.textContent:'我的产品';
+  let txt;
+  if(tier==='C'){txt=`【${cap}】会不会火 · C 档 AI 情景推演（定性·非精确预测）`;}
+  else{const s=hotIndex(rep);const m=rep.metrics||{};
+    txt=`【${cap}】会火指数 ${s}/100 · 触达${fmt((m.unique_reach||{}).p50)} 采纳${fmt((m.adopters||{}).p50)} 营收${yuan((m.revenue||{}).p50)} —— 会不会火·上市预演（${TIER_NAME[tier]}）`;}
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('结果已复制，可粘贴分享 · 或截图这张卡'),()=>toast('截图这张卡即可分享'));
+  else toast('截图这张卡即可分享');
+}
+let toastT=null;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600);}
+
+// ---- reveal animation ----
+let revRAF=null,revStart=0;
+function startReveal(){
+  const ov=$('#reveal');ov.classList.add('on');
+  const field=$('#rfield');field.innerHTML='';
+  const rnd=mulberry(42),stars=[];
+  for(let i=0;i<54;i++){const st=document.createElement('div');st.className='star';st.style.left=rnd()*300+'px';st.style.top=rnd()*108+'px';field.appendChild(st);stars.push(st);}
+  revStart=performance.now();const target=100000,t0=revStart,dur=1900;
+  const rc=$('#rc'),rb=$('#rbar'),rl=$('#rl');
+  const labels=['正在唤醒十万消费者…','逐个读你的文案…','在 40 城扩散…','聚合民意与判决…'];
+  (function tick(now){const p=Math.min(1,((now||performance.now())-t0)/dur),e=1-Math.pow(1-p,2);
+    rc.textContent=Math.round(target*e).toLocaleString();rb.style.width=(p*90)+'%';
+    rl.textContent=labels[Math.min(labels.length-1,Math.floor(p*labels.length))];
+    stars.forEach((st,i)=>{if(p*54>i)st.style.opacity=Math.min(1,(p*54-i)*.4)*.9;});
+    revRAF=requestAnimationFrame(tick);})();
+}
+function stopReveal(ok){
+  const ov=$('#reveal');
+  const done=()=>{if(revRAF){cancelAnimationFrame(revRAF);revRAF=null;}
+    if(ok){$('#rbar').style.width='100%';$('#rc').textContent=(100000).toLocaleString();$('#rl').textContent='完成';setTimeout(()=>ov.classList.remove('on'),300);}
+    else ov.classList.remove('on');};
+  const el=performance.now()-revStart;
+  if(ok&&el<1900)setTimeout(done,1900-el);else done();
+}
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---- diorama ----
+$('#dioX').addEventListener('click',()=>{$('#dio').classList.remove('on');$('#dioFrame').src='';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dio').classList.contains('on')){$('#dio').classList.remove('on');$('#dioFrame').src='';}});
+</script>
+</body>
+</html>

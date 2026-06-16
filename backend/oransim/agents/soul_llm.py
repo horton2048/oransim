@@ -216,6 +216,90 @@ def soul_infer_llm(
         return {"_error": f"{type(e).__name__}: {str(e)[:200]}"}
 
 
+SYSTEM_LAUNCH = """你是消费品上市调研的 persona 模拟器。
+你扮演给定虚拟用户，看到一款新品的上市种草内容，判断你会不会试用、最多愿意付多少钱、最大顾虑是什么。
+只输出严格 JSON，不要任何额外解释。"""
+
+PROMPT_TEMPLATE_LAUNCH = """<persona>
+{persona_card}
+最近兴趣倾向：{interests}
+</persona>
+
+<launch_note>
+平台：{platform}
+达人/创作者：{kol_name}（{kol_niche} 赛道，粉丝 {kol_fans}）
+上市种草文案：{caption}
+投放品类：{kol_niche}（只按此赛道判断）
+视觉：{visual}，BGM：{music}，时长 {duration}s
+</launch_note>
+
+站在这个用户立场，严格输出 JSON：
+{{"will_try": true/false,
+  "would_pay_cny": 你最多愿意为它支付的人民币金额（纯数字，不带单位）,
+  "objection": "你的最大顾虑/不买的理由，用自己的话写一句（20字内）；若毫无顾虑就空字符串",
+  "purchase_intent_7d": 0到1之间的小数（未来7天购买意向）}}"""
+
+
+def soul_infer_llm_launch(
+    persona: Persona,
+    caption: str,
+    platform: str,
+    kol_name: str = "无",
+    kol_niche: str = "通用",
+    kol_fans: int = 0,
+    visual: str = "bright",
+    music: str = "upbeat",
+    duration: float = 15.0,
+) -> dict:
+    """上市模式的真 LLM soul: persona 看上市种草，返回
+    {will_try, would_pay_cny, objection, purchase_intent_7d}（与 infer_one_launch 同形）。
+
+    解析失败/网络错 → 返回 {"_error": ...}，由 infer_batch 走 mock-fallback。
+    """
+    prompt = PROMPT_TEMPLATE_LAUNCH.format(
+        persona_card=persona.full_card(),
+        interests=", ".join(persona.interests),
+        platform=platform,
+        kol_name=kol_name,
+        kol_niche=kol_niche,
+        kol_fans=f"{kol_fans/10000:.1f}万" if kol_fans else "无",
+        caption=caption,
+        visual=visual,
+        music=music,
+        duration=duration,
+    )
+    use_stream = os.environ.get("LLM_STREAM", "1") not in ("0", "false", "False")
+    provider = get_provider()
+    stream_ok = use_stream and resolve_provider_name() == "openai"
+    t0 = time.time()
+    try:
+        result = provider.generate(
+            system=SYSTEM_LAUNCH, user=prompt, model=MODEL,
+            temperature=0.7, max_tokens=250, stream=stream_ok,
+        )
+        raw = _extract_json_strict(result.content)
+        # 字段强制规范化 (LLM 可能给字符串金额 / 缺字段)
+        def _num(v, default=0.0):
+            try:
+                return float(str(v).replace("¥", "").replace("元", "").strip())
+            except Exception:
+                return default
+        intent = _num(raw.get("purchase_intent_7d"), 0.1)
+        parsed = {
+            "will_try": bool(raw.get("will_try")),
+            "would_pay_cny": max(0.0, _num(raw.get("would_pay_cny"))),
+            "objection": str(raw.get("objection") or ""),
+            "purchase_intent_7d": min(1.0, max(0.0, intent)),
+        }
+        parsed["_latency_ms"] = result.latency_ms or int((time.time() - t0) * 1000)
+        parsed["_tokens_in"] = int(result.usage.get("prompt_tokens", 0) or 0)
+        parsed["_tokens_out"] = int(result.usage.get("completion_tokens", 0) or 0)
+        parsed["_raw_preview"] = result.raw_preview
+        return parsed
+    except Exception as e:
+        return {"_error": f"{type(e).__name__}: {str(e)[:200]}"}
+
+
 def _extract_json(s: str) -> dict:
     """Pull the first JSON object out of an LLM response, tolerating code fences / prose.
 
