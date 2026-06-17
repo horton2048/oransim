@@ -2,7 +2,7 @@
 
 > **状态**：v0.2 到位（完整安装、环境配置、第一次跑预测）。
 
-v0.1.0-alpha 的快速上手见根目录 [README.zh-CN.md](https://github.com/OranAi-Ltd/oransim/blob/main/README.zh-CN.md#-一分钟上手)。
+v0.1.0-alpha 的快速上手见根目录 [README.zh-CN.md](https://github.com/horton2048/augur/blob/main/README.zh-CN.md#-一分钟上手)。
 
 ## 环境变量
 
@@ -19,7 +19,7 @@ v0.1.0-alpha 的快速上手见根目录 [README.zh-CN.md](https://github.com/Or
 
 ## 部署：单 worker 起跑
 
-Oransim v0.2 的运行时 state（人口、agents、world model、Embedding Bus
+Augur v0.2 的运行时 state（人口、agents、world model、Embedding Bus
 索引、品牌记忆缓存）全部放在 **进程内单例**，OSS 版本无跨 worker 同步。
 
 **部署时用单 worker**。设置 `WEB_CONCURRENCY >= 2`、`WORKERS >= 2` 或
@@ -28,4 +28,4 @@ Oransim v0.2 的运行时 state（人口、agents、world model、Embedding Bus
 不一致数据。共享状态 Redis 后端在 Enterprise 版路线图里；OSS 版到位
 之前，单 worker 是正确选择。
 
-完整后端到位时间见 [ROADMAP.md](https://github.com/OranAi-Ltd/oransim/blob/main/ROADMAP.md)。
+完整后端到位时间见 [ROADMAP.md](https://github.com/horton2048/augur/blob/main/ROADMAP.md)。

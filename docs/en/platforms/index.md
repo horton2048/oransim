@@ -1,6 +1,6 @@
 # Platforms
 
-Oransim organises platform integrations along **two orthogonal axes**:
+Augur organises platform integrations along **two orthogonal axes**:
 
 1. **`PlatformAdapter`** — platform-specific semantics (what a post looks
    like, what a conversion is, what a KOL is). Each platform ships an
@@ -27,7 +27,7 @@ need to change together.
 | ✒️ LinkedIn | Global | 📋 planned | — | v1.0 |
 
 Request a new adapter via the [adapter request
-template](https://github.com/OranAi-Ltd/oransim/issues/new?template=adapter_request.yml).
+template](https://github.com/horton2048/augur/issues/new?template=adapter_request.yml).
 
 ## Further reading
 

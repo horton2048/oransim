@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" role="img" aria-label="Oransim wordmark">
-  <title>Oransim</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" role="img" aria-label="Augur wordmark">
+  <title>Augur</title>
   <defs>
     <linearGradient id="orange" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF8A3C"/>
@@ -32,12 +32,12 @@
         font-weight="800"
         font-size="90"
         letter-spacing="-2"
-        fill="#1a2a4a">ORANSIM</text>
+        fill="#1a2a4a">AUGUR</text>
 
   <!-- Tagline -->
   <text x="200" y="160"
         font-family="'Inter', 'Helvetica Neue', Arial, sans-serif"
         font-weight="400"
         font-size="22"
-        fill="#FF6B35">Causal Digital Twin for Marketing</text>
+        fill="#FF6B35">See how your launch lands</text>
 </svg>

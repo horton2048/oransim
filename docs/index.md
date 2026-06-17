@@ -1,9 +1,10 @@
-# Oransim
+# Augur
 
-**Causal Digital Twin for Marketing at Scale** — an open-source framework
-combining a Causal Transformer world model, a Causal Neural Hawkes
+**Launch foresight for makers** — an open-source causal engine for launch
+prediction, combining a Causal Transformer world model, a Causal Neural Hawkes
 diffusion forecaster, a 64-node Pearl SCM, and 1M IPF-calibrated virtual
-consumers with 10k LLM-driven soul agents.
+consumers with 10k LLM-driven soul agents. Rehearse a product or content launch
+before you spend on it.
 
 Released under **Apache-2.0**. Version: **v0.2.0-alpha**.
 
@@ -37,19 +38,16 @@ Released under **Apache-2.0**. Version: **v0.2.0-alpha**.
 
 ## Community
 
-- **GitHub**: <https://github.com/OranAi-Ltd/oransim>
-- **Issues**: <https://github.com/OranAi-Ltd/oransim/issues>
-- **Enterprise inquiries**: `cto@orannai.com`
+- **GitHub**: <https://github.com/horton2048/augur>
+- **Issues**: <https://github.com/horton2048/augur/issues>
 
-## Citing Oransim
+## Citing Augur
 
 ```bibtex
-@software{oransim2026,
-  author       = {Yin, Fakong and {Oransim contributors}},
-  title        = {Oransim: A Causal Digital Twin for Marketing at Scale},
+@software{augur2026,
+  title        = {Augur: Launch Foresight for Makers},
   version      = {0.2.0-alpha},
   date         = {2026-04-18},
-  url          = {https://github.com/OranAi-Ltd/oransim},
-  organization = {OranAI Ltd.}
+  url          = {https://github.com/horton2048/augur},
 }
 ```

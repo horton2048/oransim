@@ -1,6 +1,6 @@
 # Assets
 
-Visual identity files for Oransim.
+Visual identity files for Augur.
 
 | File | Purpose | Dimensions |
 |------|---------|------------|

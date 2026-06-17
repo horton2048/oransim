@@ -1,12 +1,12 @@
-site_name: Oransim
-site_description: Causal Digital Twin for Marketing at Scale
-site_url: https://oranai-ltd.github.io/oransim/docs/
-site_author: OranAI Ltd.
-repo_url: https://github.com/OranAi-Ltd/oransim
-repo_name: OranAi-Ltd/oransim
+site_name: Augur
+site_description: Launch foresight for makers
+site_url: https://horton2048.github.io/augur/docs/
+site_author: Augur contributors
+repo_url: https://github.com/horton2048/augur
+repo_name: horton2048/augur
 edit_uri: edit/main/docs/
 
-copyright: Copyright &copy; 2026 OranAI Ltd. — Apache-2.0
+copyright: Copyright &copy; 2026 OranAI Ltd. and Augur contributors — Apache-2.0
 
 theme:
   name: material
@@ -50,9 +50,9 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/OranAi-Ltd/oransim
-    - icon: fontawesome/solid/envelope
-      link: mailto:cto@orannai.com
+      link: https://github.com/horton2048/augur
+    - icon: fontawesome/solid/bug
+      link: https://github.com/horton2048/augur/issues
   generator: false
 
 nav:

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Oransim: Causal Digital Twin for Marketing at Scale</title>
-<meta name="description" content="Oransim: an open-source framework combining a Causal Transformer world model, a Causal Neural Hawkes diffusion forecaster, a 64-node causal graph, and an IPF-calibrated virtual-consumer population (configurable POP_SIZE, 100k default) with LLM-driven soul agents for marketing performance prediction."/>
-<meta property="og:title" content="Oransim · Causal Digital Twin for Marketing at Scale"/>
-<meta property="og:description" content="Causal Transformer + Causal Neural Hawkes + 64-node causal graph + agent-based simulation. Apache-2.0."/>
-<meta property="og:image" content="https://raw.githubusercontent.com/OranAi-Ltd/oransim/main/assets/social-preview.svg"/>
+<title>Augur: See How Your Launch Lands — Before You Ship It</title>
+<meta name="description" content="Augur: an open-source launch-prediction engine for makers. Rehearse a product or content launch over a virtual-consumer society — a Causal Transformer world model, a Causal Neural Hawkes diffusion forecaster, a 64-node causal graph, and an IPF-calibrated population with LLM-driven personas — and get the ROI, the 14-day curve, and a go / tune / hold call before you spend a dollar."/>
+<meta property="og:title" content="Augur · Launch foresight for makers"/>
+<meta property="og:description" content="Rehearse your launch over an agent-based society: ROI, 14-day curve, and a go / tune / hold verdict before you spend. Open-source, Apache-2.0."/>
+<meta property="og:image" content="https://raw.githubusercontent.com/horton2048/augur/main/assets/social-preview.svg"/>
 <meta property="og:url" content="https://oranai-ltd.github.io/oransim/"/>
 <meta property="og:type" content="website"/>
 <meta name="twitter:card" content="summary_large_image"/>
@@ -477,7 +477,7 @@
   <div class="header-inner">
     <div class="mark">
       <img class="logo" src="assets/logo.svg" alt=""/>
-      <a class="name" href="#">Oransim</a>
+      <a class="name" href="#">Augur</a>
       <span class="version">v0.2.0-alpha</span>
     </div>
     <div class="nav-links">
@@ -485,7 +485,7 @@
       <a href="#method" class="nv">Method</a>
       <a href="#quickstart" class="nv">Code</a>
       <a href="#bibtex" class="nv">Cite</a>
-      <a href="https://github.com/OranAi-Ltd/oransim">GitHub ↗</a>
+      <a href="https://github.com/horton2048/augur">GitHub ↗</a>
     </div>
   </div>
 </header>
@@ -493,23 +493,21 @@
 <!-- ========== TITLE ========== -->
 <section class="paper-head">
   <h1>
-    Oransim: A Causal Digital Twin for<br/>
-    Marketing Performance <em>Prediction</em>
+    Augur: See How Your Launch Lands<br/>
+    <em>Before You Ship It</em>
   </h1>
   <div class="authors">
-    Fakong&nbsp;Yin<sup>1</sup>
-    <span class="sep">·</span>
-    Oransim&nbsp;Contributors<sup>1</sup>
+    Augur&nbsp;Contributors
   </div>
   <div class="affiliations">
-    <sup>1</sup>OranAI&nbsp;Ltd. (橙果视界（深圳）科技有限公司)
+    Open-source launch foresight for makers · Apache-2.0
   </div>
   <div class="paper-meta">
     2026-04-18 · Apache-2.0 · Python&nbsp;≥&nbsp;3.10 · v0.2.0-alpha
   </div>
   <div class="pill-row">
-    <a href="https://github.com/OranAi-Ltd/oransim" class="pill primary">[Code]&nbsp;GitHub</a>
-    <a href="https://github.com/OranAi-Ltd/oransim/releases/tag/v0.2.0-alpha" class="pill">[Release]&nbsp;v0.2.0-alpha</a>
+    <a href="https://github.com/horton2048/augur" class="pill primary">[Code]&nbsp;GitHub</a>
+    <a href="https://github.com/horton2048/augur/releases/tag/v0.2.0-alpha" class="pill">[Release]&nbsp;v0.2.0-alpha</a>
     <a href="#bibtex" class="pill">[Cite]&nbsp;BibTeX</a>
     <a href="README.zh-CN.md" class="pill ghost">[中文]</a>
   </div>
@@ -520,8 +518,10 @@
   <div class="abstract-inner">
     <span class="abstract-label">Abstract</span>
     <p>
-      We present <strong>Oransim</strong>, an open-source causal digital twin for
-      marketing performance prediction. Oransim integrates four primary
+      We present <strong>Augur</strong>, an open-source causal engine for
+      launch prediction — built for makers, solo brand owners, and small
+      creator teams who want to rehearse a product or content launch before
+      they spend on it. Augur integrates four primary
       modeling components: (i) a <em>Causal Transformer</em> world model with
       explicit treatment–covariate–outcome factorization, DAG-aware attention,
       per-arm counterfactual heads, and representation-balancing regularization
@@ -534,10 +534,10 @@
       Zuo et&nbsp;al.<span class="cite"><a href="#r5">[5]</a></span>, and
       Geng et&nbsp;al.<span class="cite"><a href="#r6">[6]</a></span>;
       (iii) a hand-designed 64-node causal graph with <code>do</code>-calculus<span class="cite"><a href="#r7">[7]</a></span>
-      interventions — the graph encodes long-term marketing feedback (e.g.
+      interventions — the graph encodes long-term launch feedback (e.g.
       repeat-purchase → brand equity → CPM bid → next-cycle impression),
-      evaluated as a cyclic-SCM fixed point in the OSS release; a fully
-      time-unrolled DAG formulation ships with the Enterprise Edition;
+      evaluated as a cyclic-SCM fixed point, with a fully time-unrolled DAG
+      formulation available as an acyclic alternative;
       and (iv) a population of one&nbsp;million IPF-calibrated virtual consumers with
       10k LLM-driven persona agents. The framework is released under Apache-2.0
       with a deterministic synthetic training corpus, a pretrained LightGBM
@@ -555,16 +555,16 @@
     <span class="section-num">1 &nbsp; Introduction</span>
     <h2>Motivation</h2>
     <p class="lead">
-      Marketing prediction has long oscillated between two extremes. Academic
+      Launch prediction has long oscillated between two extremes. Academic
       simulators model causal structure but rarely ship; commercial predictors
-      ship but rarely explain. Oransim is an attempt to bridge the gap:
-      counterfactual reasoning as a first-class interface, packaged as a
-      <code>pip install</code>-shaped service.
+      ship but rarely explain. Augur is an attempt to bridge the gap:
+      counterfactual reasoning as a first-class interface, packaged so a single
+      maker can rehearse a launch from a <code>pip install</code>.
     </p>
     <p>
       Prior open-source efforts in causal inference have focused on either
       estimator libraries (DoWhy, EconML, CausalML) or observational-study
-      pipelines. Oransim differs by assembling an end-to-end <em>digital twin</em>:
+      pipelines. Augur differs by assembling an end-to-end <em>digital twin</em>:
       agent-based exposure simulation, a causal world model with per-treatment
       counterfactual heads, and an intervention-aware diffusion forecaster,
       unified behind a single prediction API. The design prioritizes three
@@ -585,7 +585,7 @@
     <span class="section-num">2 &nbsp; The Causal Stack</span>
     <h2>Components</h2>
     <p>
-      Oransim is organized as six composable engines, each separable and
+      Augur is organized as six composable engines, each separable and
       individually replaceable through a registry. Primary models are
       research-grade and ship architecture + training + inference code today
       (v0.2.0-alpha); pretrained weights land with OrancBench v0.5.
@@ -679,7 +679,7 @@
   <!-- Figure 1: Architecture -->
   <div class="col-fig">
     <figure>
-      <img src="assets/architecture.svg" alt="Oransim architecture"/>
+      <img src="assets/architecture.svg" alt="Augur architecture"/>
       <figcaption><b>Figure&nbsp;1.</b>&nbsp;Architecture. A prediction request flows
         <code>Creative + Budget</code> → <code>PlatformAdapter</code> (backed by
         a pluggable <code>DataProvider</code>) → Causal Transformer World Model
@@ -701,9 +701,9 @@
       with v0.2.0-alpha, trained on the deterministic 2k-scenario synthetic
       corpus (<code>data/synthetic/scenarios_v0_1.jsonl</code>). Numbers reflect
       performance on a 10% held-out split of synthetic data and should not be
-      read as real-world calibration; the OranAI Enterprise Edition trains the
-      same architectures on proprietary real-world data and publishes separate
-      benchmarks.
+      read as real-world calibration. For real launch accuracy, train the same
+      architectures on your own campaign data via the <code>DataProvider</code>
+      interface (see the repository).
     </p>
 
     <div class="tbl-wrap col">
@@ -746,8 +746,8 @@
 
     <div class="code-plate">
 <pre><span class="cmt"># 1. Clone and install.</span>
-<span class="cmd">git clone</span> https://github.com/OranAi-Ltd/oransim.git
-<span class="cmd">cd</span> oransim
+<span class="cmd">git clone</span> https://github.com/horton2048/augur.git
+<span class="cmd">cd</span> augur
 <span class="cmd">pip install</span> -e <span class="str">'.[dev]'</span>
 
 <span class="cmt"># 2. Optional: research-grade models (PyTorch, CPU or GPU).</span>
@@ -802,29 +802,25 @@
         <caption><b>Table&nbsp;2.</b>&nbsp;Platform adapter matrix. MVP adapters
           are wired end-to-end on the synthetic LightGBM baseline; real-panel
           calibration lands in v0.5. See
-          <a href="https://github.com/OranAi-Ltd/oransim/blob/main/ROADMAP.md">ROADMAP.md</a>.</caption>
+          <a href="https://github.com/horton2048/augur/blob/main/ROADMAP.md">ROADMAP.md</a>.</caption>
       </table>
     </div>
   </div>
 </section>
 
-<!-- ========== ENTERPRISE ========== -->
-<section id="enterprise">
+<!-- ========== USE YOUR OWN DATA ========== -->
+<section id="own-data">
   <div class="col">
-    <span class="section-num">6 &nbsp; OranAI Enterprise Edition</span>
-    <h2>Real data, vertical models, custom deployment</h2>
+    <span class="section-num">6 &nbsp; Run It On Your Own Data</span>
+    <h2>Synthetic by default, bring-your-own-data ready</h2>
     <p>
-      The open-source release trains exclusively on synthetic data for
-      transparency and reproducibility. An accompanying enterprise edition
-      maintained by OranAI Ltd. retrains the same architectures on
-      continuously-updated proprietary marketing campaigns, with
-      higher-performance vertical variants (beauty, fashion, 3C, food and
-      beverage, luxury, automotive) and bespoke customization including
-      on-premise deployment, domain-specific DAGs, branded persona libraries,
-      and a SOC&nbsp;2 / ISO&nbsp;27001 / GDPR compliance track. Academic and
-      non-commercial research use of the open-source release is unrestricted
-      under Apache-2.0. Enterprise inquiries:
-      <a href="mailto:cto@orannai.com">cto@orannai.com</a>.
+      The release trains exclusively on synthetic data for transparency and
+      reproducibility — so every prediction is auditable and nothing is hidden
+      behind a black box. When you're ready for real launch decisions, point
+      Augur at your own data (CSV, JSONL, a REST endpoint, or your database)
+      through the <code>DataProvider</code> interface and retrain the same
+      architectures on your own campaigns. No license, no sign-up — it's all
+      Apache-2.0 and it all runs locally.
     </p>
   </div>
 </section>
@@ -835,17 +831,17 @@
     <span class="section-num">7 &nbsp; Related Work</span>
     <h2>Positioning</h2>
     <p>
-      Oransim sits at the intersection of three research threads. In causal
+      Augur sits at the intersection of three research threads. In causal
       machine learning, Transformer-based treatment-effect estimators (CaT,
       CausalDAG-Transformer) and per-arm counterfactual heads (TARNet,
-      Dragonnet, BCAUSS) have recently matured; Oransim combines their design
+      Dragonnet, BCAUSS) have recently matured; Augur combines their design
       choices in one framework and packages them for end-to-end use. In
       temporal point processes, the neural-intensity family (Neural Hawkes,
       Transformer Hawkes, Intensity-Free TPP<span class="cite"><a href="#r11">[11]</a></span>,
       Neural STPP<span class="cite"><a href="#r12">[12]</a></span>) has moved
       beyond parametric models; counterfactual TPPs (Geng et&nbsp;al.;
       Noorbakhsh and Rodriguez) formalize <code>do</code>-queries on event
-      streams — Oransim operationalizes these in a marketing setting with
+      streams — Augur operationalizes these in a launch setting with
       organic-versus-paid event typing. In agent-based simulation, large
       language models increasingly serve as qualitative behavioral proxies; we
       pair 10k LLM personas with one&nbsp;million statistically-calibrated agents
@@ -861,13 +857,11 @@
     <span class="section-num">8 &nbsp; Citation</span>
     <h2>BibTeX</h2>
     <div class="bibtex">
-<pre>@software{oransim2026,
-  author       = {Yin, Fakong and {Oransim contributors}},
-  title        = {Oransim: A Causal Digital Twin for Marketing at Scale},
+<pre>@software{augur2026,
+  title        = {Augur: Launch Foresight for Makers},
   version      = {0.2.0-alpha},
   date         = {2026-04-18},
-  url          = {https://github.com/OranAi-Ltd/oransim},
-  organization = {OranAI Ltd.}
+  url          = {https://github.com/horton2048/augur},
 }</pre>
     </div>
   </div>
@@ -896,22 +890,22 @@
 <!-- ========== FOOTER ========== -->
 <footer>
   <p>
-    Oransim is released under the Apache License, Version 2.0.
+    Augur is released under the Apache License, Version 2.0.
   </p>
   <p>
-    Copyright © 2026 OranAI Ltd. (橙果视界（深圳）科技有限公司) and contributors.
+    Apache-2.0 · open-source · built for makers.
   </p>
   <p style="margin-top: 18px;">
-    <a href="https://github.com/OranAi-Ltd/oransim">GitHub</a>&nbsp;·&nbsp;
-    <a href="https://github.com/OranAi-Ltd/oransim/releases">Releases</a>&nbsp;·&nbsp;
-    <a href="https://github.com/OranAi-Ltd/oransim/blob/main/ROADMAP.md">Roadmap</a>&nbsp;·&nbsp;
-    <a href="https://github.com/OranAi-Ltd/oransim/blob/main/CHANGELOG.md">Changelog</a>&nbsp;·&nbsp;
+    <a href="https://github.com/horton2048/augur">GitHub</a>&nbsp;·&nbsp;
+    <a href="https://github.com/horton2048/augur/releases">Releases</a>&nbsp;·&nbsp;
+    <a href="https://github.com/horton2048/augur/blob/main/ROADMAP.md">Roadmap</a>&nbsp;·&nbsp;
+    <a href="https://github.com/horton2048/augur/blob/main/CHANGELOG.md">Changelog</a>&nbsp;·&nbsp;
     <a href="README.zh-CN.md">中文</a>
   </p>
 
   <div class="star-block">
-    <a class="plain" href="https://star-history.com/#OranAi-Ltd/oransim&Date">
-      <img src="https://api.star-history.com/svg?repos=OranAi-Ltd/oransim&type=Date" alt="Star history"/>
+    <a class="plain" href="https://star-history.com/#horton2048/augur&Date">
+      <img src="https://api.star-history.com/svg?repos=horton2048/augur&type=Date" alt="Star history"/>
     </a>
   </div>
 </footer>

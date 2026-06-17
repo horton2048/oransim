@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Niche registry for Oransim — single source of truth for niche keys, Chinese display labels, keyword synonyms, and CTR priors. Any hardcoded niche table in the codebase reads from here at import time. Extend this file to add your own niches (or point ORAN_NICHES_PATH at a custom JSON).",
+  "_note": "Niche registry for Augur — single source of truth for niche keys, Chinese display labels, keyword synonyms, and CTR priors. Any hardcoded niche table in the codebase reads from here at import time. Extend this file to add your own niches (or point ORAN_NICHES_PATH at a custom JSON).",
   "niches": [
     {
       "key": "beauty",

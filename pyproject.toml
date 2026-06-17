@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "oransim"
 version = "0.2.0a0"
-description = "Causal Digital Twin for Marketing at Scale — Predict any marketing decision before you spend a dollar."
+description = "Augur — launch foresight for makers. See how your launch lands before you spend a dollar."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "OranAI Ltd.", email = "cto@orannai.com" },
-    { name = "Oransim contributors" }
+    { name = "OranAI Ltd." },
+    { name = "Augur contributors" }
 ]
 requires-python = ">=3.10"
 keywords = [
@@ -76,11 +76,11 @@ ml = [
 ]
 
 [project.urls]
-Homepage = "https://oran.cn/oransim"
-Documentation = "https://github.com/OranAi-Ltd/oransim#readme"
-Repository = "https://github.com/OranAi-Ltd/oransim"
-Issues = "https://github.com/OranAi-Ltd/oransim/issues"
-Changelog = "https://github.com/OranAi-Ltd/oransim/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/horton2048/augur"
+Documentation = "https://github.com/horton2048/augur#readme"
+Repository = "https://github.com/horton2048/augur"
+Issues = "https://github.com/horton2048/augur/issues"
+Changelog = "https://github.com/horton2048/augur/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["backend"]

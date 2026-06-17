@@ -1,10 +1,10 @@
-# 会不会火 · 上市预测 — open-design 输入包 · 从这里开始
+# Augur · 上市预测 — open-design 输入包 · 从这里开始
 
-这是一份喂给 **open-design**（`nexu-io/open-design`，本地优先的开源版 Claude Design）的输入 bundle，用来从零设计 **「会不会火」上市预测** 的单一 C 端前端。
+这是一份喂给 **open-design**（`nexu-io/open-design`，本地优先的开源版 Claude Design）的输入 bundle，用来从零设计 **Augur 上市预测** 的单一 C 端前端。
 
 闭环：**open-design 出几套备选设计 → 你挑一套 → 把产物丢回 Claude Code（我）→ 我据此改后端、接真数据跑通**。
 
-> 产品工作名：**会不会火**（沿用现有原型标题的钩子；品牌名未定，open-design 可提方案）。
+> 产品名：**Augur**（中文界面也用 Augur，不再用中文品牌名）。
 > **界面任何地方都不要出现 `oransim`**——那是旧项目代号；`/api/*` 是后端实现路径，不是品牌名，保持不变。
 
 ---

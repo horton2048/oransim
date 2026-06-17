@@ -2,7 +2,7 @@
 
 > **Status:** Coming soon (v0.2). This page will cover full installation, environment configuration, and running your first prediction.
 
-For v0.1.0-alpha, see the root [README.md](https://github.com/OranAi-Ltd/oransim/blob/main/README.md#-quickstart-60-seconds).
+For v0.1.0-alpha, see the root [README.md](https://github.com/horton2048/augur/blob/main/README.md#-quickstart-60-seconds).
 
 ## Environment Variables Reference
 
@@ -19,7 +19,7 @@ For v0.1.0-alpha, see the root [README.md](https://github.com/OranAi-Ltd/oransim
 
 ## Deployment: run a single worker
 
-Oransim v0.2 stores the runtime state (population, agents, world model,
+Augur v0.2 stores the runtime state (population, agents, world model,
 Embedding Bus indexes, brand-memory cache) in **process-local**
 singletons. There is no cross-worker synchronization in the OSS build.
 
@@ -31,4 +31,4 @@ across requests. A shared-state Redis backend is on the Enterprise
 Edition roadmap; until it lands, single-worker is the correct choice
 for the OSS tier.
 
-See [ROADMAP.md](https://github.com/OranAi-Ltd/oransim/blob/main/ROADMAP.md) for when the full backend lands.
+See [ROADMAP.md](https://github.com/horton2048/augur/blob/main/ROADMAP.md) for when the full backend lands.

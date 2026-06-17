@@ -1,4 +1,4 @@
-# Contributing to Oransim
+# Contributing to Augur
 
 Thank you for your interest in contributing! This document explains how to propose changes.
 
@@ -82,21 +82,20 @@ python -m http.server 8090 --directory frontend
 
 ## Reporting Bugs
 
-Use the [Bug Report issue template](https://github.com/OranAi-Ltd/oransim/issues/new?template=bug_report.yml).
+Use the [Bug Report issue template](https://github.com/horton2048/augur/issues/new?template=bug_report.yml).
 
 ## Proposing Features
 
-For significant features, open a [Feature Request](https://github.com/OranAi-Ltd/oransim/issues/new?template=feature_request.yml) or start a [Discussion](https://github.com/OranAi-Ltd/oransim/discussions) first to align on approach before coding.
+For significant features, open a [Feature Request](https://github.com/horton2048/augur/issues/new?template=feature_request.yml) or start a [Discussion](https://github.com/horton2048/augur/discussions) first to align on approach before coding.
 
 ## Platform Adapter Requests
 
-Want support for a platform we haven't covered yet (e.g., LinkedIn, Pinterest)? File an [Adapter Request](https://github.com/OranAi-Ltd/oransim/issues/new?template=adapter_request.yml).
+Want support for a platform we haven't covered yet (e.g., LinkedIn, Pinterest)? File an [Adapter Request](https://github.com/horton2048/augur/issues/new?template=adapter_request.yml).
 
 ## Community
 
-- **Discussions**: https://github.com/OranAi-Ltd/oransim/discussions
-- **Issues**: https://github.com/OranAi-Ltd/oransim/issues
-- **Email**: cto@orannai.com (maintainer)
+- **Discussions**: https://github.com/horton2048/augur/discussions
+- **Issues**: https://github.com/horton2048/augur/issues
 
 ## License
 

@@ -1,6 +1,6 @@
-# Data Card — Oransim Synthetic Training Corpus
+# Data Card — Augur Synthetic Training Corpus
 
-- **Dataset name**: Oransim Synthetic Marketing Campaigns
+- **Dataset name**: Augur Synthetic Marketing Campaigns
 - **Version**: **v1.0** (2026-04-18)
 - **License**: Apache-2.0 / CC0 (the data itself is public domain)
 - **Companion model card**: [`model_card.md`](model_card.md)
@@ -10,7 +10,7 @@
 A fully synthetic corpus of simulated marketing campaigns produced by
 `backend/scripts/gen_synthetic_data.py`. No real KOL, note, user, or brand
 data enters this dataset. It is the exclusive training source for all
-pretrained models shipped with Oransim OSS.
+pretrained models shipped with Augur OSS.
 
 ## Generation process
 
@@ -90,11 +90,11 @@ Schema version: `1.1`.
 - The corpus contains **no personal information** about real users, KOLs,
   or brands. Synthetic names are drawn from a randomised vocabulary of
   English adjective-noun pairs.
-- OSS users training on this dataset can freely redistribute derived
+- Anyone training on this dataset can freely redistribute derived
   models under Apache-2.0.
-- OranAI Enterprise Edition trains on proprietary real-world data under
-  separate agreements; those models are not distributed with the OSS
-  release.
+- For real launch decisions, bring your own campaign data through the
+  `DataProvider` interface; the synthetic corpus is a reproducible demo,
+  not a substitute for real traffic.
 
 ## Reproducibility
 
@@ -117,5 +117,4 @@ Deterministic output. Identical seed → byte-identical files.
 ## Maintenance
 
 Please report data-quality issues via
-<https://github.com/OranAi-Ltd/oransim/issues>. Contact `cto@orannai.com`
-for commercial-data-licensing enquiries.
+<https://github.com/horton2048/augur/issues>.

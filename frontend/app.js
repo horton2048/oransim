@@ -681,7 +681,7 @@ function downloadReport(reportId) {
   const blob = new Blob([md], {type: 'text/markdown;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `oransim_${reportId || 'report'}.md`;
+  a.href = url; a.download = `augur_${reportId || 'report'}.md`;
   a.click(); URL.revokeObjectURL(url);
 }
 
@@ -689,7 +689,7 @@ function printReport() {
   const html = document.getElementById('final-report-rendered')?.innerHTML || '';
   if (!html) return alert('无报告内容');
   const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>Oransim 预测报告</title><style>
+  w.document.write(`<html><head><title>Augur 预测报告</title><style>
     body{font-family:system-ui,sans-serif;max-width:780px;margin:30px auto;padding:20px;color:#222;line-height:1.7;}
     h1,h2,h3,h4{color:#6b21a8;} table{border-collapse:collapse;margin:10px 0;} th{background:#f3f0ff;padding:6px 10px;text-align:left;} td{padding:5px 10px;border-top:1px solid #ddd;} hr{border:0;border-top:1px solid #ddd;margin:16px 0;} ul{margin:6px 0 10px 24px;}
   </style></head><body>${html}</body></html>`);

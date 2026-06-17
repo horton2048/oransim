@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Oransim are documented in this file.
+All notable changes to Augur are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -305,5 +305,5 @@ site, and expanded model / data card v1.0 documentation.
 - Platform stubs (TikTok/Instagram/YouTube Shorts/Douyin) raise `NotImplementedError` when accessed; this is intentional and tracks the roadmap.
 - Benchmarks in README are based on synthetic data from the internal (non-public) data generator.
 
-[Unreleased]: https://github.com/OranAi-Ltd/oransim/compare/v0.1.0-alpha...HEAD
-[0.1.0-alpha]: https://github.com/OranAi-Ltd/oransim/releases/tag/v0.1.0-alpha
+[Unreleased]: https://github.com/horton2048/augur/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/horton2048/augur/releases/tag/v0.1.0-alpha

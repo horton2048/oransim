@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>会不会火 · 上市预演</title>
+<title>Augur · 上市预演</title>
 <meta name="description" content="输入任何产品上市想法，模型替你推演一遍——会不会火、谁会买、什么会出问题，并诚实标注哪些是算的、哪些是猜的。A/B/C 三档分诊，不硬拒任何想法。">
 <meta name="theme-color" content="#07090F">
 <meta property="og:type" content="website">
-<meta property="og:title" content="会不会火 · 上市预演">
+<meta property="og:title" content="Augur · 上市预演">
 <meta property="og:description" content="任何产品想法，先让模型替你推演一遍。A/B/C 三档诚实预测，绝不让猜测伪装成精确。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090F'/%3E%3Cpath d='M16 5c3 4 6 6 6 11a6 6 0 1 1-12 0c0-2 1-3 2-4 0 2 1 3 2 3 1-3-1-7 2-11z' fill='%233BE0C8'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,7 +259,7 @@ textarea:focus{outline:none;border-color:var(--teal-soft);box-shadow:0 0 0 4px r
 
 <div class="wrap">
   <div class="topbar">
-    <div class="brand"><span class="mark">会不会火</span><span class="kick">Launch Foresight</span></div>
+    <div class="brand"><span class="mark">Augur</span><span class="kick">Launch Foresight</span></div>
     <div class="status"><span class="dot" id="dot"></span><span id="api">connecting…</span></div>
   </div>
 
@@ -585,9 +585,9 @@ function wireActions(tier,rep){
 function shareCard(tier,rep){
   const capEl=$('#rhead .rcap b');const cap=capEl?capEl.textContent:'我的产品';
   let txt;
-  if(tier==='C'){txt=`【${cap}】会不会火 · C 档 AI 情景推演（定性·非精确预测）`;}
+  if(tier==='C'){txt=`【${cap}】Augur · C 档 AI 情景推演（定性·非精确预测）`;}
   else{const s=hotIndex(rep);const m=rep.metrics||{};
-    txt=`【${cap}】会火指数 ${s}/100 · 触达${fmt((m.unique_reach||{}).p50)} 采纳${fmt((m.adopters||{}).p50)} 营收${yuan((m.revenue||{}).p50)} —— 会不会火·上市预演（${TIER_NAME[tier]}）`;}
+    txt=`【${cap}】会火指数 ${s}/100 · 触达${fmt((m.unique_reach||{}).p50)} 采纳${fmt((m.adopters||{}).p50)} 营收${yuan((m.revenue||{}).p50)} —— Augur·上市预演（${TIER_NAME[tier]}）`;}
   if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('结果已复制，可粘贴分享 · 或截图这张卡'),()=>toast('截图这张卡即可分享'));
   else toast('截图这张卡即可分享');
 }

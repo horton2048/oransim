@@ -1,4 +1,4 @@
-# Maya — 后端 API 契约
+# Augur — 后端 API 契约
 
 设计阶段：让 Claude Design 知道有哪些字段、什么量级（但绑定数据请用 `sample-data.json`）。
 回传阶段：我（Claude Code）照这份把设计接到真后端。**契约不可改**——后端是现成的。

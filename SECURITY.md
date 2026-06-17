@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Oransim is currently in alpha. We support security fixes on the latest minor version only:
+Augur is currently in alpha. We support security fixes on the latest minor version only:
 
 | Version | Supported          |
 |---------|--------------------|
@@ -13,7 +13,8 @@ Oransim is currently in alpha. We support security fixes on the latest minor ver
 
 **Do not open public issues for security vulnerabilities.**
 
-Instead, email `cto@orannai.com` with:
+Instead, open a private security advisory at
+<https://github.com/horton2048/augur/security/advisories/new> with:
 - A description of the vulnerability
 - Steps to reproduce
 - Potential impact (availability / confidentiality / integrity)

@@ -1,21 +1,17 @@
 cff-version: 1.2.0
-message: "If you use Oransim in your research, please cite it as below."
-title: "Oransim: Causal Digital Twin for Marketing at Scale"
-abstract: "Oransim is an open-source causal digital twin framework for predicting marketing campaign performance using structural causal models, agent-based simulation with large language model personas, and Hawkes-process diffusion forecasting. It provides a platform-agnostic adapter layer with a reference implementation for Xiaohongshu (XHS / RedNote) and extension points for TikTok, Instagram, YouTube Shorts, and Douyin."
+message: "If you use Augur in your research, please cite it as below."
+title: "Augur: Launch Foresight for Makers"
+abstract: "Augur is an open-source causal engine for launch prediction — built for makers, solo brand owners, and small creator teams to rehearse a product or content launch before they spend on it. It combines structural causal models, agent-based simulation with large language model personas, and Hawkes-process diffusion forecasting, behind a platform-agnostic adapter layer with a reference implementation for Xiaohongshu (XHS / RedNote) and extension points for TikTok, Instagram, YouTube Shorts, and Douyin."
 type: software
 version: 0.2.0-alpha
 date-released: "2026-04-19"
 license: Apache-2.0
-repository-code: "https://github.com/OranAi-Ltd/oransim"
-url: "https://oran.cn/oransim"
+repository-code: "https://github.com/horton2048/augur"
 authors:
-  - family-names: Yin
-    given-names: Fakong
-    affiliation: "OranAI Ltd. (橙果视界（深圳）科技有限公司)"
-  - name: "Oransim contributors"
+  - name: "Augur contributors"
 keywords:
   - causal-inference
-  - digital-twin
+  - launch-prediction
   - marketing-ai
   - agent-based-modeling
   - counterfactual-reasoning
@@ -26,10 +22,8 @@ keywords:
   - social-media-analytics
 preferred-citation:
   type: software
-  title: "Oransim: Causal Digital Twin for Marketing at Scale"
+  title: "Augur: Launch Foresight for Makers"
   year: 2026
   authors:
-    - family-names: Yin
-      given-names: Fakong
-      affiliation: "OranAI Ltd."
-  url: "https://github.com/OranAi-Ltd/oransim"
+    - name: "Augur contributors"
+  url: "https://github.com/horton2048/augur"

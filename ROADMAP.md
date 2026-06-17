@@ -1,10 +1,10 @@
-# Oransim Roadmap
+# Augur Roadmap
 
 > **Updated:** 2026-04-19 · **Current version:** 0.2.0-alpha
 >
-> This roadmap is aspirational. Item inclusion does not guarantee delivery; priorities shift with user feedback, research breakthroughs, and commercial signal. Give a 👍 reaction on the [tracking issue](https://github.com/OranAi-Ltd/oransim/issues) to help us prioritize.
+> This roadmap is aspirational. Item inclusion does not guarantee delivery; priorities shift with user feedback, research breakthroughs, and commercial signal. Give a 👍 reaction on the [tracking issue](https://github.com/horton2048/augur/issues) to help us prioritize.
 
-Oransim's roadmap is organized across three horizons and eight themes. Each horizon is cumulative — v1.0 ships everything from v0.2 and v0.5 plus new items.
+Augur's roadmap is organized across three horizons and eight themes. Each horizon is cumulative — v1.0 ships everything from v0.2 and v0.5 plus new items.
 
 - **v0.2 · Near** — 6~12 weeks (target Q3 2026)
 - **v0.5 · Mid** — 3~6 months (target Q4 2026 – Q1 2027)
@@ -59,7 +59,7 @@ Themes:
 ### 🌱 Ecosystem
 - Discord server launch
 - Weekly "Office Hours" livestream (first 8 weeks)
-- Blog launch on `https://oran.cn/oransim/blog`
+- Project blog / changelog
 - Hacker News / Product Hunt announcement
 
 ### 📄 Research & Publications
@@ -73,7 +73,7 @@ Themes:
 ### 🧠 Models & Algorithms
 - ✅ ~~Neural Hawkes Process~~ — **shipped in v0.1.0-alpha** as `CausalNeuralHawkesProcess` (Zuo ICML'20 + Geng NeurIPS'22 counterfactual TPP). Pretrained weights arrive with OrancBench v0.5.
 - ✅ ~~Transformer World Model~~ — **shipped in v0.1.0-alpha** as `CausalTransformerWorldModel` (CaT + CausalDAG-Transformer + TARNet/Dragonnet + BCAUSS + CInA). Pretrained weights arrive with OrancBench v0.5.
-- 🎯 **Pretrained-weight release** — trained checkpoints for both primary models on the 100k synthetic corpus, published at https://github.com/OranAi-Ltd/oransim/releases
+- 🎯 **Pretrained-weight release** — trained checkpoints for both primary models on the 100k synthetic corpus, published at https://github.com/horton2048/augur/releases
 - 🎯 **Cross-platform transfer learning** — pretrain world model on XHS data, fine-tune on TikTok with few-shot adapter layer; quantify transfer gain
 - 🎯 **Multi-modal embedders** — v0.2 ships stub classes (`ImageEmbedderStub` / `VideoEmbedderStub` / `AudioEmbedderStub` in `runtime/embedding_bus.py`) that raise `NotImplementedError` pointing here. v0.5 lands real backends:
   - **Image**: CLIP (OpenAI) / Qwen-VL (Alibaba) / SigLIP (Google) / ImageBind (Meta)
@@ -105,7 +105,7 @@ Themes:
   2. **CATE heterogeneity task** — per-arm treatment effect varies with covariates (high-engagement KOLs are budget-insensitive; low-engagement are very sensitive). Metric: per-segment CATE R². LightGBM computes factual means — noisy when differenced; CT's per-arm head models it directly.
   3. **Temporal intervention task** — `do(mute_at_min=day_3)` rollouts where boosting stops mid-campaign. Metric: per-day forecast MAE. ParametricHawkes uses fixed exponential kernels — poor on sharp policy changes; CausalNeuralHawkes's attention-over-history adapts.
 - **Pretrained weights ship here**, tied to demonstrating ≥2× improvement on at least two of the three causal tasks vs baselines. No weights released before this milestone is met.
-- Public leaderboard at `https://oran.cn/oransim/leaderboard`
+- Public leaderboard (hosted alongside the repo)
 - Synthetic generator v2 — comparative study of Copula vs GMM vs VAE
 - Evaluation protocol spec (`docs/en/benchmarks/protocol.md`)
 
@@ -125,13 +125,13 @@ Themes:
 
 ### 🌱 Ecosystem
 - **Plugin registry** — npm-style index for community-published platform adapters and data providers
-- **Hosted demo** — `https://oran.cn/demo` (public try-before-clone)
+- **Hosted demo** — a public try-before-clone instance
 - Monthly newsletter — 10 highlighted community-contributed adapters / models
 
 ### 📄 Research & Publications
 - 📄 Submit to **ICML 2027**: *Causal Data Augmentation via Simulation Pretraining for Sparse Marketing Data*
 - 📄 Submit to **KDD 2026** (short track): *Neural Hawkes for Cross-Platform Marketing Diffusion Forecasting*
-- 📄 Submit to **WWW 2027** (demo track): *Oransim — An Open Platform for Causal Marketing Simulation*
+- 📄 Submit to **WWW 2027** (demo track): *Augur — An Open Platform for Causal Marketing Simulation*
 
 ---
 
@@ -150,7 +150,7 @@ Themes:
 - Cross-platform campaign orchestration — upload once, predict across all platforms simultaneously
 
 ### 🔌 LLM Providers
-- **OranAI-tuned foundation model** — open-weight base + real marketing corpus fine-tune; available via Hugging Face
+- **Augur-tuned foundation model** — open-weight base + real marketing corpus fine-tune; available via Hugging Face
 
 ### 📊 Data & Benchmarks
 - OrancBench v1.0 — 5,000 scenarios, multimodal (text + image + video)
@@ -170,8 +170,8 @@ Themes:
 - Zapier / Make / n8n low-code connectors
 
 ### 🌱 Ecosystem
-- Annual **Oransim Conference**
-- **OranAI Certified Partner** program (agencies, consultancies)
+- Annual **Augur Conference**
+- **Augur Certified Partner** program (agencies, consultancies)
 - Academic research grant program (extending MUSE collaboration)
 - Open university curriculum for marketing causality
 
@@ -196,10 +196,9 @@ To keep the project focused, these are **not** on the roadmap (may change with c
 
 ## Getting Involved
 
-- Open an [Issue](https://github.com/OranAi-Ltd/oransim/issues) to propose roadmap changes
+- Open an [Issue](https://github.com/horton2048/augur/issues) to propose roadmap changes
 - Pick up a `good first issue` or `help wanted` item
-- Join [Discussions](https://github.com/OranAi-Ltd/oransim/discussions) for design conversations
-- Enterprise sponsors influencing the roadmap: contact `cto@orannai.com`
+- Join [Discussions](https://github.com/horton2048/augur/discussions) for design conversations
 
 ## Changelog of the Roadmap
 
